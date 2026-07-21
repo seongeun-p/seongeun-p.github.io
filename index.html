@@ -58,12 +58,33 @@
             pointer-events: none;
             transform: translate(-50%, -50%);
             z-index: 1000;
-            transition: transform 0.05s ease;
+            transition: width 0.15s ease, height 0.15s ease, transform 0.05s ease;
         }
 
         .cursor.wiping {
             transform: translate(-50%, -50%) scale(1.1);
             background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 브러시 크기 표시 */
+        .brush-size-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            z-index: 999;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 14px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .brush-size-indicator.visible {
+            opacity: 1;
         }
 
         /* 안내 텍스트 */
@@ -95,7 +116,8 @@
     </div>
 
     <div class="cursor" id="cursor"></div>
-    <div class="hint">마우스로 유리를 닦아보세요</div>
+    <div class="brush-size-indicator" id="brush-indicator">브러시: 35px</div>
+    <div class="hint">마우스로 유리를 닦아보세요 ( [ ] 키로 브러시 크기 조절)</div>
 
     <script>
         const canvas = document.getElementById('fog-canvas');
@@ -106,6 +128,36 @@
         let isWiping = false;
         let lastX = 0;
         let lastY = 0;
+        let brushRadius = 35;
+        const MIN_BRUSH = 10;
+        const MAX_BRUSH = 100;
+        const BRUSH_STEP = 5;
+        const brushIndicator = document.getElementById('brush-indicator');
+        let indicatorTimeout = null;
+
+        // 브러시 크기 업데이트
+        function updateBrushSize(newSize) {
+            brushRadius = Math.max(MIN_BRUSH, Math.min(MAX_BRUSH, newSize));
+            cursor.style.width = (brushRadius * 2) + 'px';
+            cursor.style.height = (brushRadius * 2) + 'px';
+            
+            // 크기 표시 UI
+            brushIndicator.textContent = '브러시: ' + brushRadius + 'px';
+            brushIndicator.classList.add('visible');
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = setTimeout(() => {
+                brushIndicator.classList.remove('visible');
+            }, 1000);
+        }
+
+        // 키보드 이벤트 — [ ] 로 브러시 크기 조절
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '[') {
+                updateBrushSize(brushRadius - BRUSH_STEP);
+            } else if (e.key === ']') {
+                updateBrushSize(brushRadius + BRUSH_STEP);
+            }
+        });
 
         // 캔버스 크기 설정
         function resizeCanvas() {
@@ -183,7 +235,7 @@
             ctx.globalCompositeOperation = 'destination-out';
             
             // 원형 그라데이션으로 자연스러운 닦기 효과
-            const radius = 35;
+            const radius = brushRadius;
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
             gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
             gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
