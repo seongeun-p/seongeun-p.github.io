@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>유리 닦기</title>
+    <title>seongeun-p | Portfolio</title>
     <style>
         * {
             margin: 0;
@@ -12,324 +12,116 @@
         }
 
         body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #0a0a0a;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        .container {
+        /* 그리드 — 화면 가득, 한 줄에 5개 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            padding: 4px;
+        }
+
+        /* 각 썸네일 카드 */
+        .card {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            cursor: pointer;
         }
 
-        /* 배경 이미지 (유리 안쪽 — 또렷한 원본) */
-        .background-image {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.3s ease, filter 0.3s ease;
         }
 
-        /* 유리 위 캔버스 (김 서린 레이어 + 글씨) */
-        #fog-canvas {
+        .card:hover img {
+            transform: scale(1.05);
+            filter: brightness(0.7);
+        }
+
+        /* 호버 시 제목 표시 */
+        .card .overlay {
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            cursor: none;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: #fff;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
         }
 
-        /* 커스텀 커서 (걸레 느낌) */
-        .cursor {
-            position: fixed;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            background: rgba(255, 255, 255, 0.1);
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            transition: width 0.15s ease, height 0.15s ease, transform 0.05s ease;
+        .card:hover .overlay {
+            transform: translateY(0);
         }
 
-        .cursor.wiping {
-            transform: translate(-50%, -50%) scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* 브러시 크기 표시 */
-        .brush-size-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        .card .overlay h3 {
             font-size: 14px;
-            z-index: 999;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 8px 14px;
-            border-radius: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            font-weight: 500;
+            letter-spacing: -0.3px;
         }
 
-        .brush-size-indicator.visible {
-            opacity: 1;
+        .card .overlay p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
         }
 
-        /* 안내 텍스트 */
-        .hint {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.8);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            z-index: 999;
-            pointer-events: none;
-            animation: fadeOut 3s 2s forwards;
+        /* 빈 슬롯 (아직 작업물이 없는 자리) */
+        .card.empty {
+            background: #141414;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
         }
 
-        @keyframes fadeOut {
-            to { opacity: 0; }
+        .card.empty::after {
+            content: '+';
+            font-size: 32px;
+            color: #333;
+        }
+
+        /* 반응형 — 작은 화면에서 열 수 줄이기 */
+        @media (max-width: 1024px) {
+            .grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 또렷한 원본 이미지 (유리 안쪽) -->
-        <img class="background-image" id="bg-image" src="photo.jpg" alt="유리 안쪽 풍경">
-        
-        <!-- 김 서린 유리 레이어 -->
-        <canvas id="fog-canvas"></canvas>
+    <div class="grid">
+        <!-- 작업물 1: 유리닦기 -->
+        <a class="card" href="glass/">
+            <img src="glass/photo.jpg" alt="유리 닦기">
+            <div class="overlay">
+                <h3>유리 닦기</h3>
+                <p>마우스로 김 서린 유리를 닦아보세요</p>
+            </div>
+        </a>
+
+        <!-- 빈 슬롯들 (작업물 추가하면 여기를 채움) -->
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
     </div>
-
-    <div class="cursor" id="cursor"></div>
-    <div class="brush-size-indicator" id="brush-indicator">브러시: 35px</div>
-    <div class="hint">마우스로 유리를 닦아보세요 ( [ ] 키로 브러시 크기 조절)</div>
-
-    <script>
-        const canvas = document.getElementById('fog-canvas');
-        const ctx = canvas.getContext('2d');
-        const cursor = document.getElementById('cursor');
-        const bgImage = document.getElementById('bg-image');
-
-        let isWiping = false;
-        let lastX = 0;
-        let lastY = 0;
-        let brushRadius = 35;
-        const MIN_BRUSH = 10;
-        const MAX_BRUSH = 100;
-        const BRUSH_STEP = 5;
-        const brushIndicator = document.getElementById('brush-indicator');
-        let indicatorTimeout = null;
-
-        // 브러시 크기 업데이트
-        function updateBrushSize(newSize) {
-            brushRadius = Math.max(MIN_BRUSH, Math.min(MAX_BRUSH, newSize));
-            cursor.style.width = (brushRadius * 2) + 'px';
-            cursor.style.height = (brushRadius * 2) + 'px';
-            
-            // 크기 표시 UI
-            brushIndicator.textContent = '브러시: ' + brushRadius + 'px';
-            brushIndicator.classList.add('visible');
-            clearTimeout(indicatorTimeout);
-            indicatorTimeout = setTimeout(() => {
-                brushIndicator.classList.remove('visible');
-            }, 1000);
-        }
-
-        // 키보드 이벤트 — [ ] 로 브러시 크기 조절
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '[') {
-                updateBrushSize(brushRadius - BRUSH_STEP);
-            } else if (e.key === ']') {
-                updateBrushSize(brushRadius + BRUSH_STEP);
-            }
-        });
-
-        // 캔버스 크기 설정
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            drawFogLayer();
-        }
-
-        // 김 서린 유리 레이어 그리기
-        function drawFogLayer() {
-            // 반투명 흰색/회색 김 효과
-            ctx.fillStyle = 'rgba(200, 210, 215, 0.85)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 김 위에 물방울 텍스처 추가
-            for (let i = 0; i < 300; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const radius = Math.random() * 3 + 1;
-                const alpha = Math.random() * 0.3 + 0.1;
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                ctx.fill();
-            }
-
-            // 유리 위 한자 글씨 그리기
-            drawGlassText();
-        }
-
-        // 유리 위에 쓰여진 글씨들
-        function drawGlassText() {
-            ctx.save();
-
-            // 큰 빨간 글씨들
-            ctx.fillStyle = 'rgba(220, 40, 40, 0.9)';
-            ctx.font = 'bold 72px serif';
-            ctx.fillText('滑', canvas.width * 0.55, canvas.height * 0.15);
-            ctx.fillText('魚', canvas.width * 0.55, canvas.height * 0.28);
-            ctx.fillText('旦', canvas.width * 0.55, canvas.height * 0.41);
-            ctx.fillText('麵', canvas.width * 0.72, canvas.height * 0.41);
-
-            ctx.font = 'bold 64px serif';
-            ctx.fillText('蝦', canvas.width * 0.38, canvas.height * 0.25);
-            ctx.fillText('雲', canvas.width * 0.38, canvas.height * 0.45);
-            ctx.fillText('吞', canvas.width * 0.38, canvas.height * 0.58);
-            ctx.fillText('粉', canvas.width * 0.38, canvas.height * 0.72);
-
-            // 큰 빨간 글씨 하단
-            ctx.font = 'bold 80px serif';
-            ctx.fillStyle = 'rgba(220, 40, 40, 0.9)';
-            ctx.fillText('州', canvas.width * 0.12, canvas.height * 0.82);
-            ctx.fillText('粉', canvas.width * 0.42, canvas.height * 0.85);
-            ctx.fillText('麵', canvas.width * 0.65, canvas.height * 0.85);
-
-            // 초록색 글씨들
-            ctx.fillStyle = 'rgba(30, 160, 80, 0.9)';
-            ctx.font = 'bold 56px serif';
-            ctx.fillText('墨', canvas.width * 0.05, canvas.height * 0.52);
-            ctx.fillText('魚', canvas.width * 0.05, canvas.height * 0.65);
-            ctx.fillText('丸', canvas.width * 0.05, canvas.height * 0.78);
-
-            ctx.fillText('鮮', canvas.width * 0.28, canvas.height * 0.2);
-
-            // 오른쪽 초록 글씨
-            ctx.fillText('大', canvas.width * 0.72, canvas.height * 0.1);
-            ctx.fillText('腸', canvas.width * 0.82, canvas.height * 0.28);
-
-            ctx.restore();
-        }
-
-        // 닦기 효과
-        function wipe(x, y) {
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            
-            // 원형 그라데이션으로 자연스러운 닦기 효과
-            const radius = brushRadius;
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-            gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 이전 좌표와 현재 좌표 사이를 연결해서 부드러운 닦기
-            if (lastX && lastY) {
-                ctx.beginPath();
-                ctx.lineWidth = radius * 1.5;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-            lastX = x;
-            lastY = y;
-        }
-
-        // 마우스 이벤트
-        canvas.addEventListener('mousedown', (e) => {
-            isWiping = true;
-            cursor.classList.add('wiping');
-            lastX = e.clientX;
-            lastY = e.clientY;
-            wipe(e.clientX, e.clientY);
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-            
-            if (isWiping) {
-                wipe(e.clientX, e.clientY);
-            }
-        });
-
-        canvas.addEventListener('mouseup', () => {
-            isWiping = false;
-            cursor.classList.remove('wiping');
-            lastX = 0;
-            lastY = 0;
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            isWiping = false;
-            cursor.classList.remove('wiping');
-            lastX = 0;
-            lastY = 0;
-        });
-
-        // 터치 지원 (모바일)
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isWiping = true;
-            const touch = e.touches[0];
-            lastX = touch.clientX;
-            lastY = touch.clientY;
-            wipe(touch.clientX, touch.clientY);
-        });
-
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (isWiping) {
-                const touch = e.touches[0];
-                wipe(touch.clientX, touch.clientY);
-            }
-        });
-
-        canvas.addEventListener('touchend', () => {
-            isWiping = false;
-            lastX = 0;
-            lastY = 0;
-        });
-
-        // 초기화
-        window.addEventListener('resize', resizeCanvas);
-        
-        // 이미지 로드 실패 시 (파일이 없을 때) placeholder 사용
-        bgImage.addEventListener('error', () => {
-            // 이미지 없으면 그라데이션 배경으로 대체
-            bgImage.style.display = 'none';
-            document.querySelector('.container').style.background = 
-                'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
-        });
-
-        resizeCanvas();
-    </script>
 </body>
 </html>
