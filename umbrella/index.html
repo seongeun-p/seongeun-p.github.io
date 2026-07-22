@@ -8,25 +8,17 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             width: 100vw; height: 100vh; overflow: hidden;
-            background: #000; cursor: none; user-select: none;
+            background: #0a0a0a; cursor: none; user-select: none;
             font-family: 'Courier New', monospace;
-            image-rendering: pixelated;
         }
-        canvas { display: block; width: 100vw; height: 100vh; }
-        /* UI 오버레이 */
-        .ui-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 100;
-        }
+        canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
         .bracelet-info {
             position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
             background: #000; border: 3px solid #fff; padding: 8px 20px;
             color: #fff; font-size: 14px; display: flex; align-items: center; gap: 12px;
             font-family: 'Courier New', monospace; z-index: 200;
         }
-        .bracelet-swatch {
-            width: 24px; height: 24px; border: 2px solid #fff;
-        }
+        .bracelet-swatch { width: 24px; height: 24px; border: 2px solid #fff; }
         .chances-ui {
             position: fixed; top: 16px; right: 20px;
             color: #fff; font-size: 14px; z-index: 200;
@@ -53,7 +45,6 @@
             font-family: 'Courier New', monospace; font-size: 16px;
             padding: 10px 28px; background: #000; color: #fff;
             border: 3px solid #fff; cursor: pointer;
-            pointer-events: auto;
         }
         .overlay-screen button:hover { background: #fff; color: #000; }
         #success-screen { background: rgba(0,0,0,0.85); }
@@ -65,12 +56,16 @@
             0% { box-shadow: inset 0 0 200px rgba(255,0,0,0.4); }
             100% { box-shadow: inset 0 0 200px rgba(0,0,255,0.4); }
         }
-        /* 수갑 장면 캔버스 */
         #handcuff-scene {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 400; display: none; background: #1a0000;
         }
         #handcuff-scene.show { display: block; }
+        .instruction {
+            position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.5); font-size: 12px; z-index: 200;
+            font-family: 'Courier New', monospace; pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -83,6 +78,7 @@
     <div class="chances-ui" id="chances">
         LIFE: <span class="chance-o">&#9679;</span><span class="chance-o">&#9679;</span>
     </div>
+    <div class="instruction">Click the umbrella that matches your bracelet</div>
     <div class="overlay-screen" id="success-screen">
         <h1>CLEAR!</h1>
         <p>You found your umbrella.</p>
@@ -97,359 +93,324 @@
     <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    let W, H, scale;
+    let W, H;
+
     function resize() {
         W = canvas.width = window.innerWidth;
         H = canvas.height = window.innerHeight;
-        scale = Math.min(W / 1200, H / 800);
     }
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', () => { resize(); initGame(); });
 
-    // 색상 팔레트 (90년대 레트로)
+    // 픽셀 크기
+    const PX = 3;
+
+    // 우산 팔레트 — 접힌 우산 몸통 색상+패턴
     const PALETTES = [
-        { base: '#e74c3c', accent: '#fff', pattern: 'solid' },
-        { base: '#2980b9', accent: '#f1c40f', pattern: 'hstripe' },
-        { base: '#27ae60', accent: '#e74c3c', pattern: 'diamond' },
-        { base: '#f39c12', accent: '#2c3e50', pattern: 'vstripe' },
-        { base: '#8e44ad', accent: '#1abc9c', pattern: 'dots' },
-        { base: '#c0392b', accent: '#ecf0f1', pattern: 'hstripe' },
-        { base: '#16a085', accent: '#f39c12', pattern: 'checker' },
-        { base: '#d35400', accent: '#2ecc71', pattern: 'vstripe' },
-        { base: '#2c3e50', accent: '#e74c3c', pattern: 'diamond' },
-        { base: '#f1c40f', accent: '#e74c3c', pattern: 'solid' },
-        { base: '#1abc9c', accent: '#9b59b6', pattern: 'hstripe' },
-        { base: '#e67e22', accent: '#3498db', pattern: 'dots' },
-        { base: '#9b59b6', accent: '#f1c40f', pattern: 'checker' },
-        { base: '#34495e', accent: '#e74c3c', pattern: 'vstripe' },
-        { base: '#e74c3c', accent: '#f1c40f', pattern: 'hstripe' },
-        { base: '#3498db', accent: '#e74c3c', pattern: 'diamond' },
-        { base: '#2ecc71', accent: '#f39c12', pattern: 'vstripe' },
-        { base: '#e91e63', accent: '#00bcd4', pattern: 'dots' },
-        { base: '#ff5722', accent: '#4caf50', pattern: 'checker' },
-        { base: '#673ab7', accent: '#ff9800', pattern: 'hstripe' },
-        { base: '#009688', accent: '#ff5722', pattern: 'solid' },
-        { base: '#795548', accent: '#ffc107', pattern: 'vstripe' },
-        { base: '#607d8b', accent: '#ff4081', pattern: 'diamond' },
-        { base: '#4caf50', accent: '#ff5722', pattern: 'hstripe' },
-        { base: '#ff9800', accent: '#3f51b5', pattern: 'dots' },
-        { base: '#00bcd4', accent: '#e91e63', pattern: 'checker' },
-        { base: '#cddc39', accent: '#9c27b0', pattern: 'vstripe' },
-        { base: '#ff4081', accent: '#00e676', pattern: 'solid' },
-        { base: '#3f51b5', accent: '#ff9800', pattern: 'hstripe' },
-        { base: '#8bc34a', accent: '#e91e63', pattern: 'diamond' }
+        { colors: ['#e74c3c','#c0392b','#ff6b6b'], pattern: 'solid' },
+        { colors: ['#2980b9','#f1c40f','#2980b9'], pattern: 'hstripe' },
+        { colors: ['#27ae60','#e74c3c','#27ae60'], pattern: 'vband' },
+        { colors: ['#f39c12','#2c3e50','#f39c12'], pattern: 'hstripe' },
+        { colors: ['#8e44ad','#1abc9c','#8e44ad'], pattern: 'diamond' },
+        { colors: ['#c0392b','#ecf0f1','#c0392b'], pattern: 'hstripe' },
+        { colors: ['#16a085','#f39c12','#e74c3c'], pattern: 'tricolor' },
+        { colors: ['#d35400','#2ecc71','#d35400'], pattern: 'vband' },
+        { colors: ['#2c3e50','#e74c3c','#f1c40f'], pattern: 'tricolor' },
+        { colors: ['#1a1a1a','#333','#1a1a1a'], pattern: 'zigzag' },
+        { colors: ['#3498db','#e74c3c','#f1c40f'], pattern: 'tricolor' },
+        { colors: ['#e67e22','#3498db','#e67e22'], pattern: 'hstripe' },
+        { colors: ['#27ae60','#f39c12','#27ae60'], pattern: 'diamond' },
+        { colors: ['#e74c3c','#27ae60','#e74c3c'], pattern: 'vband' },
+        { colors: ['#9b59b6','#f1c40f','#9b59b6'], pattern: 'hstripe' },
+        { colors: ['#1abc9c','#e74c3c','#1abc9c'], pattern: 'diamond' },
+        { colors: ['#2980b9','#2ecc71','#2980b9'], pattern: 'vband' },
+        { colors: ['#e91e63','#00bcd4','#e91e63'], pattern: 'hstripe' },
+        { colors: ['#ff5722','#4caf50','#ff5722'], pattern: 'tricolor' },
+        { colors: ['#673ab7','#ff9800','#673ab7'], pattern: 'diamond' },
+        { colors: ['#f44336','#2196f3','#ffeb3b'], pattern: 'tricolor' },
+        { colors: ['#4caf50','#f44336','#4caf50'], pattern: 'hstripe' },
+        { colors: ['#ff9800','#3f51b5','#ff9800'], pattern: 'vband' },
+        { colors: ['#00bcd4','#e91e63','#00bcd4'], pattern: 'diamond' },
+        { colors: ['#8bc34a','#ff5722','#8bc34a'], pattern: 'hstripe' },
+        { colors: ['#e74c3c','#f1c40f','#2ecc71'], pattern: 'tricolor' },
+        { colors: ['#3f51b5','#ff9800','#3f51b5'], pattern: 'vband' },
+        { colors: ['#009688','#ff5722','#009688'], pattern: 'zigzag' },
+        { colors: ['#795548','#ffc107','#795548'], pattern: 'hstripe' },
+        { colors: ['#607d8b','#ff4081','#607d8b'], pattern: 'diamond' },
     ];
 
-    // 우산 모양 타입
-    const SHAPES = ['classic', 'pointy', 'flat', 'bubble', 'pagoda'];
+    // 손잡이 타입
+    const HANDLES = ['j-hook', 'round', 'straight', 't-handle'];
 
-    // 우산 데이터
     let umbrellas = [];
     let targetIdx = 0;
-    let mouseX = W / 2, mouseY = H - 100;
+    let mouseX = 0, mouseY = 0;
     let hoveredIdx = -1;
     let wrongCount = 0;
     let gameOver = false;
-    let handcuffs = false;
-
-    // 우산꽂이 영역
-    const STAND_TOP = 0.35;
-    const STAND_BOTTOM = 0.78;
 
     function initGame() {
         umbrellas = [];
         const count = 30;
-        const standLeft = W * 0.08;
-        const standRight = W * 0.92;
-        const standW = standRight - standLeft;
+        // 우산들이 걸리는 봉의 위치
+        const rackY = H * 0.22;
+        const rackLeft = W * 0.05;
+        const rackRight = W * 0.95;
+        const spacing = (rackRight - rackLeft) / count;
 
-        // 셔플된 팔레트
         const shuffled = [...PALETTES].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < count; i++) {
-            const palette = shuffled[i % shuffled.length];
-            const shape = SHAPES[i % SHAPES.length];
-            const col = i;
-            const x = standLeft + (col + 0.5) * (standW / count);
-            const baseY = H * STAND_BOTTOM;
-            const topY = H * STAND_TOP + Math.random() * H * 0.05;
-            const umbH = baseY - topY;
+            const palette = shuffled[i];
+            const handle = HANDLES[i % HANDLES.length];
+            const x = rackLeft + (i + 0.5) * spacing;
+            const bodyW = spacing * 0.7;
+            const bodyH = H * 0.55 + (Math.random() * H * 0.08);
+            const tilt = (Math.random() - 0.5) * 4; // 약간 기울기
+
             umbrellas.push({
-                x, topY, baseY, umbH, palette, shape,
-                width: standW / count * 0.85,
-                hovered: false, scale: 1, removed: false
+                x, rackY, bodyW, bodyH, palette, handle, tilt,
+                hovered: false, removed: false
             });
         }
 
-        // 타겟 랜덤 선택
         targetIdx = Math.floor(Math.random() * count);
-        
-        // 팔찌 색상 표시
+        updateSwatch();
+    }
+
+    function updateSwatch() {
         const swatch = document.getElementById('swatch');
-        const tp = umbrellas[targetIdx].palette;
-        if (tp.pattern === 'solid') {
-            swatch.style.background = tp.base;
-        } else if (tp.pattern === 'hstripe') {
-            swatch.style.background = `repeating-linear-gradient(0deg, ${tp.base} 0px, ${tp.base} 4px, ${tp.accent} 4px, ${tp.accent} 8px)`;
-        } else if (tp.pattern === 'vstripe') {
-            swatch.style.background = `repeating-linear-gradient(90deg, ${tp.base} 0px, ${tp.base} 4px, ${tp.accent} 4px, ${tp.accent} 8px)`;
-        } else if (tp.pattern === 'diamond' || tp.pattern === 'checker') {
-            swatch.style.background = `repeating-conic-gradient(${tp.base} 0% 25%, ${tp.accent} 0% 50%) 50% / 8px 8px`;
-        } else {
-            swatch.style.background = tp.base;
+        const p = umbrellas[targetIdx].palette;
+        if (p.pattern === 'solid') {
+            swatch.style.background = p.colors[0];
+        } else if (p.pattern === 'hstripe') {
+            swatch.style.background = `repeating-linear-gradient(0deg, ${p.colors[0]} 0px, ${p.colors[0]} 4px, ${p.colors[1]} 4px, ${p.colors[1]} 8px)`;
+        } else if (p.pattern === 'vband') {
+            swatch.style.background = `linear-gradient(90deg, ${p.colors[0]} 33%, ${p.colors[1]} 33%, ${p.colors[1]} 66%, ${p.colors[2]} 66%)`;
+        } else if (p.pattern === 'tricolor') {
+            swatch.style.background = `linear-gradient(180deg, ${p.colors[0]} 33%, ${p.colors[1]} 33%, ${p.colors[1]} 66%, ${p.colors[2]} 66%)`;
+        } else if (p.pattern === 'diamond' || p.pattern === 'zigzag') {
+            swatch.style.background = `repeating-conic-gradient(${p.colors[0]} 0% 25%, ${p.colors[1]} 0% 50%) 50% / 8px 8px`;
         }
     }
 
-    // 픽셀 패턴 채우기
-    function fillPattern(x, y, w, h, palette) {
-        const { base, accent, pattern } = palette;
-        ctx.fillStyle = base;
-        ctx.fillRect(x, y, w, h);
+    // 접힌 우산 몸통 패턴 그리기 (픽셀)
+    function drawFoldedBody(x, y, w, h, palette, hovered) {
+        const { colors, pattern } = palette;
+        const px = PX;
+        const cols = Math.floor(w / px);
+        const rows = Math.floor(h / px);
 
-        ctx.fillStyle = accent;
-        const ps = 4; // pixel size
-        if (pattern === 'hstripe') {
-            for (let row = 0; row < h; row += ps * 2) {
-                ctx.fillRect(x, y + row, w, ps);
-            }
-        } else if (pattern === 'vstripe') {
-            for (let col = 0; col < w; col += ps * 2) {
-                ctx.fillRect(x + col, y, ps, h);
-            }
-        } else if (pattern === 'diamond') {
-            for (let row = 0; row < h; row += ps * 4) {
-                for (let col = 0; col < w; col += ps * 4) {
-                    ctx.fillRect(x + col + ps, y + row, ps, ps);
-                    ctx.fillRect(x + col, y + row + ps, ps, ps);
-                    ctx.fillRect(x + col + ps * 2, y + row + ps, ps, ps);
-                    ctx.fillRect(x + col + ps, y + row + ps * 2, ps, ps);
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                let color;
+                const py = r / rows;
+                const px2 = c / cols;
+
+                if (pattern === 'solid') {
+                    // 접힌 주름 효과
+                    const fold = Math.sin(px2 * Math.PI * 6);
+                    color = fold > 0.3 ? colors[0] : colors[1] || darken(colors[0]);
+                } else if (pattern === 'hstripe') {
+                    const stripe = Math.floor(r / 4) % 3;
+                    color = colors[stripe % colors.length];
+                } else if (pattern === 'vband') {
+                    const band = Math.floor(px2 * 3);
+                    color = colors[band];
+                } else if (pattern === 'tricolor') {
+                    const band = Math.floor(py * 3);
+                    color = colors[band];
+                } else if (pattern === 'diamond') {
+                    const d = (r + c) % 8 < 4;
+                    color = d ? colors[0] : colors[1];
+                } else if (pattern === 'zigzag') {
+                    const z = (r + Math.floor(Math.sin(c * 0.5) * 3)) % 6 < 3;
+                    color = z ? colors[0] : colors[1];
+                } else {
+                    color = colors[0];
                 }
+
+                // 접힌 주름 음영
+                const foldShade = Math.sin(px2 * Math.PI * 5) * 0.15;
+                ctx.fillStyle = shadeColor(color, foldShade);
+                ctx.fillRect(x + c * px, y + r * px, px, px);
             }
-        } else if (pattern === 'dots') {
-            for (let row = 0; row < h; row += ps * 3) {
-                for (let col = 0; col < w; col += ps * 3) {
-                    ctx.fillRect(x + col + ps, y + row + ps, ps, ps);
-                }
-            }
-        } else if (pattern === 'checker') {
-            for (let row = 0; row < h; row += ps * 2) {
-                for (let col = 0; col < w; col += ps * 2) {
-                    if ((Math.floor(row / (ps*2)) + Math.floor(col / (ps*2))) % 2 === 0) {
-                        ctx.fillRect(x + col, y + row, ps * 2, ps * 2);
-                    }
-                }
-            }
+        }
+
+        // 호버 시 밝은 외곽선
+        if (hovered) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 10;
+            ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+            ctx.shadowBlur = 0;
         }
     }
 
-    // 우산 그리기
+    function darken(hex) {
+        return shadeColor(hex, -0.3);
+    }
+
+    function shadeColor(color, percent) {
+        let r = parseInt(color.slice(1,3), 16);
+        let g = parseInt(color.slice(3,5), 16);
+        let b = parseInt(color.slice(5,7), 16);
+        r = Math.min(255, Math.max(0, Math.round(r * (1 + percent))));
+        g = Math.min(255, Math.max(0, Math.round(g * (1 + percent))));
+        b = Math.min(255, Math.max(0, Math.round(b * (1 + percent))));
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // 우산 그리기 (접힌 상태, 봉에 걸림)
     function drawUmbrella(u, idx) {
         if (u.removed) return;
         ctx.save();
 
-        const s = u.hovered ? 1.12 : 1;
         const cx = u.x;
-        const cy = u.topY + u.umbH / 2;
-        ctx.translate(cx, cy);
-        ctx.scale(s, s);
-        ctx.translate(-cx, -cy);
+        const topY = u.rackY + 15; // 봉 아래에서 시작
+        const bw = u.bodyW;
+        const bh = u.bodyH;
 
-        const uw = u.width;
-        const canopyH = u.umbH * 0.3;
-        const stickTop = u.topY + canopyH;
-        const canopyTop = u.topY;
+        // 약간 기울기
+        ctx.translate(cx, topY);
+        ctx.rotate(u.tilt * Math.PI / 180);
+        ctx.translate(-cx, -topY);
 
-        // 우산 캐노피 (모양에 따라)
-        ctx.save();
-        ctx.beginPath();
-        if (u.shape === 'classic') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.quadraticCurveTo(cx, canopyTop - canopyH * 0.3, cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        } else if (u.shape === 'pointy') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.lineTo(cx, canopyTop - canopyH * 0.2);
-            ctx.lineTo(cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        } else if (u.shape === 'flat') {
-            ctx.rect(cx - uw/2, canopyTop, uw, canopyH);
-        } else if (u.shape === 'bubble') {
-            ctx.ellipse(cx, canopyTop + canopyH * 0.6, uw/2, canopyH * 0.7, 0, 0, Math.PI * 2);
-        } else if (u.shape === 'pagoda') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.quadraticCurveTo(cx - uw/4, canopyTop - canopyH*0.1, cx, canopyTop + canopyH*0.3);
-            ctx.quadraticCurveTo(cx + uw/4, canopyTop - canopyH*0.1, cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        }
-        ctx.clip();
-        fillPattern(cx - uw/2, canopyTop - canopyH*0.3, uw, canopyH * 1.5, u.palette);
-        ctx.restore();
-
-        // 캐노피 외곽선
-        ctx.beginPath();
-        if (u.shape === 'classic') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.quadraticCurveTo(cx, canopyTop - canopyH * 0.3, cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        } else if (u.shape === 'pointy') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.lineTo(cx, canopyTop - canopyH * 0.2);
-            ctx.lineTo(cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        } else if (u.shape === 'flat') {
-            ctx.rect(cx - uw/2, canopyTop, uw, canopyH);
-        } else if (u.shape === 'bubble') {
-            ctx.ellipse(cx, canopyTop + canopyH * 0.6, uw/2, canopyH * 0.7, 0, 0, Math.PI * 2);
-        } else if (u.shape === 'pagoda') {
-            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
-            ctx.quadraticCurveTo(cx - uw/4, canopyTop - canopyH*0.1, cx, canopyTop + canopyH*0.3);
-            ctx.quadraticCurveTo(cx + uw/4, canopyTop - canopyH*0.1, cx + uw/2, canopyTop + canopyH);
-            ctx.closePath();
-        }
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 우산 봉 (스틱)
-        ctx.fillStyle = '#333';
-        ctx.fillRect(cx - 2, stickTop, 4, u.baseY - stickTop - 15);
-
-        // 손잡이 (J형)
-        ctx.beginPath();
-        ctx.arc(cx - 8, u.baseY - 15, 8, -Math.PI/2, Math.PI/2);
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // 꼭대기 점
-        ctx.fillStyle = '#222';
-        ctx.fillRect(cx - 3, canopyTop - 6, 6, 6);
-
-        // 호버 글로우
+        // 호버 시 살짝 위로 + 커짐
         if (u.hovered) {
-            ctx.shadowColor = '#fff';
-            ctx.shadowBlur = 15;
-            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cx - uw/2 - 4, canopyTop - 8, uw + 8, u.umbH + 8);
-            ctx.shadowBlur = 0;
+            ctx.translate(0, -8);
+            ctx.translate(cx, topY + bh/2);
+            ctx.scale(1.06, 1.06);
+            ctx.translate(-cx, -(topY + bh/2));
         }
+
+        // 손잡이 (위쪽, 봉에 걸리는 부분)
+        const handleColor = ['#8B4513','#D2691E','#A0522D','#CD853F'][idx % 4];
+        ctx.strokeStyle = handleColor;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+
+        if (u.handle === 'j-hook') {
+            ctx.beginPath();
+            ctx.arc(cx, u.rackY - 2, 10, 0, Math.PI);
+            ctx.stroke();
+        } else if (u.handle === 'round') {
+            ctx.beginPath();
+            ctx.arc(cx, u.rackY - 4, 8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = handleColor;
+            ctx.fill();
+        } else if (u.handle === 'straight') {
+            ctx.beginPath();
+            ctx.moveTo(cx, u.rackY - 12);
+            ctx.lineTo(cx, u.rackY + 5);
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(cx - 8, u.rackY - 6);
+            ctx.lineTo(cx + 8, u.rackY - 6);
+            ctx.moveTo(cx, u.rackY - 6);
+            ctx.lineTo(cx, u.rackY + 5);
+            ctx.stroke();
+        }
+
+        // 우산 상단 밴드 (묶음)
+        ctx.fillStyle = '#222';
+        ctx.fillRect(cx - bw/2, topY, bw, 6);
+        ctx.fillRect(cx - bw/2, topY + bh - 8, bw, 6);
+
+        // 접힌 우산 몸통
+        drawFoldedBody(cx - bw/2, topY + 6, bw, bh - 14, u.palette, u.hovered);
+
+        // 하단 팁
+        ctx.fillStyle = '#222';
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, topY + bh);
+        ctx.lineTo(cx + 3, topY + bh);
+        ctx.lineTo(cx, topY + bh + 12);
+        ctx.fill();
 
         ctx.restore();
     }
 
-    // 우산꽂이 통 그리기
-    function drawStand() {
-        const sLeft = W * 0.06;
-        const sRight = W * 0.94;
-        const sTop = H * STAND_BOTTOM - 10;
-        const sBottom = H * 0.92;
+    // 봉 (rack) 그리기
+    function drawRack() {
+        const rackY = H * 0.22;
+        const rackLeft = W * 0.03;
+        const rackRight = W * 0.97;
 
-        // 통 본체
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(sLeft, sTop, sRight - sLeft, sBottom - sTop);
+        // 메인 봉
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(rackLeft, rackY - 3, rackRight - rackLeft, 6);
 
-        // 테두리
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(sLeft, sTop, sRight - sLeft, sBottom - sTop);
+        // 하이라이트
+        ctx.fillStyle = '#A0522D';
+        ctx.fillRect(rackLeft, rackY - 3, rackRight - rackLeft, 2);
 
-        // 상단 림
-        ctx.fillStyle = '#333';
-        ctx.fillRect(sLeft - 6, sTop - 8, sRight - sLeft + 12, 12);
-        ctx.strokeStyle = '#555';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sLeft - 6, sTop - 8, sRight - sLeft + 12, 12);
+        // 그림자
+        ctx.fillStyle = '#5C3317';
+        ctx.fillRect(rackLeft, rackY + 1, rackRight - rackLeft, 2);
+
+        // 양쪽 지지대
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(rackLeft, rackY - 20, 8, 40);
+        ctx.fillRect(rackRight - 8, rackY - 20, 8, 40);
     }
 
-    // 손 그리기 (픽셀아트 스타일)
+    // 손 그리기
     function drawHand() {
         ctx.save();
         const hx = mouseX;
-        const hy = mouseY + 60;
+        const hy = mouseY + 40;
 
-        // 팔 (화면 아래에서 손까지 연결)
+        // 팔
         ctx.fillStyle = '#d4956a';
-        ctx.fillRect(hx - 14, hy, 28, H - hy + 20);
+        ctx.fillRect(hx - 12, hy, 24, H - hy + 20);
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hx - 12, hy, 24, H - hy + 20);
+
+        // 팔찌
+        const tp = umbrellas[targetIdx].palette;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(hx - 14, hy + 16, 28, 12);
+        ctx.clip();
+        // 팔찌에 미니 패턴
+        const bc = tp.colors;
+        for (let i = 0; i < 28; i += PX) {
+            const ci = Math.floor(i / (28 / bc.length)) % bc.length;
+            ctx.fillStyle = bc[ci];
+            ctx.fillRect(hx - 14 + i, hy + 16, PX, 12);
+        }
+        ctx.restore();
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
-        ctx.strokeRect(hx - 14, hy, 28, H - hy + 20);
-
-        // 팔찌 또는 수갑
-        if (handcuffs) {
-            // 수갑
-            ctx.fillStyle = '#666';
-            ctx.fillRect(hx - 18, hy + 20, 36, 16);
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(hx - 18, hy + 20, 36, 16);
-            // 열쇠구멍
-            ctx.fillStyle = '#222';
-            ctx.fillRect(hx - 3, hy + 25, 6, 6);
-        } else {
-            // 팔찌
-            const tp = umbrellas[targetIdx].palette;
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(hx - 16, hy + 18, 32, 14);
-            ctx.clip();
-            fillPattern(hx - 16, hy + 18, 32, 14, tp);
-            ctx.restore();
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(hx - 16, hy + 18, 32, 14);
-        }
+        ctx.strokeRect(hx - 14, hy + 16, 28, 12);
 
         // 손가락들 (위로 뻗음)
         const fingers = [
-            { x: hx - 10, w: 8, h: 30 },
-            { x: hx - 3, w: 8, h: 36 },
-            { x: hx + 4, w: 8, h: 33 },
-            { x: hx + 11, w: 7, h: 26 },
+            { ox: -9, w: 7, h: 24 },
+            { ox: -3, w: 7, h: 30 },
+            { ox: 3, w: 7, h: 27 },
+            { ox: 9, w: 6, h: 22 },
         ];
         fingers.forEach(f => {
             ctx.fillStyle = '#d4956a';
-            ctx.fillRect(f.x, hy - 20 - f.h, f.w, f.h);
-            ctx.strokeStyle = '#000';
+            ctx.fillRect(hx + f.ox, hy - f.h, f.w, f.h);
+            ctx.strokeStyle = '#111';
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(f.x, hy - 20 - f.h, f.w, f.h);
+            ctx.strokeRect(hx + f.ox, hy - f.h, f.w, f.h);
         });
-
         // 엄지
         ctx.fillStyle = '#d4956a';
-        ctx.fillRect(hx - 18, hy - 30, 7, 18);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(hx - 18, hy - 30, 7, 18);
+        ctx.fillRect(hx - 16, hy - 16, 6, 16);
+        ctx.strokeStyle = '#111';
+        ctx.strokeRect(hx - 16, hy - 16, 6, 16);
 
         ctx.restore();
-    }
-
-    // 비 효과 (레트로)
-    let raindrops = [];
-    function initRain() {
-        for (let i = 0; i < 80; i++) {
-            raindrops.push({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                speed: 4 + Math.random() * 6,
-                len: 8 + Math.random() * 12
-            });
-        }
-    }
-    initRain();
-
-    function drawRain() {
-        ctx.strokeStyle = 'rgba(150,180,200,0.3)';
-        ctx.lineWidth = 1;
-        raindrops.forEach(r => {
-            ctx.beginPath();
-            ctx.moveTo(r.x, r.y);
-            ctx.lineTo(r.x - 2, r.y + r.len);
-            ctx.stroke();
-            r.y += r.speed;
-            if (r.y > H) { r.y = -r.len; r.x = Math.random() * W; }
-        });
     }
 
     // 히트 테스트
@@ -457,37 +418,117 @@
         for (let i = umbrellas.length - 1; i >= 0; i--) {
             const u = umbrellas[i];
             if (u.removed) continue;
-            const halfW = u.width / 2 + 4;
+            const topY = u.rackY + 15;
+            const halfW = u.bodyW / 2 + 6;
             if (mx > u.x - halfW && mx < u.x + halfW &&
-                my > u.topY - 10 && my < u.baseY + 10) {
+                my > topY - 20 && my < topY + u.bodyH + 20) {
                 return i;
             }
         }
         return -1;
     }
 
-    // 경고 애니메이션
+    // 경고
     let warningAlpha = 0;
-    let warningText = '';
+    function showWarning() { warningAlpha = 1; }
 
-    function showWarning() {
-        warningAlpha = 1;
-        warningText = 'WRONG!';
+    // 수갑 장면
+    function drawHandcuffScene() {
+        const hc = document.getElementById('handcuff-scene');
+        hc.classList.add('show');
+        hc.width = W; hc.height = H;
+        const hctx = hc.getContext('2d');
+        let frameCount = 0;
+
+        function animateScene() {
+            frameCount++;
+            hctx.clearRect(0, 0, W, H);
+            // 빨간 배경 깜빡임
+            hctx.fillStyle = frameCount % 20 < 10 ? '#2a0000' : '#1a0000';
+            hctx.fillRect(0, 0, W, H);
+
+            const cx = W / 2;
+            const cy = H / 2 + 20;
+            const s = Math.min(W, H) * 0.0045;
+
+            // 왼손
+            drawBigHand(hctx, cx - 60*s, cy, s);
+            // 오른손 (미러)
+            hctx.save();
+            hctx.translate(cx + 60*s, cy);
+            hctx.scale(-1, 1);
+            hctx.translate(-(cx + 60*s), -cy);
+            drawBigHand(hctx, cx + 60*s, cy, s);
+            hctx.restore();
+
+            // 수갑
+            hctx.fillStyle = '#777';
+            hctx.fillRect(cx - 60*s - 12*s, cy + 25*s, 28*s, 14*s);
+            hctx.strokeStyle = '#444'; hctx.lineWidth = 3;
+            hctx.strokeRect(cx - 60*s - 12*s, cy + 25*s, 28*s, 14*s);
+            hctx.fillStyle = '#777';
+            hctx.fillRect(cx + 60*s - 16*s, cy + 25*s, 28*s, 14*s);
+            hctx.strokeRect(cx + 60*s - 16*s, cy + 25*s, 28*s, 14*s);
+
+            // 체인
+            hctx.strokeStyle = '#888'; hctx.lineWidth = 3*s;
+            hctx.setLineDash([5*s, 3*s]);
+            hctx.beginPath();
+            hctx.moveTo(cx - 45*s, cy + 32*s);
+            hctx.quadraticCurveTo(cx, cy + 50*s, cx + 45*s, cy + 32*s);
+            hctx.stroke();
+            hctx.setLineDash([]);
+
+            // BUSTED
+            if (frameCount > 20) {
+                hctx.fillStyle = '#e74c3c';
+                hctx.font = `bold ${Math.floor(50*s)}px Courier New`;
+                hctx.textAlign = 'center';
+                hctx.shadowColor = '#ff0000'; hctx.shadowBlur = 20;
+                hctx.fillText('BUSTED', cx, cy - 70*s);
+                hctx.shadowBlur = 0;
+            }
+
+            if (frameCount < 100) requestAnimationFrame(animateScene);
+            else document.getElementById('fail-screen').classList.add('show');
+        }
+        animateScene();
     }
 
-    // 메인 렌더
+    function drawBigHand(c, hx, hy, s) {
+        // 팔
+        c.fillStyle = '#d4956a';
+        c.fillRect(hx - 14*s, hy, 28*s, 70*s);
+        c.strokeStyle = '#111'; c.lineWidth = 2;
+        c.strokeRect(hx - 14*s, hy, 28*s, 70*s);
+        // 손바닥
+        c.fillStyle = '#d4956a';
+        c.fillRect(hx - 16*s, hy - 28*s, 32*s, 32*s);
+        c.strokeRect(hx - 16*s, hy - 28*s, 32*s, 32*s);
+        // 주먹 손가락
+        const fw = 7*s, fh = 12*s;
+        for (let i = 0; i < 4; i++) {
+            const fx = hx - 14*s + i * 8*s;
+            c.fillStyle = '#d4956a';
+            c.fillRect(fx, hy - 28*s - fh, fw, fh);
+            c.strokeRect(fx, hy - 28*s - fh, fw, fh);
+        }
+    }
+
+    // 메인 렌더 루프
     function render() {
         ctx.clearRect(0, 0, W, H);
-
-        // 배경
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, W, H);
 
-        // 비
-        drawRain();
+        // 배경 텍스처 (미세 노이즈)
+        ctx.fillStyle = 'rgba(255,255,255,0.01)';
+        for (let i = 0; i < 200; i++) {
+            ctx.fillRect(Math.random()*W, Math.random()*H, PX, PX);
+        }
 
-        // 우산꽂이 통
-        drawStand();
+        // 봉
+        drawRack();
 
         // 우산들
         hoveredIdx = getHoveredUmbrella(mouseX, mouseY);
@@ -504,152 +545,14 @@
             ctx.save();
             ctx.globalAlpha = warningAlpha;
             ctx.fillStyle = '#e74c3c';
-            ctx.font = 'bold 64px Courier New';
+            ctx.font = 'bold 56px Courier New';
             ctx.textAlign = 'center';
-            ctx.fillText(warningText, W / 2, H / 2);
+            ctx.fillText('WRONG!', W / 2, H / 2);
             ctx.restore();
             warningAlpha -= 0.02;
         }
 
         if (!gameOver) requestAnimationFrame(render);
-        else render_static();
-    }
-
-    function render_static() {
-        // 마지막 프레임 유지
-    }
-
-    // 수갑 장면 그리기 (양손 확대)
-    function drawHandcuffScene() {
-        const hc = document.getElementById('handcuff-scene');
-        hc.classList.add('show');
-        hc.width = W;
-        hc.height = H;
-        const hctx = hc.getContext('2d');
-
-        let flash = 0;
-        let frameCount = 0;
-
-        function animateScene() {
-            frameCount++;
-            hctx.clearRect(0, 0, W, H);
-
-            // 배경 — 빨간색 깜빡임
-            flash = (flash + 1) % 20;
-            if (flash < 10) {
-                hctx.fillStyle = '#2a0000';
-            } else {
-                hctx.fillStyle = '#1a0000';
-            }
-            hctx.fillRect(0, 0, W, H);
-
-            // 빨간 비네팅
-            const vg = hctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, W*0.7);
-            vg.addColorStop(0, 'rgba(80,0,0,0)');
-            vg.addColorStop(1, 'rgba(100,0,0,0.6)');
-            hctx.fillStyle = vg;
-            hctx.fillRect(0, 0, W, H);
-
-            const cx = W / 2;
-            const cy = H / 2 + 40;
-            const s = Math.min(W, H) * 0.004; // scale
-
-            // 왼손
-            drawPixelHand(hctx, cx - 70 * s, cy, s, false);
-            // 오른손
-            drawPixelHand(hctx, cx + 70 * s, cy, s, true);
-
-            // 수갑 연결 (가운데 체인 + 수갑)
-            // 왼쪽 수갑
-            hctx.fillStyle = '#777';
-            hctx.fillRect(cx - 70*s - 10*s, cy + 30*s, 30*s, 14*s);
-            hctx.strokeStyle = '#444';
-            hctx.lineWidth = 3;
-            hctx.strokeRect(cx - 70*s - 10*s, cy + 30*s, 30*s, 14*s);
-            // 왼쪽 열쇠구멍
-            hctx.fillStyle = '#333';
-            hctx.fillRect(cx - 70*s + 2*s, cy + 34*s, 4*s, 6*s);
-
-            // 오른쪽 수갑
-            hctx.fillStyle = '#777';
-            hctx.fillRect(cx + 70*s - 20*s, cy + 30*s, 30*s, 14*s);
-            hctx.strokeStyle = '#444';
-            hctx.lineWidth = 3;
-            hctx.strokeRect(cx + 70*s - 20*s, cy + 30*s, 30*s, 14*s);
-            // 오른쪽 열쇠구멍
-            hctx.fillStyle = '#333';
-            hctx.fillRect(cx + 70*s - 2*s, cy + 34*s, 4*s, 6*s);
-
-            // 체인 연결
-            hctx.strokeStyle = '#666';
-            hctx.lineWidth = 4 * s;
-            hctx.setLineDash([6*s, 4*s]);
-            hctx.beginPath();
-            hctx.moveTo(cx - 50*s, cy + 37*s);
-            hctx.quadraticCurveTo(cx, cy + 55*s, cx + 50*s, cy + 37*s);
-            hctx.stroke();
-            hctx.setLineDash([]);
-
-            // BUSTED 텍스트
-            if (frameCount > 30) {
-                hctx.save();
-                hctx.fillStyle = '#e74c3c';
-                hctx.font = `bold ${48 * s}px Courier New`;
-                hctx.textAlign = 'center';
-                hctx.shadowColor = '#ff0000';
-                hctx.shadowBlur = 20;
-                hctx.fillText('BUSTED', cx, cy - 80 * s);
-                hctx.restore();
-            }
-
-            if (frameCount < 120) {
-                requestAnimationFrame(animateScene);
-            } else {
-                document.getElementById('fail-screen').classList.add('show');
-            }
-        }
-
-        animateScene();
-    }
-
-    // 픽셀 손 그리기 (수갑 장면용)
-    function drawPixelHand(c, hx, hy, s, mirror) {
-        c.save();
-        if (mirror) {
-            c.translate(hx, hy);
-            c.scale(-1, 1);
-            c.translate(-hx, -hy);
-        }
-
-        // 팔
-        c.fillStyle = '#d4956a';
-        c.fillRect(hx - 12*s, hy, 24*s, 80*s);
-        c.strokeStyle = '#000';
-        c.lineWidth = 2;
-        c.strokeRect(hx - 12*s, hy, 24*s, 80*s);
-
-        // 손바닥
-        c.fillStyle = '#d4956a';
-        c.fillRect(hx - 16*s, hy - 30*s, 32*s, 35*s);
-        c.strokeStyle = '#000';
-        c.strokeRect(hx - 16*s, hy - 30*s, 32*s, 35*s);
-
-        // 손가락들 (주먹 쥔 모양)
-        const fingers = [
-            { x: hx - 12*s, w: 8*s, h: 14*s },
-            { x: hx - 4*s, w: 8*s, h: 16*s },
-            { x: hx + 4*s, w: 8*s, h: 15*s },
-            { x: hx + 12*s, w: 7*s, h: 12*s },
-        ];
-        fingers.forEach(f => {
-            c.fillStyle = '#d4956a';
-            c.fillRect(f.x, hy - 30*s - f.h, f.w, f.h);
-            c.strokeStyle = '#000';
-            c.lineWidth = 1.5;
-            c.strokeRect(f.x, hy - 30*s - f.h, f.w, f.h);
-        });
-
-        c.restore();
     }
 
     // 입력
@@ -663,17 +566,14 @@
         if (hoveredIdx === -1) return;
 
         if (hoveredIdx === targetIdx) {
-            // 성공
             umbrellas[hoveredIdx].removed = true;
             gameOver = true;
             setTimeout(() => {
                 document.getElementById('success-screen').classList.add('show');
             }, 300);
         } else {
-            // 실패
             wrongCount++;
             showWarning();
-            // 기회 표시 업데이트
             const chances = document.getElementById('chances');
             let html = 'LIFE: ';
             for (let i = 0; i < 2; i++) {
@@ -683,11 +583,8 @@
             chances.innerHTML = html;
 
             if (wrongCount >= 2) {
-                // 게임오버 — 사이렌 + 수갑 장면
                 gameOver = true;
-                handcuffs = true;
                 document.body.classList.add('siren');
-                
                 setTimeout(() => {
                     document.body.classList.remove('siren');
                     drawHandcuffScene();
