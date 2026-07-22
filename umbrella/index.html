@@ -359,15 +359,14 @@
     function drawHand() {
         ctx.save();
         const hx = mouseX;
-        const hy = H - 60;
-        const armTop = hy - 80;
+        const hy = mouseY + 60;
 
-        // 팔
+        // 팔 (화면 아래에서 손까지 연결)
         ctx.fillStyle = '#d4956a';
-        ctx.fillRect(hx - 14, hy - 20, 28, 80);
+        ctx.fillRect(hx - 14, hy, 28, H - hy + 20);
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
-        ctx.strokeRect(hx - 14, hy - 20, 28, 80);
+        ctx.strokeRect(hx - 14, hy, 28, H - hy + 20);
 
         // 팔찌 또는 수갑
         if (handcuffs) {
@@ -448,14 +447,12 @@
 
     // 히트 테스트
     function getHoveredUmbrella(mx, my) {
-        // 손 위치 기준으로 위쪽의 우산 영역 검사
-        const handTipY = H - 140;
         for (let i = umbrellas.length - 1; i >= 0; i--) {
             const u = umbrellas[i];
             if (u.removed) continue;
             const halfW = u.width / 2 + 4;
             if (mx > u.x - halfW && mx < u.x + halfW &&
-                handTipY > u.topY - 10 && handTipY < u.baseY + 10) {
+                my > u.topY - 10 && my < u.baseY + 10) {
                 return i;
             }
         }
