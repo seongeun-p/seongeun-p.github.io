@@ -37,10 +37,10 @@
         .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; z-index: 500; opacity: 0;
+            justify-content: center; z-index: 900; opacity: 0;
             pointer-events: none; transition: opacity 0.3s;
         }
-        .overlay-screen.show { opacity: 1; pointer-events: auto; }
+        .overlay-screen.show { opacity: 1; pointer-events: auto; cursor: default; }
         .overlay-screen h1 {
             font-family: 'Courier New', monospace; font-size: 48px;
             text-transform: uppercase; letter-spacing: 4px;
@@ -58,17 +58,24 @@
         .overlay-screen button:hover { background: #fff; color: #000; }
         #success-screen { background: rgba(0,0,0,0.85); }
         #success-screen h1 { color: #2ecc71; }
-        #fail-screen { background: rgba(0,0,0,0.85); }
+        #fail-screen { background: rgba(30,0,0,0.95); }
         #fail-screen h1 { color: #e74c3c; }
         .siren { animation: sirenFlash 0.15s infinite alternate; }
         @keyframes sirenFlash {
             0% { box-shadow: inset 0 0 200px rgba(255,0,0,0.4); }
             100% { box-shadow: inset 0 0 200px rgba(0,0,255,0.4); }
         }
+        /* 수갑 장면 캔버스 */
+        #handcuff-scene {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 400; display: none; background: #1a0000;
+        }
+        #handcuff-scene.show { display: block; }
     </style>
 </head>
 <body>
     <canvas id="game"></canvas>
+    <canvas id="handcuff-scene"></canvas>
     <div class="bracelet-info">
         <span>MY BRACELET:</span>
         <div class="bracelet-swatch" id="swatch"></div>
@@ -512,6 +519,139 @@
         // 마지막 프레임 유지
     }
 
+    // 수갑 장면 그리기 (양손 확대)
+    function drawHandcuffScene() {
+        const hc = document.getElementById('handcuff-scene');
+        hc.classList.add('show');
+        hc.width = W;
+        hc.height = H;
+        const hctx = hc.getContext('2d');
+
+        let flash = 0;
+        let frameCount = 0;
+
+        function animateScene() {
+            frameCount++;
+            hctx.clearRect(0, 0, W, H);
+
+            // 배경 — 빨간색 깜빡임
+            flash = (flash + 1) % 20;
+            if (flash < 10) {
+                hctx.fillStyle = '#2a0000';
+            } else {
+                hctx.fillStyle = '#1a0000';
+            }
+            hctx.fillRect(0, 0, W, H);
+
+            // 빨간 비네팅
+            const vg = hctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, W*0.7);
+            vg.addColorStop(0, 'rgba(80,0,0,0)');
+            vg.addColorStop(1, 'rgba(100,0,0,0.6)');
+            hctx.fillStyle = vg;
+            hctx.fillRect(0, 0, W, H);
+
+            const cx = W / 2;
+            const cy = H / 2 + 40;
+            const s = Math.min(W, H) * 0.004; // scale
+
+            // 왼손
+            drawPixelHand(hctx, cx - 70 * s, cy, s, false);
+            // 오른손
+            drawPixelHand(hctx, cx + 70 * s, cy, s, true);
+
+            // 수갑 연결 (가운데 체인 + 수갑)
+            // 왼쪽 수갑
+            hctx.fillStyle = '#777';
+            hctx.fillRect(cx - 70*s - 10*s, cy + 30*s, 30*s, 14*s);
+            hctx.strokeStyle = '#444';
+            hctx.lineWidth = 3;
+            hctx.strokeRect(cx - 70*s - 10*s, cy + 30*s, 30*s, 14*s);
+            // 왼쪽 열쇠구멍
+            hctx.fillStyle = '#333';
+            hctx.fillRect(cx - 70*s + 2*s, cy + 34*s, 4*s, 6*s);
+
+            // 오른쪽 수갑
+            hctx.fillStyle = '#777';
+            hctx.fillRect(cx + 70*s - 20*s, cy + 30*s, 30*s, 14*s);
+            hctx.strokeStyle = '#444';
+            hctx.lineWidth = 3;
+            hctx.strokeRect(cx + 70*s - 20*s, cy + 30*s, 30*s, 14*s);
+            // 오른쪽 열쇠구멍
+            hctx.fillStyle = '#333';
+            hctx.fillRect(cx + 70*s - 2*s, cy + 34*s, 4*s, 6*s);
+
+            // 체인 연결
+            hctx.strokeStyle = '#666';
+            hctx.lineWidth = 4 * s;
+            hctx.setLineDash([6*s, 4*s]);
+            hctx.beginPath();
+            hctx.moveTo(cx - 50*s, cy + 37*s);
+            hctx.quadraticCurveTo(cx, cy + 55*s, cx + 50*s, cy + 37*s);
+            hctx.stroke();
+            hctx.setLineDash([]);
+
+            // BUSTED 텍스트
+            if (frameCount > 30) {
+                hctx.save();
+                hctx.fillStyle = '#e74c3c';
+                hctx.font = `bold ${48 * s}px Courier New`;
+                hctx.textAlign = 'center';
+                hctx.shadowColor = '#ff0000';
+                hctx.shadowBlur = 20;
+                hctx.fillText('BUSTED', cx, cy - 80 * s);
+                hctx.restore();
+            }
+
+            if (frameCount < 120) {
+                requestAnimationFrame(animateScene);
+            } else {
+                document.getElementById('fail-screen').classList.add('show');
+            }
+        }
+
+        animateScene();
+    }
+
+    // 픽셀 손 그리기 (수갑 장면용)
+    function drawPixelHand(c, hx, hy, s, mirror) {
+        c.save();
+        if (mirror) {
+            c.translate(hx, hy);
+            c.scale(-1, 1);
+            c.translate(-hx, -hy);
+        }
+
+        // 팔
+        c.fillStyle = '#d4956a';
+        c.fillRect(hx - 12*s, hy, 24*s, 80*s);
+        c.strokeStyle = '#000';
+        c.lineWidth = 2;
+        c.strokeRect(hx - 12*s, hy, 24*s, 80*s);
+
+        // 손바닥
+        c.fillStyle = '#d4956a';
+        c.fillRect(hx - 16*s, hy - 30*s, 32*s, 35*s);
+        c.strokeStyle = '#000';
+        c.strokeRect(hx - 16*s, hy - 30*s, 32*s, 35*s);
+
+        // 손가락들 (주먹 쥔 모양)
+        const fingers = [
+            { x: hx - 12*s, w: 8*s, h: 14*s },
+            { x: hx - 4*s, w: 8*s, h: 16*s },
+            { x: hx + 4*s, w: 8*s, h: 15*s },
+            { x: hx + 12*s, w: 7*s, h: 12*s },
+        ];
+        fingers.forEach(f => {
+            c.fillStyle = '#d4956a';
+            c.fillRect(f.x, hy - 30*s - f.h, f.w, f.h);
+            c.strokeStyle = '#000';
+            c.lineWidth = 1.5;
+            c.strokeRect(f.x, hy - 30*s - f.h, f.w, f.h);
+        });
+
+        c.restore();
+    }
+
     // 입력
     canvas.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
@@ -543,23 +683,15 @@
             chances.innerHTML = html;
 
             if (wrongCount >= 2) {
-                // 게임오버 — 사이렌 + 수갑
+                // 게임오버 — 사이렌 + 수갑 장면
                 gameOver = true;
                 handcuffs = true;
                 document.body.classList.add('siren');
-                // 마지막 프레임 그리기
-                setTimeout(() => {
-                    ctx.clearRect(0, 0, W, H);
-                    ctx.fillStyle = '#000';
-                    ctx.fillRect(0, 0, W, H);
-                    drawRain(); drawStand();
-                    umbrellas.forEach((u, i) => drawUmbrella(u, i));
-                    drawHand();
-                }, 50);
+                
                 setTimeout(() => {
                     document.body.classList.remove('siren');
-                    document.getElementById('fail-screen').classList.add('show');
-                }, 2000);
+                    drawHandcuffScene();
+                }, 1500);
             }
         }
     });
