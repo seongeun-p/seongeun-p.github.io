@@ -5,525 +5,571 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 우산을 찾아라</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            cursor: none;
-            user-select: none;
+            width: 100vw; height: 100vh; overflow: hidden;
+            background: #000; cursor: none; user-select: none;
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
         }
-
-        /* 우산꽂이 */
-        .umbrella-stand {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 500px;
-            height: 500px;
+        canvas { display: block; width: 100vw; height: 100vh; }
+        /* UI 오버레이 */
+        .ui-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
         }
-
-        /* 우산꽂이 통 */
-        .stand-body {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 180px;
-            background: linear-gradient(180deg, #4a3728 0%, #2d1f14 100%);
-            border-radius: 10px 10px 20px 20px;
-            border: 3px solid #5c4033;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .bracelet-info {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            background: #000; border: 3px solid #fff; padding: 8px 20px;
+            color: #fff; font-size: 14px; display: flex; align-items: center; gap: 12px;
+            font-family: 'Courier New', monospace; z-index: 200;
         }
-
-        .stand-body::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: -10px;
-            right: -10px;
-            height: 16px;
-            background: #5c4033;
-            border-radius: 8px;
+        .bracelet-swatch {
+            width: 24px; height: 24px; border: 2px solid #fff;
         }
-
-        /* 우산 */
-        .umbrella {
-            position: absolute;
-            cursor: none;
-            transition: transform 0.2s ease;
+        .chances-ui {
+            position: fixed; top: 16px; right: 20px;
+            color: #fff; font-size: 14px; z-index: 200;
+            font-family: 'Courier New', monospace;
         }
-
-        .umbrella:hover {
-            transform: translateY(-10px);
+        .chance-x { color: #e74c3c; font-size: 18px; margin-left: 4px; }
+        .chance-o { color: #2ecc71; font-size: 18px; margin-left: 4px; }
+        .overlay-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 500; opacity: 0;
+            pointer-events: none; transition: opacity 0.3s;
         }
-
-        .umbrella.wrong {
-            animation: shake 0.4s ease;
+        .overlay-screen.show { opacity: 1; pointer-events: auto; }
+        .overlay-screen h1 {
+            font-family: 'Courier New', monospace; font-size: 48px;
+            text-transform: uppercase; letter-spacing: 4px;
         }
-
-        .umbrella.correct {
-            animation: pullOut 0.8s ease forwards;
+        .overlay-screen p {
+            font-family: 'Courier New', monospace; font-size: 16px;
+            margin: 12px 0 24px; color: #aaa;
         }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px) rotate(-2deg); }
-            75% { transform: translateX(8px) rotate(2deg); }
+        .overlay-screen button {
+            font-family: 'Courier New', monospace; font-size: 16px;
+            padding: 10px 28px; background: #000; color: #fff;
+            border: 3px solid #fff; cursor: pointer;
+            pointer-events: auto;
         }
-
-        @keyframes pullOut {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-200px) scale(1.2); opacity: 0; }
-        }
-
-        /* 커스텀 커서 — 손 */
-        .hand-cursor {
-            position: fixed;
-            pointer-events: none;
-            z-index: 1000;
-            transform: translate(-20px, -10px);
-        }
-
-        /* 팔찌 */
-        .bracelet-display {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 999;
-        }
-
-        .bracelet-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.5);
-        }
-
-        /* 경고 표시 */
-        .warning {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 80px;
-            z-index: 2000;
-            pointer-events: none;
-            animation: warningPop 0.8s ease forwards;
-        }
-
-        @keyframes warningPop {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-        }
-
-        /* 남은 기회 */
-        .chances {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            z-index: 999;
-        }
-
-        .chance-dot {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #e74c3c;
-            margin-left: 6px;
-            transition: opacity 0.3s;
-        }
-
-        .chance-dot.used {
-            opacity: 0.2;
-        }
-
-        /* 사이렌 효과 */
-        .siren {
-            animation: sirenFlash 0.2s infinite alternate;
-        }
-
+        .overlay-screen button:hover { background: #fff; color: #000; }
+        #success-screen { background: rgba(0,0,0,0.85); }
+        #success-screen h1 { color: #2ecc71; }
+        #fail-screen { background: rgba(0,0,0,0.85); }
+        #fail-screen h1 { color: #e74c3c; }
+        .siren { animation: sirenFlash 0.15s infinite alternate; }
         @keyframes sirenFlash {
-            0% { background: rgba(255, 0, 0, 0.3); }
-            100% { background: rgba(0, 0, 255, 0.3); }
-        }
-
-        /* 성공 화면 */
-        .success-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-
-        .success-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .success-overlay h1 {
-            color: #2ecc71;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        .success-overlay button {
-            padding: 12px 32px;
-            font-size: 16px;
-            background: #2ecc71;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        /* 실패 화면 */
-        .fail-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-
-        .fail-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .fail-overlay h1 {
-            color: #e74c3c;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        .fail-overlay p {
-            color: #aaa;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        .fail-overlay button {
-            padding: 12px 32px;
-            font-size: 16px;
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        /* 안내 */
-        .instruction {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.6);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 13px;
-            z-index: 999;
-            pointer-events: none;
+            0% { box-shadow: inset 0 0 200px rgba(255,0,0,0.4); }
+            100% { box-shadow: inset 0 0 200px rgba(0,0,255,0.4); }
         }
     </style>
 </head>
 <body>
-    <div class="bracelet-display">
-        <span>내 팔찌:</span>
-        <div class="bracelet-color" id="bracelet-color"></div>
-        <span id="bracelet-label">이 색 우산을 찾으세요</span>
+    <canvas id="game"></canvas>
+    <div class="bracelet-info">
+        <span>MY BRACELET:</span>
+        <div class="bracelet-swatch" id="swatch"></div>
     </div>
-
-    <div class="chances">
-        기회: <span class="chance-dot" id="c1"></span><span class="chance-dot" id="c2"></span><span class="chance-dot" id="c3"></span>
+    <div class="chances-ui" id="chances">
+        LIFE: <span class="chance-o">&#9679;</span><span class="chance-o">&#9679;</span>
     </div>
-
-    <div class="umbrella-stand" id="stand"></div>
-
-    <!-- 우산꽂이 통 -->
-    <div class="stand-body" style="position:fixed; bottom:40px; left:50%; transform:translateX(-50%);"></div>
-
-    <div class="hand-cursor" id="hand-cursor"></div>
-
-    <div class="instruction">팔찌와 같은 색의 우산을 클릭하세요</div>
-
-    <div class="success-overlay" id="success">
-        <h1>성공!</h1>
-        <p style="color:#aaa; font-size:18px; margin-bottom:20px;">내 우산을 찾았어요</p>
-        <button onclick="location.reload()">다시 하기</button>
+    <div class="overlay-screen" id="success-screen">
+        <h1>CLEAR!</h1>
+        <p>You found your umbrella.</p>
+        <button onclick="location.reload()">RETRY</button>
     </div>
-
-    <div class="fail-overlay" id="fail">
-        <h1>체포!</h1>
-        <p>남의 우산을 3번이나 잡으시다니...</p>
-        <button onclick="location.reload()">다시 하기</button>
+    <div class="overlay-screen" id="fail-screen">
+        <h1>BUSTED!</h1>
+        <p>That's not yours...</p>
+        <button onclick="location.reload()">RETRY</button>
     </div>
 
     <script>
-        // 우산 색상 팔레트 (다양한 색상 + 패턴)
-        const COLORS = [
-            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-            '#1abc9c', '#e67e22', '#ec407a', '#26c6da', '#ab47bc',
-            '#ff7043', '#66bb6a', '#42a5f5', '#ffa726', '#ef5350',
-            '#7e57c2', '#26a69a', '#d4e157', '#ff8a65', '#78909c',
-            '#f06292', '#4db6ac', '#ffb74d', '#ba68c8', '#4dd0e1',
-            '#aed581', '#ff8a80', '#80cbc4', '#ce93d8', '#fff176'
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W, H, scale;
+    function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+        scale = Math.min(W / 1200, H / 800);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 색상 팔레트 (90년대 레트로)
+    const PALETTES = [
+        { base: '#e74c3c', accent: '#fff', pattern: 'solid' },
+        { base: '#2980b9', accent: '#f1c40f', pattern: 'hstripe' },
+        { base: '#27ae60', accent: '#e74c3c', pattern: 'diamond' },
+        { base: '#f39c12', accent: '#2c3e50', pattern: 'vstripe' },
+        { base: '#8e44ad', accent: '#1abc9c', pattern: 'dots' },
+        { base: '#c0392b', accent: '#ecf0f1', pattern: 'hstripe' },
+        { base: '#16a085', accent: '#f39c12', pattern: 'checker' },
+        { base: '#d35400', accent: '#2ecc71', pattern: 'vstripe' },
+        { base: '#2c3e50', accent: '#e74c3c', pattern: 'diamond' },
+        { base: '#f1c40f', accent: '#e74c3c', pattern: 'solid' },
+        { base: '#1abc9c', accent: '#9b59b6', pattern: 'hstripe' },
+        { base: '#e67e22', accent: '#3498db', pattern: 'dots' },
+        { base: '#9b59b6', accent: '#f1c40f', pattern: 'checker' },
+        { base: '#34495e', accent: '#e74c3c', pattern: 'vstripe' },
+        { base: '#e74c3c', accent: '#f1c40f', pattern: 'hstripe' },
+        { base: '#3498db', accent: '#e74c3c', pattern: 'diamond' },
+        { base: '#2ecc71', accent: '#f39c12', pattern: 'vstripe' },
+        { base: '#e91e63', accent: '#00bcd4', pattern: 'dots' },
+        { base: '#ff5722', accent: '#4caf50', pattern: 'checker' },
+        { base: '#673ab7', accent: '#ff9800', pattern: 'hstripe' },
+        { base: '#009688', accent: '#ff5722', pattern: 'solid' },
+        { base: '#795548', accent: '#ffc107', pattern: 'vstripe' },
+        { base: '#607d8b', accent: '#ff4081', pattern: 'diamond' },
+        { base: '#4caf50', accent: '#ff5722', pattern: 'hstripe' },
+        { base: '#ff9800', accent: '#3f51b5', pattern: 'dots' },
+        { base: '#00bcd4', accent: '#e91e63', pattern: 'checker' },
+        { base: '#cddc39', accent: '#9c27b0', pattern: 'vstripe' },
+        { base: '#ff4081', accent: '#00e676', pattern: 'solid' },
+        { base: '#3f51b5', accent: '#ff9800', pattern: 'hstripe' },
+        { base: '#8bc34a', accent: '#e91e63', pattern: 'diamond' }
+    ];
+
+    // 우산 모양 타입
+    const SHAPES = ['classic', 'pointy', 'flat', 'bubble', 'pagoda'];
+
+    // 우산 데이터
+    let umbrellas = [];
+    let targetIdx = 0;
+    let mouseX = W / 2, mouseY = H - 100;
+    let hoveredIdx = -1;
+    let wrongCount = 0;
+    let gameOver = false;
+    let handcuffs = false;
+
+    // 우산꽂이 영역
+    const STAND_TOP = 0.35;
+    const STAND_BOTTOM = 0.78;
+
+    function initGame() {
+        umbrellas = [];
+        const count = 30;
+        const standLeft = W * 0.08;
+        const standRight = W * 0.92;
+        const standW = standRight - standLeft;
+
+        // 셔플된 팔레트
+        const shuffled = [...PALETTES].sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < count; i++) {
+            const palette = shuffled[i % shuffled.length];
+            const shape = SHAPES[i % SHAPES.length];
+            const col = i;
+            const x = standLeft + (col + 0.5) * (standW / count);
+            const baseY = H * STAND_BOTTOM;
+            const topY = H * STAND_TOP + Math.random() * H * 0.05;
+            const umbH = baseY - topY;
+            umbrellas.push({
+                x, topY, baseY, umbH, palette, shape,
+                width: standW / count * 0.85,
+                hovered: false, scale: 1, removed: false
+            });
+        }
+
+        // 타겟 랜덤 선택
+        targetIdx = Math.floor(Math.random() * count);
+        
+        // 팔찌 색상 표시
+        const swatch = document.getElementById('swatch');
+        const tp = umbrellas[targetIdx].palette;
+        if (tp.pattern === 'solid') {
+            swatch.style.background = tp.base;
+        } else if (tp.pattern === 'hstripe') {
+            swatch.style.background = `repeating-linear-gradient(0deg, ${tp.base} 0px, ${tp.base} 4px, ${tp.accent} 4px, ${tp.accent} 8px)`;
+        } else if (tp.pattern === 'vstripe') {
+            swatch.style.background = `repeating-linear-gradient(90deg, ${tp.base} 0px, ${tp.base} 4px, ${tp.accent} 4px, ${tp.accent} 8px)`;
+        } else if (tp.pattern === 'diamond' || tp.pattern === 'checker') {
+            swatch.style.background = `repeating-conic-gradient(${tp.base} 0% 25%, ${tp.accent} 0% 50%) 50% / 8px 8px`;
+        } else {
+            swatch.style.background = tp.base;
+        }
+    }
+
+    // 픽셀 패턴 채우기
+    function fillPattern(x, y, w, h, palette) {
+        const { base, accent, pattern } = palette;
+        ctx.fillStyle = base;
+        ctx.fillRect(x, y, w, h);
+
+        ctx.fillStyle = accent;
+        const ps = 4; // pixel size
+        if (pattern === 'hstripe') {
+            for (let row = 0; row < h; row += ps * 2) {
+                ctx.fillRect(x, y + row, w, ps);
+            }
+        } else if (pattern === 'vstripe') {
+            for (let col = 0; col < w; col += ps * 2) {
+                ctx.fillRect(x + col, y, ps, h);
+            }
+        } else if (pattern === 'diamond') {
+            for (let row = 0; row < h; row += ps * 4) {
+                for (let col = 0; col < w; col += ps * 4) {
+                    ctx.fillRect(x + col + ps, y + row, ps, ps);
+                    ctx.fillRect(x + col, y + row + ps, ps, ps);
+                    ctx.fillRect(x + col + ps * 2, y + row + ps, ps, ps);
+                    ctx.fillRect(x + col + ps, y + row + ps * 2, ps, ps);
+                }
+            }
+        } else if (pattern === 'dots') {
+            for (let row = 0; row < h; row += ps * 3) {
+                for (let col = 0; col < w; col += ps * 3) {
+                    ctx.fillRect(x + col + ps, y + row + ps, ps, ps);
+                }
+            }
+        } else if (pattern === 'checker') {
+            for (let row = 0; row < h; row += ps * 2) {
+                for (let col = 0; col < w; col += ps * 2) {
+                    if ((Math.floor(row / (ps*2)) + Math.floor(col / (ps*2))) % 2 === 0) {
+                        ctx.fillRect(x + col, y + row, ps * 2, ps * 2);
+                    }
+                }
+            }
+        }
+    }
+
+    // 우산 그리기
+    function drawUmbrella(u, idx) {
+        if (u.removed) return;
+        ctx.save();
+
+        const s = u.hovered ? 1.12 : 1;
+        const cx = u.x;
+        const cy = u.topY + u.umbH / 2;
+        ctx.translate(cx, cy);
+        ctx.scale(s, s);
+        ctx.translate(-cx, -cy);
+
+        const uw = u.width;
+        const canopyH = u.umbH * 0.3;
+        const stickTop = u.topY + canopyH;
+        const canopyTop = u.topY;
+
+        // 우산 캐노피 (모양에 따라)
+        ctx.save();
+        ctx.beginPath();
+        if (u.shape === 'classic') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.quadraticCurveTo(cx, canopyTop - canopyH * 0.3, cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        } else if (u.shape === 'pointy') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.lineTo(cx, canopyTop - canopyH * 0.2);
+            ctx.lineTo(cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        } else if (u.shape === 'flat') {
+            ctx.rect(cx - uw/2, canopyTop, uw, canopyH);
+        } else if (u.shape === 'bubble') {
+            ctx.ellipse(cx, canopyTop + canopyH * 0.6, uw/2, canopyH * 0.7, 0, 0, Math.PI * 2);
+        } else if (u.shape === 'pagoda') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.quadraticCurveTo(cx - uw/4, canopyTop - canopyH*0.1, cx, canopyTop + canopyH*0.3);
+            ctx.quadraticCurveTo(cx + uw/4, canopyTop - canopyH*0.1, cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        }
+        ctx.clip();
+        fillPattern(cx - uw/2, canopyTop - canopyH*0.3, uw, canopyH * 1.5, u.palette);
+        ctx.restore();
+
+        // 캐노피 외곽선
+        ctx.beginPath();
+        if (u.shape === 'classic') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.quadraticCurveTo(cx, canopyTop - canopyH * 0.3, cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        } else if (u.shape === 'pointy') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.lineTo(cx, canopyTop - canopyH * 0.2);
+            ctx.lineTo(cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        } else if (u.shape === 'flat') {
+            ctx.rect(cx - uw/2, canopyTop, uw, canopyH);
+        } else if (u.shape === 'bubble') {
+            ctx.ellipse(cx, canopyTop + canopyH * 0.6, uw/2, canopyH * 0.7, 0, 0, Math.PI * 2);
+        } else if (u.shape === 'pagoda') {
+            ctx.moveTo(cx - uw/2, canopyTop + canopyH);
+            ctx.quadraticCurveTo(cx - uw/4, canopyTop - canopyH*0.1, cx, canopyTop + canopyH*0.3);
+            ctx.quadraticCurveTo(cx + uw/4, canopyTop - canopyH*0.1, cx + uw/2, canopyTop + canopyH);
+            ctx.closePath();
+        }
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 우산 봉 (스틱)
+        ctx.fillStyle = '#333';
+        ctx.fillRect(cx - 2, stickTop, 4, u.baseY - stickTop - 15);
+
+        // 손잡이 (J형)
+        ctx.beginPath();
+        ctx.arc(cx - 8, u.baseY - 15, 8, -Math.PI/2, Math.PI/2);
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 꼭대기 점
+        ctx.fillStyle = '#222';
+        ctx.fillRect(cx - 3, canopyTop - 6, 6, 6);
+
+        // 호버 글로우
+        if (u.hovered) {
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 15;
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cx - uw/2 - 4, canopyTop - 8, uw + 8, u.umbH + 8);
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.restore();
+    }
+
+    // 우산꽂이 통 그리기
+    function drawStand() {
+        const sLeft = W * 0.06;
+        const sRight = W * 0.94;
+        const sTop = H * STAND_BOTTOM - 10;
+        const sBottom = H * 0.92;
+
+        // 통 본체
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(sLeft, sTop, sRight - sLeft, sBottom - sTop);
+
+        // 테두리
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(sLeft, sTop, sRight - sLeft, sBottom - sTop);
+
+        // 상단 림
+        ctx.fillStyle = '#333';
+        ctx.fillRect(sLeft - 6, sTop - 8, sRight - sLeft + 12, 12);
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sLeft - 6, sTop - 8, sRight - sLeft + 12, 12);
+    }
+
+    // 손 그리기 (픽셀아트 스타일)
+    function drawHand() {
+        ctx.save();
+        const hx = mouseX;
+        const hy = H - 60;
+        const armTop = hy - 80;
+
+        // 팔
+        ctx.fillStyle = '#d4956a';
+        ctx.fillRect(hx - 14, hy - 20, 28, 80);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hx - 14, hy - 20, 28, 80);
+
+        // 팔찌 또는 수갑
+        if (handcuffs) {
+            // 수갑
+            ctx.fillStyle = '#666';
+            ctx.fillRect(hx - 18, hy + 20, 36, 16);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(hx - 18, hy + 20, 36, 16);
+            // 열쇠구멍
+            ctx.fillStyle = '#222';
+            ctx.fillRect(hx - 3, hy + 25, 6, 6);
+        } else {
+            // 팔찌
+            const tp = umbrellas[targetIdx].palette;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hx - 16, hy + 18, 32, 14);
+            ctx.clip();
+            fillPattern(hx - 16, hy + 18, 32, 14, tp);
+            ctx.restore();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(hx - 16, hy + 18, 32, 14);
+        }
+
+        // 손가락들 (위로 뻗음)
+        const fingers = [
+            { x: hx - 10, w: 8, h: 30 },
+            { x: hx - 3, w: 8, h: 36 },
+            { x: hx + 4, w: 8, h: 33 },
+            { x: hx + 11, w: 7, h: 26 },
         ];
-
-        const PATTERNS = ['solid', 'striped', 'dotted'];
-
-        let umbrellas = [];
-        let targetColor = '';
-        let targetPattern = '';
-        let wrongCount = 0;
-        let gameOver = false;
-
-        const stand = document.getElementById('stand');
-        const handCursor = document.getElementById('hand-cursor');
-        const braceletColor = document.getElementById('bracelet-color');
-        const braceletLabel = document.getElementById('bracelet-label');
-
-        // 우산 생성
-        function createUmbrellas() {
-            stand.innerHTML = '';
-            umbrellas = [];
-
-            // 타겟 우산 결정
-            const targetIdx = Math.floor(Math.random() * 30);
-            
-            for (let i = 0; i < 30; i++) {
-                const color = COLORS[i % COLORS.length];
-                const pattern = PATTERNS[i % PATTERNS.length];
-                
-                const umbrella = document.createElement('div');
-                umbrella.className = 'umbrella';
-                umbrella.dataset.color = color;
-                umbrella.dataset.pattern = pattern;
-                umbrella.dataset.index = i;
-
-                // 우산 위치 (반원형 배치)
-                const angle = (i / 30) * Math.PI * 0.8 + Math.PI * 0.1;
-                const radiusX = 200;
-                const radiusY = 60;
-                const centerX = 250;
-                const baseY = 280;
-                
-                const x = centerX + Math.cos(angle) * radiusX * (0.8 + Math.random() * 0.4) - 30;
-                const y = baseY - Math.sin(angle) * radiusY - Math.random() * 30;
-                
-                umbrella.style.left = x + 'px';
-                umbrella.style.top = y + 'px';
-
-                // 우산 SVG 생성
-                const height = 180 + Math.random() * 40;
-                const rotation = (Math.random() - 0.5) * 20;
-                umbrella.style.transform = `rotate(${rotation}deg)`;
-                
-                umbrella.innerHTML = createUmbrellaSVG(color, pattern, height);
-                
-                umbrella.addEventListener('click', () => handleClick(i, color, pattern, umbrella));
-                
-                stand.appendChild(umbrella);
-                umbrellas.push({ color, pattern, element: umbrella });
-
-                if (i === targetIdx) {
-                    targetColor = color;
-                    targetPattern = pattern;
-                }
-            }
-
-            // 팔찌 색상 설정
-            braceletColor.style.background = targetColor;
-            if (targetPattern === 'striped') {
-                braceletColor.style.background = `repeating-linear-gradient(45deg, ${targetColor}, ${targetColor} 4px, rgba(255,255,255,0.4) 4px, rgba(255,255,255,0.4) 8px)`;
-            } else if (targetPattern === 'dotted') {
-                braceletColor.style.background = targetColor;
-                braceletColor.style.boxShadow = `inset 0 0 0 3px ${targetColor}, inset 0 0 0 5px rgba(255,255,255,0.5)`;
-            }
-        }
-
-        // 우산 SVG
-        function createUmbrellaSVG(color, pattern, height) {
-            let patternDef = '';
-            let fillAttr = `fill="${color}"`;
-
-            if (pattern === 'striped') {
-                patternDef = `
-                    <defs>
-                        <pattern id="stripe-${color.replace('#','')}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-                            <rect width="4" height="8" fill="${color}"/>
-                            <rect x="4" width="4" height="8" fill="rgba(255,255,255,0.3)"/>
-                        </pattern>
-                    </defs>`;
-                fillAttr = `fill="url(#stripe-${color.replace('#','')})"`;
-            } else if (pattern === 'dotted') {
-                patternDef = `
-                    <defs>
-                        <pattern id="dots-${color.replace('#','')}" patternUnits="userSpaceOnUse" width="10" height="10">
-                            <rect width="10" height="10" fill="${color}"/>
-                            <circle cx="5" cy="5" r="2" fill="rgba(255,255,255,0.4)"/>
-                        </pattern>
-                    </defs>`;
-                fillAttr = `fill="url(#dots-${color.replace('#','')})"`;
-            }
-
-            return `
-                <svg width="60" height="${height}" viewBox="0 0 60 ${height}">
-                    ${patternDef}
-                    <!-- 우산 캐노피 -->
-                    <path d="M 5 45 Q 30 -10 55 45 Z" ${fillAttr} stroke="${color}" stroke-width="1.5"/>
-                    <!-- 우산 봉 -->
-                    <line x1="30" y1="45" x2="30" y2="${height - 20}" stroke="#555" stroke-width="2.5"/>
-                    <!-- 손잡이 -->
-                    <path d="M 30 ${height - 20} Q 30 ${height} 22 ${height}" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
-                    <!-- 꼭대기 -->
-                    <circle cx="30" cy="6" r="3" fill="#333"/>
-                </svg>`;
-        }
-
-        // 손 커서 SVG (팔찌 포함)
-        function updateHandCursor() {
-            const braceletStyle = targetPattern === 'striped' 
-                ? `stroke="${targetColor}" stroke-width="6" stroke-dasharray="4 3"`
-                : targetPattern === 'dotted'
-                ? `stroke="${targetColor}" stroke-width="6" stroke-dasharray="2 3"`
-                : `stroke="${targetColor}" stroke-width="6"`;
-
-            handCursor.innerHTML = `
-                <svg width="80" height="100" viewBox="0 0 80 100">
-                    <!-- 팔 -->
-                    <rect x="25" y="55" width="30" height="45" rx="12" fill="#f4c898" stroke="#dba06d" stroke-width="1"/>
-                    <!-- 팔찌 -->
-                    <rect x="23" y="75" width="34" height="12" rx="6" fill="none" ${braceletStyle} id="bracelet-svg"/>
-                    <!-- 손바닥 -->
-                    <ellipse cx="40" cy="40" rx="18" ry="22" fill="#f4c898" stroke="#dba06d" stroke-width="1"/>
-                    <!-- 손가락들 -->
-                    <rect x="22" y="10" width="9" height="30" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8"/>
-                    <rect x="33" y="5" width="9" height="35" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8"/>
-                    <rect x="44" y="8" width="9" height="32" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8"/>
-                    <rect x="55" y="14" width="8" height="26" rx="4" fill="#f4c898" stroke="#dba06d" stroke-width="0.8"/>
-                    <!-- 엄지 -->
-                    <rect x="12" y="32" width="8" height="20" rx="4" fill="#f4c898" stroke="#dba06d" stroke-width="0.8" transform="rotate(-20 16 42)"/>
-                </svg>`;
-        }
-
-        // 수갑으로 변환
-        function showHandcuffs() {
-            handCursor.innerHTML = `
-                <svg width="80" height="100" viewBox="0 0 80 100">
-                    <!-- 팔 -->
-                    <rect x="25" y="55" width="30" height="45" rx="12" fill="#f4c898" stroke="#dba06d" stroke-width="1"/>
-                    <!-- 수갑 -->
-                    <rect x="20" y="72" width="40" height="16" rx="4" fill="#888" stroke="#555" stroke-width="2"/>
-                    <circle cx="26" cy="80" r="3" fill="#555"/>
-                    <rect x="38" y="76" width="8" height="4" rx="1" fill="#666"/>
-                    <!-- 손바닥 -->
-                    <ellipse cx="40" cy="40" rx="18" ry="22" fill="#f4c898" stroke="#dba06d" stroke-width="1"/>
-                    <!-- 손가락들 (주먹) -->
-                    <rect x="24" y="20" width="9" height="22" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8" transform="rotate(5 28 31)"/>
-                    <rect x="34" y="18" width="9" height="24" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8"/>
-                    <rect x="44" y="20" width="9" height="22" rx="4.5" fill="#f4c898" stroke="#dba06d" stroke-width="0.8" transform="rotate(-5 48 31)"/>
-                    <rect x="53" y="24" width="8" height="18" rx="4" fill="#f4c898" stroke="#dba06d" stroke-width="0.8" transform="rotate(-10 57 33)"/>
-                </svg>`;
-        }
-
-        // 클릭 핸들러
-        function handleClick(index, color, pattern, element) {
-            if (gameOver) return;
-
-            if (color === targetColor && pattern === targetPattern) {
-                // 성공!
-                element.classList.add('correct');
-                setTimeout(() => {
-                    document.getElementById('success').classList.add('show');
-                }, 800);
-                gameOver = true;
-            } else {
-                // 실패
-                wrongCount++;
-                element.classList.add('wrong');
-                setTimeout(() => element.classList.remove('wrong'), 400);
-
-                // 경고 표시
-                const warning = document.createElement('div');
-                warning.className = 'warning';
-                warning.textContent = '⚠️';
-                document.body.appendChild(warning);
-                setTimeout(() => warning.remove(), 800);
-
-                // 기회 차감
-                document.getElementById(`c${wrongCount}`).classList.add('used');
-
-                if (wrongCount >= 3) {
-                    // 게임 오버 — 사이렌 + 수갑
-                    gameOver = true;
-                    document.body.classList.add('siren');
-                    showHandcuffs();
-                    
-                    setTimeout(() => {
-                        document.body.classList.remove('siren');
-                        document.getElementById('fail').classList.add('show');
-                    }, 2000);
-                }
-            }
-        }
-
-        // 마우스 추적
-        document.addEventListener('mousemove', (e) => {
-            handCursor.style.left = (e.clientX - 30) + 'px';
-            handCursor.style.top = (e.clientY - 20) + 'px';
+        fingers.forEach(f => {
+            ctx.fillStyle = '#d4956a';
+            ctx.fillRect(f.x, hy - 20 - f.h, f.w, f.h);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(f.x, hy - 20 - f.h, f.w, f.h);
         });
 
-        // 초기화
-        createUmbrellas();
-        updateHandCursor();
+        // 엄지
+        ctx.fillStyle = '#d4956a';
+        ctx.fillRect(hx - 18, hy - 30, 7, 18);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(hx - 18, hy - 30, 7, 18);
+
+        ctx.restore();
+    }
+
+    // 비 효과 (레트로)
+    let raindrops = [];
+    function initRain() {
+        for (let i = 0; i < 80; i++) {
+            raindrops.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                speed: 4 + Math.random() * 6,
+                len: 8 + Math.random() * 12
+            });
+        }
+    }
+    initRain();
+
+    function drawRain() {
+        ctx.strokeStyle = 'rgba(150,180,200,0.3)';
+        ctx.lineWidth = 1;
+        raindrops.forEach(r => {
+            ctx.beginPath();
+            ctx.moveTo(r.x, r.y);
+            ctx.lineTo(r.x - 2, r.y + r.len);
+            ctx.stroke();
+            r.y += r.speed;
+            if (r.y > H) { r.y = -r.len; r.x = Math.random() * W; }
+        });
+    }
+
+    // 히트 테스트
+    function getHoveredUmbrella(mx, my) {
+        // 손 위치 기준으로 위쪽의 우산 영역 검사
+        const handTipY = H - 140;
+        for (let i = umbrellas.length - 1; i >= 0; i--) {
+            const u = umbrellas[i];
+            if (u.removed) continue;
+            const halfW = u.width / 2 + 4;
+            if (mx > u.x - halfW && mx < u.x + halfW &&
+                handTipY > u.topY - 10 && handTipY < u.baseY + 10) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // 경고 애니메이션
+    let warningAlpha = 0;
+    let warningText = '';
+
+    function showWarning() {
+        warningAlpha = 1;
+        warningText = 'WRONG!';
+    }
+
+    // 메인 렌더
+    function render() {
+        ctx.clearRect(0, 0, W, H);
+
+        // 배경
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, W, H);
+
+        // 비
+        drawRain();
+
+        // 우산꽂이 통
+        drawStand();
+
+        // 우산들
+        hoveredIdx = getHoveredUmbrella(mouseX, mouseY);
+        umbrellas.forEach((u, i) => {
+            u.hovered = (i === hoveredIdx);
+            drawUmbrella(u, i);
+        });
+
+        // 손
+        drawHand();
+
+        // 경고 텍스트
+        if (warningAlpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = warningAlpha;
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = 'bold 64px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(warningText, W / 2, H / 2);
+            ctx.restore();
+            warningAlpha -= 0.02;
+        }
+
+        if (!gameOver) requestAnimationFrame(render);
+        else render_static();
+    }
+
+    function render_static() {
+        // 마지막 프레임 유지
+    }
+
+    // 입력
+    canvas.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    canvas.addEventListener('click', () => {
+        if (gameOver) return;
+        if (hoveredIdx === -1) return;
+
+        if (hoveredIdx === targetIdx) {
+            // 성공
+            umbrellas[hoveredIdx].removed = true;
+            gameOver = true;
+            setTimeout(() => {
+                document.getElementById('success-screen').classList.add('show');
+            }, 300);
+        } else {
+            // 실패
+            wrongCount++;
+            showWarning();
+            // 기회 표시 업데이트
+            const chances = document.getElementById('chances');
+            let html = 'LIFE: ';
+            for (let i = 0; i < 2; i++) {
+                if (i < 2 - wrongCount) html += '<span class="chance-o">&#9679;</span>';
+                else html += '<span class="chance-x">&#10005;</span>';
+            }
+            chances.innerHTML = html;
+
+            if (wrongCount >= 2) {
+                // 게임오버 — 사이렌 + 수갑
+                gameOver = true;
+                handcuffs = true;
+                document.body.classList.add('siren');
+                // 마지막 프레임 그리기
+                setTimeout(() => {
+                    ctx.clearRect(0, 0, W, H);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, W, H);
+                    drawRain(); drawStand();
+                    umbrellas.forEach((u, i) => drawUmbrella(u, i));
+                    drawHand();
+                }, 50);
+                setTimeout(() => {
+                    document.body.classList.remove('siren');
+                    document.getElementById('fail-screen').classList.add('show');
+                }, 2000);
+            }
+        }
+    });
+
+    // 시작
+    initGame();
+    render();
     </script>
 </body>
 </html>
