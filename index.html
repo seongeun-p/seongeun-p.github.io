@@ -17,10 +17,10 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        /* 그리드 — 화면 가득, 한 줄에 5개 */
+        /* 그리드 — 화면 가득, 한 줄에 3개 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 4px;
             padding: 4px;
         }
@@ -90,14 +90,11 @@
         }
 
         /* 반응형 — 작은 화면에서 열 수 줄이기 */
-        @media (max-width: 1024px) {
-            .grid { grid-template-columns: repeat(4, 1fr); }
-        }
         @media (max-width: 768px) {
-            .grid { grid-template-columns: repeat(3, 1fr); }
+            .grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 480px) {
-            .grid { grid-template-columns: repeat(2, 1fr); }
+            .grid { grid-template-columns: repeat(1, 1fr); }
         }
     </style>
 </head>
