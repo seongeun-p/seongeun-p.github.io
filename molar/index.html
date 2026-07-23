@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>어금니가 영어로 뭐야?</title>
-    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0a0a0a;
+            background: #121230;
             width: 100vw; height: 100vh;
             overflow: hidden;
             cursor: none;
@@ -17,70 +16,36 @@
             justify-content: center;
         }
 
-        .text-container {
+        .poster-area {
             position: relative;
-            text-align: center;
+            width: 75vmin;
+            height: 75vmin;
         }
 
-        /* 기본 텍스트: 어금니가 영어로 뭐야? */
-        .base-text {
-            font-family: 'Pretendard', sans-serif;
-            font-weight: 800;
-            font-size: clamp(48px, 9vw, 140px);
-            line-height: 1.1;
-            color: #1a1a1a;
-            text-shadow:
-                0 1px 0 #2a2a2a,
-                0 2px 0 #252525,
-                0 3px 0 #222,
-                0 4px 0 #1f1f1f,
-                0 5px 0 #1c1c1c,
-                0 6px 3px rgba(0,0,0,0.4),
-                0 0 8px rgba(255,255,255,0.08),
-                -1px -1px 0 rgba(255,255,255,0.15),
-                1px 1px 0 rgba(0,0,0,0.5);
-            /* 엠보싱: 밝은 상단 + 어두운 하단 */
-            background: linear-gradient(180deg, #e8e8e8 0%, #b0b0b0 40%, #888 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
-        /* 몰라 텍스트 (클릭 시 나타남) */
-        .reveal-text {
+        /* 클릭 시 나타나는 몰라 레이어 */
+        .reveal-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Pretendard', sans-serif;
-            font-weight: 800;
-            font-size: clamp(80px, 16vw, 240px);
-            line-height: 1;
-            color: #1a1a1a;
-            background: linear-gradient(180deg, #ff4444 0%, #cc0000 40%, #880000 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 4px 8px rgba(200,0,0,0.4));
-            clip-path: circle(0% at var(--mx, 50%) var(--my, 50%));
-            transition: none;
             pointer-events: none;
         }
 
-        .reveal-text.active {
-            clip-path: circle(var(--radius, 0%) at var(--mx, 50%) var(--my, 50%));
+        .reveal-layer canvas {
+            width: 100%; height: 100%;
         }
 
-        /* 3D 어금니 커서 */
+        /* 어금니 커서 */
         .cursor-molar {
             position: fixed;
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
         }
-
         .cursor-molar img {
             width: 50px;
             height: auto;
@@ -89,80 +54,163 @@
     </style>
 </head>
 <body>
-    <div class="text-container" id="container">
-        <div class="base-text">어금니가<br>영어로 뭐야?</div>
-        <div class="reveal-text" id="reveal">몰라</div>
+    <div class="poster-area">
+        <canvas id="base"></canvas>
+        <div class="reveal-layer">
+            <canvas id="reveal"></canvas>
+        </div>
     </div>
-
-    <!-- 3D 어금니 커서 -->
     <div class="cursor-molar" id="cursor">
         <img src="tooth.png" alt="어금니">
     </div>
 
     <script>
-        const cursor = document.getElementById('cursor');
-        const reveal = document.getElementById('reveal');
-        const container = document.getElementById('container');
-        let isPressed = false;
-        let radius = 0;
-        let mx = 50, my = 50;
+    const baseCanvas = document.getElementById('base');
+    const revealCanvas = document.getElementById('reveal');
+    const baseCtx = baseCanvas.getContext('2d');
+    const revealCtx = revealCanvas.getContext('2d');
+    const cursorEl = document.getElementById('cursor');
 
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
+    let S; // canvas pixel size
 
-            // reveal 위치 업데이트
-            const rect = container.getBoundingClientRect();
-            mx = ((e.clientX - rect.left) / rect.width) * 100;
-            my = ((e.clientY - rect.top) / rect.height) * 100;
-            reveal.style.setProperty('--mx', mx + '%');
-            reveal.style.setProperty('--my', my + '%');
-        });
+    function resize() {
+        const area = document.querySelector('.poster-area');
+        const rect = area.getBoundingClientRect();
+        S = Math.floor(rect.width * (window.devicePixelRatio || 1));
+        baseCanvas.width = baseCanvas.height = S;
+        revealCanvas.width = revealCanvas.height = S;
+        drawBase();
+        drawReveal();
+    }
 
-        document.addEventListener('mousedown', () => {
-            isPressed = true;
-            reveal.classList.add('active');
-            growReveal();
-        });
+    // 버블 글자 그리기 함수
+    function drawBubbleText(ctx, text, x, y, size, color, darkColor) {
+        ctx.save();
+        ctx.font = `900 ${size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
 
-        document.addEventListener('mouseup', () => {
-            isPressed = false;
-            // 서서히 줄어들기
-            shrinkReveal();
-        });
+        // 뒤쪽 그림자 (더 두꺼운 stroke)
+        ctx.lineWidth = size * 0.18;
+        ctx.strokeStyle = darkColor;
+        ctx.strokeText(text, x, y);
 
-        function growReveal() {
-            if (!isPressed) return;
-            radius = Math.min(radius + 2, 80);
-            reveal.style.setProperty('--radius', radius + '%');
-            requestAnimationFrame(growReveal);
+        // 메인 채우기
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+
+        // 안쪽 하이라이트 선
+        ctx.lineWidth = size * 0.06;
+        ctx.strokeStyle = darkColor;
+        ctx.strokeText(text, x, y);
+
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+
+        ctx.restore();
+    }
+
+    // 기본 텍스트: "어금니가 영어로 뭐야"
+    function drawBase() {
+        const ctx = baseCtx;
+        ctx.clearRect(0, 0, S, S);
+
+        const mainColor = '#8b7fdb';
+        const darkColor = '#4a4090';
+        const fontSize = S * 0.22;
+
+        // 3줄로 꽉 채우기: "어금니가" / "영어로" / "뭐야?"
+        drawBubbleText(ctx, '어금니가', S * 0.5, S * 0.22, fontSize, mainColor, darkColor);
+        drawBubbleText(ctx, '영어로', S * 0.5, S * 0.5, fontSize, mainColor, darkColor);
+        drawBubbleText(ctx, '뭐야?', S * 0.5, S * 0.78, fontSize, mainColor, darkColor);
+    }
+
+    // 몰라 텍스트 (빨간색)
+    function drawReveal() {
+        const ctx = revealCtx;
+        ctx.clearRect(0, 0, S, S);
+
+        // 배경 (어두운 남색)
+        ctx.fillStyle = '#121230';
+        ctx.fillRect(0, 0, S, S);
+
+        const mainColor = '#ff5555';
+        const darkColor = '#8b1a1a';
+        const fontSize = S * 0.35;
+
+        drawBubbleText(ctx, '몰', S * 0.5, S * 0.38, fontSize, mainColor, darkColor);
+        drawBubbleText(ctx, '라', S * 0.5, S * 0.7, fontSize, mainColor, darkColor);
+    }
+
+    // 마스크 (클릭하면 원형으로 reveal 보이기)
+    let isPressed = false;
+    let maskRadius = 0;
+    let maskX = 0.5, maskY = 0.5;
+
+    function updateMask() {
+        const el = revealCanvas.parentElement;
+        el.style.clipPath = `circle(${maskRadius}% at ${maskX * 100}% ${maskY * 100}%)`;
+    }
+
+    function growMask() {
+        if (!isPressed) return;
+        maskRadius = Math.min(maskRadius + 1.5, 75);
+        updateMask();
+        requestAnimationFrame(growMask);
+    }
+
+    function shrinkMask() {
+        if (isPressed) return;
+        maskRadius = Math.max(maskRadius - 2.5, 0);
+        updateMask();
+        if (maskRadius > 0) requestAnimationFrame(shrinkMask);
+    }
+
+    // 이벤트
+    const area = document.querySelector('.poster-area');
+
+    document.addEventListener('mousemove', (e) => {
+        cursorEl.style.left = e.clientX + 'px';
+        cursorEl.style.top = e.clientY + 'px';
+
+        const rect = area.getBoundingClientRect();
+        maskX = (e.clientX - rect.left) / rect.width;
+        maskY = (e.clientY - rect.top) / rect.height;
+        if (isPressed) updateMask();
+    });
+
+    document.addEventListener('mousedown', () => {
+        isPressed = true;
+        updateMask();
+        growMask();
+    });
+
+    document.addEventListener('mouseup', () => {
+        isPressed = false;
+        shrinkMask();
+    });
+
+    // 커서 흔들림
+    let angle = 0, dir = 1;
+    function wobble() {
+        if (isPressed) {
+            angle += 0.12 * dir;
+            if (angle > 5) dir = -1;
+            if (angle < -5) dir = 1;
+        } else {
+            angle *= 0.9;
         }
+        cursorEl.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        requestAnimationFrame(wobble);
+    }
+    wobble();
 
-        function shrinkReveal() {
-            if (isPressed) return;
-            radius = Math.max(radius - 3, 0);
-            reveal.style.setProperty('--radius', radius + '%');
-            if (radius > 0) {
-                requestAnimationFrame(shrinkReveal);
-            } else {
-                reveal.classList.remove('active');
-            }
-        }
-
-        // 커서 약간의 떨림 (어금니 느낌)
-        let angle = 0, dir = 1;
-        function wobble() {
-            if (isPressed) {
-                angle += 0.15 * dir;
-                if (angle > 5) dir = -1;
-                if (angle < -5) dir = 1;
-            } else {
-                angle *= 0.9;
-            }
-            cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-            requestAnimationFrame(wobble);
-        }
-        wobble();
+    // 초기화
+    resize();
+    window.addEventListener('resize', resize);
+    updateMask();
     </script>
 </body>
 </html>
