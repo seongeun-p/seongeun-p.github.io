@@ -130,9 +130,9 @@
     function animate() {
         hueOffset += 0.4;
         if (isPressed) {
-            revealSize = Math.min(revealSize + 16, MAX_SIZE);
+            revealSize = Math.min(revealSize + 30, MAX_SIZE);
         } else {
-            revealSize = Math.max(revealSize - 24, 0);
+            revealSize = Math.max(revealSize - 40, 0);
         }
         drawBase();
         drawReveal();
