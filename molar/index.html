@@ -7,17 +7,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0a0a0a;
             width: 100vw; height: 100vh;
             overflow: hidden;
             cursor: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .poster-area {
-            position: relative;
-            width: 75vmin; height: 75vmin;
         }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .cursor-molar {
@@ -31,12 +23,10 @@
     </style>
 </head>
 <body>
-    <div class="poster-area">
-        <canvas id="base"></canvas>
-        <canvas id="reveal"></canvas>
-    </div>
+    <canvas id="base"></canvas>
+    <canvas id="reveal"></canvas>
     <div class="cursor-molar" id="cursor">
-        <img src="tooth.png" alt="어금니" id="toothImg">
+        <img src="tooth.png" alt="어금니">
     </div>
 
     <script>
@@ -45,21 +35,33 @@
     const baseCtx = baseCanvas.getContext('2d');
     const revealCtx = revealCanvas.getContext('2d');
     const cursorEl = document.getElementById('cursor');
-    const toothImg = document.getElementById('toothImg');
 
-    let S;
-    let mouseX = 0, mouseY = 0;
+    let W, H;
+    let mouseX = 0.5, mouseY = 0.5;
     let isPressed = false;
-    let toothSize = 0;
-    const MAX_TOOTH = 280;
+    let revealSize = 0;
+    const MAX_SIZE = 350;
+    let hueOffset = 0;
 
     function resize() {
-        const area = document.querySelector('.poster-area');
-        const rect = area.getBoundingClientRect();
-        S = Math.floor(rect.width * (window.devicePixelRatio || 1));
-        baseCanvas.width = baseCanvas.height = S;
-        revealCanvas.width = revealCanvas.height = S;
-        drawBase();
+        const dpr = window.devicePixelRatio || 1;
+        W = baseCanvas.width = revealCanvas.width = window.innerWidth * dpr;
+        H = baseCanvas.height = revealCanvas.height = window.innerHeight * dpr;
+        baseCanvas.style.width = revealCanvas.style.width = '100vw';
+        baseCanvas.style.height = revealCanvas.style.height = '100vh';
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function getGradient(ctx) {
+        const h1 = hueOffset % 360;
+        const h2 = (hueOffset + 80) % 360;
+        const h3 = (hueOffset + 160) % 360;
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, `hsl(${h1}, 90%, 55%)`);
+        grad.addColorStop(0.5, `hsl(${h2}, 85%, 50%)`);
+        grad.addColorStop(1, `hsl(${h3}, 90%, 55%)`);
+        return grad;
     }
 
     function drawText(ctx, text, x, y, size, fillColor, strokeColor) {
@@ -68,132 +70,86 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineJoin = 'round';
-        // 검정 테두리
-        ctx.lineWidth = size * 0.08;
-        ctx.strokeStyle = strokeColor || '#000000';
+        ctx.lineWidth = size * 0.04;
+        ctx.strokeStyle = strokeColor;
         ctx.strokeText(text, x, y);
-        // 흰색 채우기
         ctx.fillStyle = fillColor;
         ctx.fillText(text, x, y);
         ctx.restore();
     }
 
-    // 배경색 그라데이션 (시간에 따라 변함)
-    let hueOffset = 0;
-
-    function getGradientBg(ctx) {
-        const h1 = (hueOffset) % 360;
-        const h2 = (hueOffset + 60) % 360;
-        const h3 = (hueOffset + 120) % 360;
-        const grad = ctx.createLinearGradient(0, 0, S, S);
-        grad.addColorStop(0, `hsl(${h1}, 90%, 55%)`);
-        grad.addColorStop(0.5, `hsl(${h2}, 85%, 50%)`);
-        grad.addColorStop(1, `hsl(${h3}, 90%, 55%)`);
-        return grad;
-    }
-
-    function drawBase() {
-        baseCtx.clearRect(0, 0, S, S);
-        // 알록달록 배경
-        baseCtx.fillStyle = getGradientBg(baseCtx);
-        baseCtx.fillRect(0, 0, S, S);
-
-        const fontSize = S * 0.22;
-        drawText(baseCtx, '어금니가', S * 0.5, S * 0.22, fontSize, '#ffffff', '#000000');
-        drawText(baseCtx, '영어로', S * 0.5, S * 0.5, fontSize, '#ffffff', '#000000');
-        drawText(baseCtx, '뭐야?', S * 0.5, S * 0.78, fontSize, '#ffffff', '#000000');
-    }
-
-    // 어금니 모양 path 그리기 (마스크용)
-    function drawToothPath(ctx, cx, cy, size) {
-        const s = size / 200; // 기본 200px 기준 스케일
+    // 성게 모양 path (뾰족한 가시 + 동그라미)
+    function drawSeaUrchinPath(ctx, cx, cy, size) {
+        const spikes = 20;
+        const outerR = size;
+        const innerR = size * 0.65;
         ctx.beginPath();
-        // 어금니 실루엣
-        ctx.moveTo(cx - 60*s, cy + 80*s);
-        ctx.quadraticCurveTo(cx - 70*s, cy + 20*s, cx - 50*s, cy - 30*s);
-        ctx.quadraticCurveTo(cx - 40*s, cy - 70*s, cx - 20*s, cy - 85*s);
-        ctx.quadraticCurveTo(cx, cy - 60*s, cx, cy - 60*s);
-        ctx.quadraticCurveTo(cx, cy - 60*s, cx + 20*s, cy - 85*s);
-        ctx.quadraticCurveTo(cx + 40*s, cy - 70*s, cx + 50*s, cy - 30*s);
-        ctx.quadraticCurveTo(cx + 70*s, cy + 20*s, cx + 60*s, cy + 80*s);
-        // 하단 뿌리 (간략화)
-        ctx.quadraticCurveTo(cx + 40*s, cy + 100*s, cx + 25*s, cy + 110*s);
-        ctx.quadraticCurveTo(cx + 15*s, cy + 100*s, cx + 5*s, cy + 90*s);
-        ctx.quadraticCurveTo(cx, cy + 85*s, cx - 5*s, cy + 90*s);
-        ctx.quadraticCurveTo(cx - 15*s, cy + 100*s, cx - 25*s, cy + 110*s);
-        ctx.quadraticCurveTo(cx - 40*s, cy + 100*s, cx - 60*s, cy + 80*s);
+        for (let i = 0; i < spikes * 2; i++) {
+            const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+            const r = i % 2 === 0 ? outerR : innerR;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
         ctx.closePath();
     }
 
-    // reveal 캔버스 그리기
+    function drawBase() {
+        baseCtx.fillStyle = getGradient(baseCtx);
+        baseCtx.fillRect(0, 0, W, H);
+        const fontSize = Math.min(W * 0.09, H * 0.18);
+        drawText(baseCtx, '어금니가 영어로 뭐야?', W * 0.5, H * 0.5, fontSize, '#ffffff', '#000000');
+    }
+
     function drawReveal() {
         const ctx = revealCtx;
-        ctx.clearRect(0, 0, S, S);
+        ctx.clearRect(0, 0, W, H);
+        if (revealSize <= 0) return;
 
-        if (toothSize <= 0) return;
-
-        // 1) 어금니 모양 마스크 영역만 그리기
         ctx.save();
-        drawToothPath(ctx, mouseX * S, mouseY * S, toothSize * (S / 400));
+        drawSeaUrchinPath(ctx, mouseX * W, mouseY * H, revealSize);
         ctx.clip();
 
-        // 2) 배경
-        ctx.fillStyle = getGradientBg(ctx);
-        ctx.fillRect(0, 0, S, S);
+        // 배경 그라데이션
+        ctx.fillStyle = getGradient(ctx);
+        ctx.fillRect(0, 0, W, H);
 
-        // 3) 빨간 "몰라" 텍스트 (흰 테두리 + 빨간 채우기 대신, 빨간 채우기 + 검정 테두리)
-        const fontSize = S * 0.35;
-        drawText(ctx, '몰', S * 0.5, S * 0.38, fontSize, '#e63946', '#000000');
-        drawText(ctx, '라', S * 0.5, S * 0.7, fontSize, '#e63946', '#000000');
-
+        // 빨간 "몰라"
+        const fontSize = Math.min(W * 0.2, H * 0.3);
+        drawText(ctx, '몰라', W * 0.5, H * 0.5, fontSize, '#e63946', '#000000');
         ctx.restore();
     }
 
-    // 애니메이션 루프
     function animate() {
-        hueOffset += 0.5;
+        hueOffset += 0.4;
         if (isPressed) {
-            toothSize = Math.min(toothSize + 6, MAX_TOOTH);
+            revealSize = Math.min(revealSize + 8, MAX_SIZE);
         } else {
-            toothSize = Math.max(toothSize - 10, 0);
+            revealSize = Math.max(revealSize - 12, 0);
         }
         drawBase();
         drawReveal();
         requestAnimationFrame(animate);
     }
 
-    // 이벤트
-    const area = document.querySelector('.poster-area');
-
     document.addEventListener('mousemove', (e) => {
         cursorEl.style.left = e.clientX + 'px';
         cursorEl.style.top = e.clientY + 'px';
-
-        const rect = area.getBoundingClientRect();
-        mouseX = (e.clientX - rect.left) / rect.width;
-        mouseY = (e.clientY - rect.top) / rect.height;
+        mouseX = e.clientX / window.innerWidth;
+        mouseY = e.clientY / window.innerHeight;
     });
-
     document.addEventListener('mousedown', () => { isPressed = true; });
     document.addEventListener('mouseup', () => { isPressed = false; });
 
-    // 커서 흔들림
     let angle = 0, dir = 1;
     function wobble() {
-        if (isPressed) {
-            angle += 0.12 * dir;
-            if (angle > 5) dir = -1;
-            if (angle < -5) dir = 1;
-        } else {
-            angle *= 0.9;
-        }
+        if (isPressed) { angle += 0.12 * dir; if (angle > 5) dir = -1; if (angle < -5) dir = 1; }
+        else { angle *= 0.9; }
         cursorEl.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
         requestAnimationFrame(wobble);
     }
     wobble();
-
-    resize();
-    window.addEventListener('resize', resize);
     animate();
     </script>
 </body>
