@@ -15,40 +15,17 @@
             align-items: center;
             justify-content: center;
         }
-
         .poster-area {
             position: relative;
-            width: 75vmin;
-            height: 75vmin;
+            width: 75vmin; height: 75vmin;
         }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        /* 클릭 시 나타나는 몰라 레이어 */
-        .reveal-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-        }
-
-        .reveal-layer canvas {
-            width: 100%; height: 100%;
-        }
-
-        /* 어금니 커서 */
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .cursor-molar {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
+            position: fixed; pointer-events: none; z-index: 9999;
             transform: translate(-50%, -50%);
         }
         .cursor-molar img {
-            width: 50px;
-            height: auto;
+            width: 50px; height: auto;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
     </style>
@@ -56,23 +33,11 @@
 <body>
     <div class="poster-area">
         <canvas id="base"></canvas>
-        <div class="reveal-layer">
-            <canvas id="reveal"></canvas>
-        </div>
+        <canvas id="reveal"></canvas>
     </div>
     <div class="cursor-molar" id="cursor">
-        <img src="tooth.png" alt="어금니">
+        <img src="tooth.png" alt="어금니" id="toothImg">
     </div>
-
-    <!-- 어금니 실루엣 clip-path용 SVG -->
-    <svg width="0" height="0" style="position:absolute;">
-        <defs>
-            <clipPath id="tooth-clip" clipPathUnits="objectBoundingBox">
-                <!-- 어금니 실루엣 (0~1 범위) -->
-                <path d="M 0.3,0.05 C 0.2,0.02 0.15,0.08 0.15,0.15 C 0.12,0.05 0.05,0.08 0.08,0.18 C 0.02,0.12 0.0,0.2 0.05,0.28 C 0.0,0.35 0.05,0.45 0.12,0.48 C 0.08,0.55 0.1,0.65 0.18,0.68 L 0.2,0.85 C 0.2,0.92 0.25,0.98 0.3,0.98 C 0.33,0.98 0.35,0.95 0.35,0.9 L 0.38,0.78 C 0.4,0.76 0.42,0.75 0.45,0.75 L 0.55,0.75 C 0.58,0.75 0.6,0.76 0.62,0.78 L 0.65,0.9 C 0.65,0.95 0.67,0.98 0.7,0.98 C 0.75,0.98 0.8,0.92 0.8,0.85 L 0.82,0.68 C 0.9,0.65 0.92,0.55 0.88,0.48 C 0.95,0.45 1.0,0.35 0.95,0.28 C 1.0,0.2 0.98,0.12 0.92,0.18 C 0.95,0.08 0.88,0.05 0.85,0.15 C 0.85,0.08 0.8,0.02 0.7,0.05 C 0.65,0.0 0.55,0.0 0.5,0.03 C 0.45,0.0 0.35,0.0 0.3,0.05 Z"/>
-            </clipPath>
-        </defs>
-    </svg>
 
     <script>
     const baseCanvas = document.getElementById('base');
@@ -80,8 +45,13 @@
     const baseCtx = baseCanvas.getContext('2d');
     const revealCtx = revealCanvas.getContext('2d');
     const cursorEl = document.getElementById('cursor');
+    const toothImg = document.getElementById('toothImg');
 
-    let S; // canvas pixel size
+    let S;
+    let mouseX = 0, mouseY = 0;
+    let isPressed = false;
+    let toothSize = 0;
+    const MAX_TOOTH = 280;
 
     function resize() {
         const area = document.querySelector('.poster-area');
@@ -90,96 +60,84 @@
         baseCanvas.width = baseCanvas.height = S;
         revealCanvas.width = revealCanvas.height = S;
         drawBase();
-        drawReveal();
     }
 
-    // 버블 글자 그리기 함수
-    function drawBubbleText(ctx, text, x, y, size, color) {
+    function drawText(ctx, text, x, y, size, color) {
         ctx.save();
         ctx.font = `900 ${size}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineJoin = 'round';
-        ctx.miterLimit = 2;
-
-        // 두꺼운 stroke로 빵빵한 느낌 (같은 색)
         ctx.lineWidth = size * 0.12;
         ctx.strokeStyle = color;
         ctx.strokeText(text, x, y);
-
         ctx.fillStyle = color;
         ctx.fillText(text, x, y);
-
         ctx.restore();
     }
 
-    // 기본 텍스트: "어금니가 영어로 뭐야"
     function drawBase() {
-        const ctx = baseCtx;
-        ctx.clearRect(0, 0, S, S);
-
-        const color = '#ffffff';
+        baseCtx.clearRect(0, 0, S, S);
         const fontSize = S * 0.22;
-
-        drawBubbleText(ctx, '어금니가', S * 0.5, S * 0.22, fontSize, color);
-        drawBubbleText(ctx, '영어로', S * 0.5, S * 0.5, fontSize, color);
-        drawBubbleText(ctx, '뭐야?', S * 0.5, S * 0.78, fontSize, color);
+        drawText(baseCtx, '어금니가', S * 0.5, S * 0.22, fontSize, '#ffffff');
+        drawText(baseCtx, '영어로', S * 0.5, S * 0.5, fontSize, '#ffffff');
+        drawText(baseCtx, '뭐야?', S * 0.5, S * 0.78, fontSize, '#ffffff');
     }
 
-    // 몰라 텍스트 (빨간색)
+    // 어금니 모양 path 그리기 (마스크용)
+    function drawToothPath(ctx, cx, cy, size) {
+        const s = size / 200; // 기본 200px 기준 스케일
+        ctx.beginPath();
+        // 어금니 실루엣
+        ctx.moveTo(cx - 60*s, cy + 80*s);
+        ctx.quadraticCurveTo(cx - 70*s, cy + 20*s, cx - 50*s, cy - 30*s);
+        ctx.quadraticCurveTo(cx - 40*s, cy - 70*s, cx - 20*s, cy - 85*s);
+        ctx.quadraticCurveTo(cx, cy - 60*s, cx, cy - 60*s);
+        ctx.quadraticCurveTo(cx, cy - 60*s, cx + 20*s, cy - 85*s);
+        ctx.quadraticCurveTo(cx + 40*s, cy - 70*s, cx + 50*s, cy - 30*s);
+        ctx.quadraticCurveTo(cx + 70*s, cy + 20*s, cx + 60*s, cy + 80*s);
+        // 하단 뿌리 (간략화)
+        ctx.quadraticCurveTo(cx + 40*s, cy + 100*s, cx + 25*s, cy + 110*s);
+        ctx.quadraticCurveTo(cx + 15*s, cy + 100*s, cx + 5*s, cy + 90*s);
+        ctx.quadraticCurveTo(cx, cy + 85*s, cx - 5*s, cy + 90*s);
+        ctx.quadraticCurveTo(cx - 15*s, cy + 100*s, cx - 25*s, cy + 110*s);
+        ctx.quadraticCurveTo(cx - 40*s, cy + 100*s, cx - 60*s, cy + 80*s);
+        ctx.closePath();
+    }
+
+    // reveal 캔버스 그리기
     function drawReveal() {
         const ctx = revealCtx;
         ctx.clearRect(0, 0, S, S);
 
+        if (toothSize <= 0) return;
+
+        // 1) 어금니 모양 마스크 영역만 그리기
+        ctx.save();
+        drawToothPath(ctx, mouseX * S, mouseY * S, toothSize * (S / 400));
+        ctx.clip();
+
+        // 2) 배경
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, S, S);
 
-        const color = '#e63946';
+        // 3) 빨간 "몰라" 텍스트
         const fontSize = S * 0.35;
+        drawText(ctx, '몰', S * 0.5, S * 0.38, fontSize, '#e63946');
+        drawText(ctx, '라', S * 0.5, S * 0.7, fontSize, '#e63946');
 
-        drawBubbleText(ctx, '몰', S * 0.5, S * 0.38, fontSize, color);
-        drawBubbleText(ctx, '라', S * 0.5, S * 0.7, fontSize, color);
+        ctx.restore();
     }
 
-    // 마스크 (클릭하면 어금니 실루엣으로 reveal 보이기)
-    let isPressed = false;
-    let maskRadius = 0;
-    let maskX = 0.5, maskY = 0.5;
-
-    function updateMask() {
-        const el = revealCanvas.parentElement;
-        if (maskRadius <= 0) {
-            el.style.clipPath = 'circle(0% at 50% 50%)';
-            return;
+    // 애니메이션 루프
+    function animate() {
+        if (isPressed) {
+            toothSize = Math.min(toothSize + 6, MAX_TOOTH);
+        } else {
+            toothSize = Math.max(toothSize - 10, 0);
         }
-        // 어금니 크기 (maskRadius를 퍼센트로 사용)
-        const size = maskRadius * 1.2; // vmin 기준 크기
-        const left = maskX * 100 - size / 2;
-        const top = maskY * 100 - size / 2.2;
-
-        // inset으로 위치 잡고 SVG clip-path 사용
-        el.style.clipPath = `url(#tooth-clip)`;
-        el.style.clip = 'auto';
-        // transform으로 위치+크기 조절
-        const tx = (maskX - 0.5) * 100;
-        const ty = (maskY - 0.5) * 100;
-        const scale = maskRadius / 50;
-        el.style.transformOrigin = `${maskX * 100}% ${maskY * 100}%`;
-        el.style.transform = `scale(${Math.max(scale, 0.01)})`;
-    }
-
-    function growMask() {
-        if (!isPressed) return;
-        maskRadius = Math.min(maskRadius + 1.5, 75);
-        updateMask();
-        requestAnimationFrame(growMask);
-    }
-
-    function shrinkMask() {
-        if (isPressed) return;
-        maskRadius = Math.max(maskRadius - 2.5, 0);
-        updateMask();
-        if (maskRadius > 0) requestAnimationFrame(shrinkMask);
+        drawReveal();
+        requestAnimationFrame(animate);
     }
 
     // 이벤트
@@ -190,21 +148,12 @@
         cursorEl.style.top = e.clientY + 'px';
 
         const rect = area.getBoundingClientRect();
-        maskX = (e.clientX - rect.left) / rect.width;
-        maskY = (e.clientY - rect.top) / rect.height;
-        if (isPressed) updateMask();
+        mouseX = (e.clientX - rect.left) / rect.width;
+        mouseY = (e.clientY - rect.top) / rect.height;
     });
 
-    document.addEventListener('mousedown', () => {
-        isPressed = true;
-        updateMask();
-        growMask();
-    });
-
-    document.addEventListener('mouseup', () => {
-        isPressed = false;
-        shrinkMask();
-    });
+    document.addEventListener('mousedown', () => { isPressed = true; });
+    document.addEventListener('mouseup', () => { isPressed = false; });
 
     // 커서 흔들림
     let angle = 0, dir = 1;
@@ -221,10 +170,9 @@
     }
     wobble();
 
-    // 초기화
     resize();
     window.addEventListener('resize', resize);
-    updateMask();
+    animate();
     </script>
 </body>
 </html>
