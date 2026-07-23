@@ -4,274 +4,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>어금니가 영어로 뭐야?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #f8f6f1;
+            background: #f5f0ea;
             width: 100vw; height: 100vh;
             overflow: hidden;
+            cursor: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             position: relative;
         }
 
-        .canvas-wrap {
+        .poster {
             width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             position: relative;
         }
 
-        canvas {
+        /* 상단 텍스트 — 화면 꽉 차게 */
+        .top-text {
+            font-family: 'Black Han Sans', sans-serif;
+            color: #0a0a0a;
+            font-size: clamp(60px, 14vw, 200px);
+            line-height: 0.9;
+            text-align: center;
+            letter-spacing: -0.03em;
+            z-index: 2;
+        }
+
+        /* 가운데 터지는 효과 + 몰라 */
+        .center-zone {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: -20px 0;
+            z-index: 3;
+        }
+
+        /* 터지는 별 모양 */
+        .burst {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            width: clamp(200px, 40vw, 500px);
+            height: clamp(200px, 40vw, 500px);
+        }
+
+        .burst-back {
+            fill: #e63946;
+        }
+
+        .burst-front {
+            fill: #f4a5ab;
+        }
+
+        /* 몰라 텍스트 */
+        .mola-text {
+            font-family: 'Black Han Sans', sans-serif;
+            color: #0a0a0a;
+            font-size: clamp(80px, 18vw, 260px);
+            line-height: 0.85;
+            text-align: center;
+            position: relative;
+            z-index: 4;
+            letter-spacing: -0.02em;
+        }
+
+        /* 마우스 커서 어금니 */
+        .cursor-molar {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+
+        .cursor-molar svg {
+            width: 48px;
+            height: 60px;
+        }
+
+        /* 하단 크레딧 */
+        .credit {
+            position: absolute;
+            bottom: 24px;
+            right: 28px;
+            font-family: 'Black Han Sans', sans-serif;
+            font-size: clamp(12px, 1.8vw, 18px);
+            color: #0a0a0a;
+            letter-spacing: 0.02em;
         }
     </style>
 </head>
 <body>
-    <div class="canvas-wrap">
-        <canvas id="poster"></canvas>
+    <div class="poster">
+        <!-- 상단: 어금니가 영어로 뭐야 -->
+        <div class="top-text">어금니가<br>영어로 뭐야</div>
+
+        <!-- 가운데: 터지는 효과 + 몰라 -->
+        <div class="center-zone">
+            <svg class="burst" viewBox="0 0 200 200">
+                <!-- 뒤쪽 빨간 별 -->
+                <polygon class="burst-back" points="100,5 115,75 185,15 130,80 195,100 130,120 185,185 115,130 100,195 85,130 15,185 70,120 5,100 70,80 15,15 85,75"/>
+                <!-- 앞쪽 핑크 별 -->
+                <polygon class="burst-front" points="100,20 112,78 170,35 125,82 180,100 125,118 170,165 112,125 100,180 88,125 30,165 75,118 20,100 75,82 30,35 88,78"/>
+            </svg>
+            <div class="mola-text">몰라</div>
+        </div>
     </div>
+
+    <!-- 마우스 커서: 어금니 -->
+    <div class="cursor-molar" id="cursor">
+        <svg viewBox="0 0 50 65" xmlns="http://www.w3.org/2000/svg">
+            <!-- 어금니 몸통 -->
+            <path d="M 10 30 C 10 12, 20 4, 25 4 C 30 4, 40 12, 40 30 L 40 40 C 40 42, 38 44, 37 44 L 35 55 C 35 60, 32 63, 29 63 C 27 63, 26 61, 26 58 L 26 48 C 26 47, 25.5 46, 25 46 C 24.5 46, 24 47, 24 48 L 24 58 C 24 61, 23 63, 21 63 C 18 63, 15 60, 15 55 L 13 44 C 12 44, 10 42, 10 40 Z"
+                fill="#fff" stroke="#1a1a1a" stroke-width="2"/>
+            <!-- 상단 울퉁불퉁 -->
+            <ellipse cx="18" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
+            <ellipse cx="25" cy="6" rx="6" ry="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
+            <ellipse cx="32" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
+            <!-- 감은 눈 -->
+            <line x1="18" y1="24" x2="23" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+            <line x1="27" y1="24" x2="32" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+            <!-- 삐죽 입 -->
+            <path d="M 21 32 Q 25 30 29 32" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+    </div>
+
+    <div class="credit">molar = 어금니</div>
+
     <script>
-    const canvas = document.getElementById('poster');
-    const ctx = canvas.getContext('2d');
-    let W, H;
+        const cursor = document.getElementById('cursor');
+        let angle = 0;
+        let dir = 1;
 
-    function resize() {
-        W = canvas.width = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-        draw();
-    }
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
 
-    // 손글씨 느낌 텍스트 (기울기 + 떨림)
-    function handText(text, x, y, size, color, angle) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate((angle || (Math.random() - 0.5) * 0.08) * Math.PI / 180 * 15);
-        ctx.font = `italic ${size}px 'Georgia', serif`;
-        ctx.fillStyle = color;
-        ctx.fillText(text, 0, 0);
-        ctx.restore();
-    }
-
-    // 거친 매직 텍스트
-    function markerText(text, x, y, size, color, rot) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rot || 0);
-        ctx.font = `900 ${size}px 'Georgia', serif`;
-        ctx.fillStyle = color;
-        // 두 번 그려서 두꺼운 매직 느낌
-        ctx.fillText(text, 0, 0);
-        ctx.fillText(text, 1, 1);
-        ctx.restore();
-    }
-
-    // 빨간 블록 (형광펜 밑줄 느낌)
-    function redBlock(x, y, w, h) {
-        ctx.save();
-        ctx.fillStyle = 'rgba(210, 30, 30, 0.85)';
-        ctx.fillRect(x, y, w, h);
-        ctx.restore();
-    }
-
-    // 검정 취소선
-    function strikeThrough(x, y, w) {
-        ctx.save();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2 + Math.random() * 2;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + w, y + (Math.random() - 0.5) * 4);
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    // 빨간 파편 흩뿌리기
-    function scatterDebris() {
-        for (let i = 0; i < 40; i++) {
-            ctx.save();
-            const x = Math.random() * W;
-            const y = Math.random() * H;
-            ctx.translate(x, y);
-            ctx.rotate(Math.random() * Math.PI * 2);
-            ctx.fillStyle = Math.random() > 0.3 ? 'rgba(210,30,30,0.7)' : 'rgba(0,0,0,0.6)';
-            const s = 2 + Math.random() * 8;
-            if (Math.random() > 0.5) {
-                ctx.fillRect(0, 0, s, s * 0.4);
-            } else {
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(s, s * 0.3);
-                ctx.lineTo(s * 0.3, s);
-                ctx.fill();
-            }
-            ctx.restore();
+        // 도리도리
+        function shakeCursor() {
+            angle += 0.08 * dir;
+            if (angle > 15) dir = -1;
+            if (angle < -15) dir = 1;
+            cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            requestAnimationFrame(shakeCursor);
         }
-    }
-
-    // 대충 그린 어금니 (매직 손그림)
-    function drawMolar(cx, cy, size) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.lineWidth = 3 + size * 0.02;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#000';
-
-        const s = size;
-
-        // 어금니 외형 — 울퉁불퉁한 손그림
-        ctx.beginPath();
-        // 왼쪽 뿌리
-        ctx.moveTo(-s * 0.3, s * 0.6);
-        ctx.quadraticCurveTo(-s * 0.35, s * 0.3, -s * 0.25, s * 0.1);
-        // 왼쪽 봉우리
-        ctx.quadraticCurveTo(-s * 0.2, -s * 0.3, -s * 0.1, -s * 0.4);
-        // 가운데 홈
-        ctx.quadraticCurveTo(0, -s * 0.2, s * 0.1, -s * 0.4);
-        // 오른쪽 봉우리
-        ctx.quadraticCurveTo(s * 0.2, -s * 0.3, s * 0.25, s * 0.1);
-        // 오른쪽 뿌리
-        ctx.quadraticCurveTo(s * 0.35, s * 0.3, s * 0.3, s * 0.6);
-        ctx.stroke();
-
-        // 가운데 갈라진 선
-        ctx.beginPath();
-        ctx.moveTo(0, s * 0.15);
-        ctx.lineTo(-s * 0.02, s * 0.5);
-        ctx.stroke();
-
-        // 눈 (감은 상태 — 일자로 휙)
-        ctx.lineWidth = 2.5;
-        // 왼눈
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.15, -s * 0.1);
-        ctx.lineTo(-s * 0.05, -s * 0.08);
-        ctx.stroke();
-        // 오른눈
-        ctx.beginPath();
-        ctx.moveTo(s * 0.05, -s * 0.1);
-        ctx.lineTo(s * 0.15, -s * 0.08);
-        ctx.stroke();
-
-        // 눈 위 짜증 표시 (ㄱ자)
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.16, -s * 0.18);
-        ctx.lineTo(-s * 0.06, -s * 0.18);
-        ctx.lineTo(-s * 0.06, -s * 0.13);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(s * 0.06, -s * 0.18);
-        ctx.lineTo(s * 0.16, -s * 0.18);
-        ctx.lineTo(s * 0.16, -s * 0.13);
-        ctx.stroke();
-
-        // 입 (삐죽 불만)
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.08, s * 0.02);
-        ctx.quadraticCurveTo(0, -s * 0.02, s * 0.08, s * 0.03);
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-    // 도리도리 애니메이션 값
-    let shakeAngle = 0;
-    let shakeDir = 1;
-
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = '#f8f6f1';
-        ctx.fillRect(0, 0, W, H);
-
-        const u = Math.min(W, H); // 기준 단위
-
-        // 빨간 파편 흩뿌리기
-        scatterDebris();
-
-        // 상단 빨간 블록들
-        redBlock(W * 0.05, H * 0.06, W * 0.35, H * 0.04);
-        redBlock(W * 0.55, H * 0.12, W * 0.3, H * 0.035);
-        redBlock(W * 0.1, H * 0.38, W * 0.25, H * 0.03);
-
-        // 검정 매직 취소선들
-        strikeThrough(W * 0.08, H * 0.11, W * 0.28);
-        strikeThrough(W * 0.6, H * 0.32, W * 0.2);
-
-        // 텍스트들 — 정신없이 배치
-        // 1차 (작게, 위쪽)
-        handText('어금니가 영어로 뭐야?', W * 0.06, H * 0.15, u * 0.028, '#000', -2);
-        handText('몰라', W * 0.42, H * 0.14, u * 0.03, '#d42020', 3);
-
-        // 2차 (중간, 비스듬히)
-        markerText('어금니가 영어로', W * 0.03, H * 0.28, u * 0.035, '#000', -0.03);
-        markerText('뭐냐니까?', W * 0.5, H * 0.3, u * 0.04, '#000', 0.02);
-        redBlock(W * 0.72, H * 0.28, W * 0.2, u * 0.045);
-        markerText('몰라!', W * 0.73, H * 0.315, u * 0.04, '#fff', -0.01);
-
-        // 3차 (크게, 아래쪽)
-        markerText('어금니가', W * 0.04, H * 0.72, u * 0.055, '#000', 0.02);
-        markerText('영어로', W * 0.4, H * 0.74, u * 0.045, '#000', -0.03);
-        markerText('뭐냐고!', W * 0.63, H * 0.71, u * 0.05, '#000', 0.04);
-        redBlock(W * 0.05, H * 0.78, W * 0.28, u * 0.06);
-        markerText('몰라!', W * 0.06, H * 0.83, u * 0.055, '#fff', -0.02);
-
-        // 추가 낙서들
-        handText('molar...?', W * 0.65, H * 0.88, u * 0.022, '#999', 5);
-        handText('아 진짜', W * 0.7, H * 0.55, u * 0.02, '#000', -4);
-        handText('??', W * 0.85, H * 0.2, u * 0.05, 'rgba(210,30,30,0.4)', 15);
-        handText('!', W * 0.15, H * 0.55, u * 0.06, 'rgba(0,0,0,0.15)', -10);
-        handText('?!', W * 0.8, H * 0.65, u * 0.04, 'rgba(210,30,30,0.3)', 8);
-
-        // 화살표 낙서
-        ctx.save();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(W * 0.35, H * 0.15);
-        ctx.lineTo(W * 0.5, H * 0.18);
-        ctx.lineTo(W * 0.48, H * 0.16);
-        ctx.moveTo(W * 0.5, H * 0.18);
-        ctx.lineTo(W * 0.48, H * 0.2);
-        ctx.stroke();
-        ctx.restore();
-
-        // 어금니 캐릭터 (중앙, 도리도리)
-        ctx.save();
-        ctx.translate(W * 0.5, H * 0.5);
-        ctx.rotate(shakeAngle);
-        ctx.translate(-W * 0.5, -H * 0.5);
-        drawMolar(W * 0.5, H * 0.5, u * 0.28);
-        ctx.restore();
-
-        // 어금니 주변 강조 선 (방사형)
-        ctx.save();
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-        ctx.lineWidth = 1.5;
-        for (let i = 0; i < 8; i++) {
-            const a = (i / 8) * Math.PI * 2 + 0.3;
-            const r1 = u * 0.18;
-            const r2 = u * 0.22;
-            ctx.beginPath();
-            ctx.moveTo(W * 0.5 + Math.cos(a) * r1, H * 0.5 + Math.sin(a) * r1);
-            ctx.lineTo(W * 0.5 + Math.cos(a) * r2, H * 0.5 + Math.sin(a) * r2);
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
-
-    // 도리도리 애니메이션 루프
-    function animate() {
-        shakeAngle += 0.04 * shakeDir;
-        if (shakeAngle > 0.15) shakeDir = -1;
-        if (shakeAngle < -0.15) shakeDir = 1;
-        draw();
-        requestAnimationFrame(animate);
-    }
-
-    resize();
-    window.addEventListener('resize', resize);
-    animate();
+        shakeCursor();
     </script>
 </body>
 </html>
