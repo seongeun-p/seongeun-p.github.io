@@ -8,72 +8,70 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #f5f0ea;
+            background: #0a0a0a;
             width: 100vw; height: 100vh;
             overflow: hidden;
             cursor: none;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
         }
 
+        /* 크림색 가로 포스터 영역 */
         .poster {
-            width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            width: 85vw;
+            height: 65vh;
+            background: #f5f0e8;
             position: relative;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            overflow: hidden;
         }
 
-        /* 상단 텍스트 — 화면 꽉 차게 */
-        .top-text {
+        /* 왼쪽: 어금니가 */
+        .left-text {
             font-family: 'Black Han Sans', sans-serif;
             color: #0a0a0a;
-            font-size: clamp(60px, 14vw, 200px);
+            font-size: clamp(48px, 10vw, 150px);
             line-height: 0.9;
             text-align: center;
-            letter-spacing: -0.03em;
+            padding-left: 3%;
             z-index: 2;
         }
 
-        /* 가운데 터지는 효과 + 몰라 */
+        /* 가운데: 빨간 터지는 도형 + 몰라 */
         .center-zone {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: -20px 0;
             z-index: 3;
         }
 
-        /* 터지는 별 모양 */
-        .burst {
-            position: absolute;
-            width: clamp(200px, 40vw, 500px);
-            height: clamp(200px, 40vw, 500px);
+        .burst-svg {
+            width: clamp(160px, 28vw, 360px);
+            height: clamp(160px, 28vw, 360px);
         }
 
-        .burst-back {
-            fill: #e63946;
-        }
-
-        .burst-front {
-            fill: #f4a5ab;
-        }
-
-        /* 몰라 텍스트 */
         .mola-text {
+            position: absolute;
             font-family: 'Black Han Sans', sans-serif;
-            color: #0a0a0a;
-            font-size: clamp(80px, 18vw, 260px);
-            line-height: 0.85;
-            text-align: center;
-            position: relative;
+            color: #f5f0e8;
+            font-size: clamp(36px, 7vw, 100px);
             z-index: 4;
             letter-spacing: -0.02em;
+        }
+
+        /* 오른쪽: 영어로 뭐야 */
+        .right-text {
+            font-family: 'Black Han Sans', sans-serif;
+            color: #0a0a0a;
+            font-size: clamp(48px, 10vw, 150px);
+            line-height: 0.9;
+            text-align: center;
+            padding-right: 3%;
+            z-index: 2;
         }
 
         /* 마우스 커서 어금니 */
@@ -85,53 +83,64 @@
         }
 
         .cursor-molar svg {
-            width: 48px;
-            height: 60px;
+            width: 44px;
+            height: 56px;
         }
 
         /* 하단 크레딧 */
         .credit {
-            position: absolute;
-            bottom: 24px;
-            right: 28px;
+            position: fixed;
+            bottom: 16px;
+            right: 24px;
             font-family: 'Black Han Sans', sans-serif;
-            font-size: clamp(12px, 1.8vw, 18px);
-            color: #0a0a0a;
-            letter-spacing: 0.02em;
+            font-size: 13px;
+            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="poster">
-        <!-- 상단: 어금니가 영어로 뭐야 -->
-        <div class="top-text">어금니가<br>영어로 뭐야</div>
+        <div class="left-text">어금니가</div>
 
-        <!-- 가운데: 터지는 효과 + 몰라 -->
         <div class="center-zone">
-            <svg class="burst" viewBox="0 0 200 200">
-                <!-- 뒤쪽 빨간 별 -->
-                <polygon class="burst-back" points="100,5 115,75 185,15 130,80 195,100 130,120 185,185 115,130 100,195 85,130 15,185 70,120 5,100 70,80 15,15 85,75"/>
-                <!-- 앞쪽 핑크 별 -->
-                <polygon class="burst-front" points="100,20 112,78 170,35 125,82 180,100 125,118 170,165 112,125 100,180 88,125 30,165 75,118 20,100 75,82 30,35 88,78"/>
+            <!-- 촘촘한 터지는 도형 (많은 꼭짓점) -->
+            <svg class="burst-svg" viewBox="0 0 200 200">
+                <polygon fill="#e63946" points="
+                    100,8
+                    112,30 125,12 122,38 140,22 132,46
+                    152,34 140,56 162,48 146,66
+                    175,62 158,78 188,78 166,90
+                    192,100
+                    166,110 188,122 158,122 175,138
+                    146,134 162,152 140,144 152,166
+                    132,154 140,178 122,162 125,188
+                    112,170 100,192
+                    88,170 75,188 78,162 60,178
+                    68,154 48,166 58,144 38,152
+                    54,134 25,138 42,122 12,122
+                    34,110 8,100
+                    34,90 12,78 42,78 25,62
+                    54,66 38,48 60,56 48,34
+                    68,46 60,22 78,38 75,12
+                    88,30
+                "/>
             </svg>
             <div class="mola-text">몰라</div>
         </div>
+
+        <div class="right-text">영어로<br>뭐야</div>
     </div>
 
     <!-- 마우스 커서: 어금니 -->
     <div class="cursor-molar" id="cursor">
         <svg viewBox="0 0 50 65" xmlns="http://www.w3.org/2000/svg">
-            <!-- 어금니 몸통 -->
             <path d="M 10 30 C 10 12, 20 4, 25 4 C 30 4, 40 12, 40 30 L 40 40 C 40 42, 38 44, 37 44 L 35 55 C 35 60, 32 63, 29 63 C 27 63, 26 61, 26 58 L 26 48 C 26 47, 25.5 46, 25 46 C 24.5 46, 24 47, 24 48 L 24 58 C 24 61, 23 63, 21 63 C 18 63, 15 60, 15 55 L 13 44 C 12 44, 10 42, 10 40 Z"
                 fill="#fff" stroke="#1a1a1a" stroke-width="2"/>
-            <!-- 상단 울퉁불퉁 -->
             <ellipse cx="18" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
             <ellipse cx="25" cy="6" rx="6" ry="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
             <ellipse cx="32" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
-            <!-- 감은 눈 -->
             <line x1="18" y1="24" x2="23" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
             <line x1="27" y1="24" x2="32" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
-            <!-- 삐죽 입 -->
             <path d="M 21 32 Q 25 30 29 32" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
         </svg>
     </div>
@@ -140,23 +149,21 @@
 
     <script>
         const cursor = document.getElementById('cursor');
-        let angle = 0;
-        let dir = 1;
+        let angle = 0, dir = 1;
 
         document.addEventListener('mousemove', (e) => {
             cursor.style.left = e.clientX + 'px';
             cursor.style.top = e.clientY + 'px';
         });
 
-        // 도리도리
-        function shakeCursor() {
+        function shake() {
             angle += 0.08 * dir;
-            if (angle > 15) dir = -1;
-            if (angle < -15) dir = 1;
+            if (angle > 12) dir = -1;
+            if (angle < -12) dir = 1;
             cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-            requestAnimationFrame(shakeCursor);
+            requestAnimationFrame(shake);
         }
-        shakeCursor();
+        shake();
     </script>
 </body>
 </html>
