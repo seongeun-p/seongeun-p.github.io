@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>어금니가 영어로 뭐야?</title>
-    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -17,64 +17,63 @@
             justify-content: center;
         }
 
-        /* 크림색 가로 포스터 영역 */
-        .poster {
-            width: 85vw;
-            height: 65vh;
-            background: #f5f0e8;
+        .text-container {
             position: relative;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        /* 왼쪽: 어금니가 */
-        .left-text {
-            font-family: 'Black Han Sans', sans-serif;
-            color: #0a0a0a;
-            font-size: clamp(48px, 10vw, 150px);
-            line-height: 0.9;
             text-align: center;
-            padding-left: 3%;
-            z-index: 2;
         }
 
-        /* 가운데: 빨간 터지는 도형 + 몰라 */
-        .center-zone {
-            position: relative;
+        /* 기본 텍스트: 어금니가 영어로 뭐야? */
+        .base-text {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 800;
+            font-size: clamp(48px, 9vw, 140px);
+            line-height: 1.1;
+            color: #1a1a1a;
+            text-shadow:
+                0 1px 0 #2a2a2a,
+                0 2px 0 #252525,
+                0 3px 0 #222,
+                0 4px 0 #1f1f1f,
+                0 5px 0 #1c1c1c,
+                0 6px 3px rgba(0,0,0,0.4),
+                0 0 8px rgba(255,255,255,0.08),
+                -1px -1px 0 rgba(255,255,255,0.15),
+                1px 1px 0 rgba(0,0,0,0.5);
+            /* 엠보싱: 밝은 상단 + 어두운 하단 */
+            background: linear-gradient(180deg, #e8e8e8 0%, #b0b0b0 40%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        }
+
+        /* 몰라 텍스트 (클릭 시 나타남) */
+        .reveal-text {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 3;
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 800;
+            font-size: clamp(80px, 16vw, 240px);
+            line-height: 1;
+            color: #1a1a1a;
+            background: linear-gradient(180deg, #ff4444 0%, #cc0000 40%, #880000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 8px rgba(200,0,0,0.4));
+            clip-path: circle(0% at var(--mx, 50%) var(--my, 50%));
+            transition: none;
+            pointer-events: none;
         }
 
-        .burst-svg {
-            width: clamp(160px, 28vw, 360px);
-            height: clamp(160px, 28vw, 360px);
+        .reveal-text.active {
+            clip-path: circle(var(--radius, 0%) at var(--mx, 50%) var(--my, 50%));
         }
 
-        .mola-text {
-            position: absolute;
-            font-family: 'Black Han Sans', sans-serif;
-            color: #f5f0e8;
-            font-size: clamp(36px, 7vw, 100px);
-            z-index: 4;
-            letter-spacing: -0.02em;
-        }
-
-        /* 오른쪽: 영어로 뭐야 */
-        .right-text {
-            font-family: 'Black Han Sans', sans-serif;
-            color: #0a0a0a;
-            font-size: clamp(48px, 10vw, 150px);
-            line-height: 0.9;
-            text-align: center;
-            padding-right: 3%;
-            z-index: 2;
-        }
-
-        /* 마우스 커서 어금니 */
+        /* 3D 어금니 커서 */
         .cursor-molar {
             position: fixed;
             pointer-events: none;
@@ -83,87 +82,119 @@
         }
 
         .cursor-molar svg {
-            width: 44px;
-            height: 56px;
-        }
-
-        /* 하단 크레딧 */
-        .credit {
-            position: fixed;
-            bottom: 16px;
-            right: 24px;
-            font-family: 'Black Han Sans', sans-serif;
-            font-size: 13px;
-            color: #555;
+            width: 40px;
+            height: 52px;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
         }
     </style>
 </head>
 <body>
-    <div class="poster">
-        <div class="left-text">어금니가</div>
-
-        <div class="center-zone">
-            <!-- 촘촘한 터지는 도형 (많은 꼭짓점) -->
-            <svg class="burst-svg" viewBox="0 0 200 200">
-                <polygon fill="#e63946" points="
-                    100,8
-                    112,30 125,12 122,38 140,22 132,46
-                    152,34 140,56 162,48 146,66
-                    175,62 158,78 188,78 166,90
-                    192,100
-                    166,110 188,122 158,122 175,138
-                    146,134 162,152 140,144 152,166
-                    132,154 140,178 122,162 125,188
-                    112,170 100,192
-                    88,170 75,188 78,162 60,178
-                    68,154 48,166 58,144 38,152
-                    54,134 25,138 42,122 12,122
-                    34,110 8,100
-                    34,90 12,78 42,78 25,62
-                    54,66 38,48 60,56 48,34
-                    68,46 60,22 78,38 75,12
-                    88,30
-                "/>
-            </svg>
-            <div class="mola-text">몰라</div>
-        </div>
-
-        <div class="right-text">영어로<br>뭐야</div>
+    <div class="text-container" id="container">
+        <div class="base-text">어금니가<br>영어로 뭐야?</div>
+        <div class="reveal-text" id="reveal">몰라</div>
     </div>
 
-    <!-- 마우스 커서: 어금니 -->
+    <!-- 3D 어금니 커서 -->
     <div class="cursor-molar" id="cursor">
         <svg viewBox="0 0 50 65" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 10 30 C 10 12, 20 4, 25 4 C 30 4, 40 12, 40 30 L 40 40 C 40 42, 38 44, 37 44 L 35 55 C 35 60, 32 63, 29 63 C 27 63, 26 61, 26 58 L 26 48 C 26 47, 25.5 46, 25 46 C 24.5 46, 24 47, 24 48 L 24 58 C 24 61, 23 63, 21 63 C 18 63, 15 60, 15 55 L 13 44 C 12 44, 10 42, 10 40 Z"
-                fill="#fff" stroke="#1a1a1a" stroke-width="2"/>
-            <ellipse cx="18" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
-            <ellipse cx="25" cy="6" rx="6" ry="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
-            <ellipse cx="32" cy="9" rx="7" ry="6" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/>
-            <line x1="18" y1="24" x2="23" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
-            <line x1="27" y1="24" x2="32" y2="24" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
-            <path d="M 21 32 Q 25 30 29 32" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <defs>
+                <linearGradient id="toothGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="30%" stop-color="#f0ede8"/>
+                    <stop offset="70%" stop-color="#d4cfc5"/>
+                    <stop offset="100%" stop-color="#b8b0a0"/>
+                </linearGradient>
+                <linearGradient id="rootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#e8e2d8"/>
+                    <stop offset="100%" stop-color="#c4b8a4"/>
+                </linearGradient>
+                <radialGradient id="toothShine" cx="35%" cy="30%" r="50%">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/>
+                    <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </radialGradient>
+            </defs>
+            <!-- 어금니 본체 -->
+            <path d="M 12 28 C 12 14, 19 6, 25 6 C 31 6, 38 14, 38 28 L 38 36 C 38 38, 36 40, 35 40 L 33 52 C 33 56, 31 59, 28 59 C 27 59, 26 57, 26 55 L 26 46 C 26 45, 25.5 44.5, 25 44.5 C 24.5 44.5, 24 45, 24 46 L 24 55 C 24 57, 23 59, 22 59 C 19 59, 17 56, 17 52 L 15 40 C 14 40, 12 38, 12 36 Z"
+                fill="url(#toothGrad)"/>
+            <!-- 뿌리 -->
+            <path d="M 17 40 L 15 52 C 15 56, 17 59, 19 59" fill="url(#rootGrad)"/>
+            <path d="M 33 40 L 35 52 C 35 56, 33 59, 31 59" fill="url(#rootGrad)"/>
+            <!-- 상단 울퉁불퉁 (어금니 cusp) -->
+            <ellipse cx="19" cy="10" rx="6" ry="5" fill="url(#toothGrad)"/>
+            <ellipse cx="25" cy="8" rx="5.5" ry="4.5" fill="url(#toothGrad)"/>
+            <ellipse cx="31" cy="10" rx="6" ry="5" fill="url(#toothGrad)"/>
+            <!-- 하이라이트 -->
+            <ellipse cx="22" cy="18" rx="8" ry="10" fill="url(#toothShine)" opacity="0.5"/>
+            <!-- 미세한 홈 -->
+            <path d="M 22 15 Q 25 18 28 15" stroke="rgba(0,0,0,0.08)" stroke-width="0.8" fill="none"/>
+            <path d="M 20 20 Q 25 22 30 20" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" fill="none"/>
         </svg>
     </div>
 
-    <div class="credit">molar = 어금니</div>
-
     <script>
         const cursor = document.getElementById('cursor');
-        let angle = 0, dir = 1;
+        const reveal = document.getElementById('reveal');
+        const container = document.getElementById('container');
+        let isPressed = false;
+        let radius = 0;
+        let mx = 50, my = 50;
 
         document.addEventListener('mousemove', (e) => {
             cursor.style.left = e.clientX + 'px';
             cursor.style.top = e.clientY + 'px';
+
+            // reveal 위치 업데이트
+            const rect = container.getBoundingClientRect();
+            mx = ((e.clientX - rect.left) / rect.width) * 100;
+            my = ((e.clientY - rect.top) / rect.height) * 100;
+            reveal.style.setProperty('--mx', mx + '%');
+            reveal.style.setProperty('--my', my + '%');
         });
 
-        function shake() {
-            angle += 0.08 * dir;
-            if (angle > 12) dir = -1;
-            if (angle < -12) dir = 1;
-            cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-            requestAnimationFrame(shake);
+        document.addEventListener('mousedown', () => {
+            isPressed = true;
+            reveal.classList.add('active');
+            growReveal();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isPressed = false;
+            // 서서히 줄어들기
+            shrinkReveal();
+        });
+
+        function growReveal() {
+            if (!isPressed) return;
+            radius = Math.min(radius + 2, 80);
+            reveal.style.setProperty('--radius', radius + '%');
+            requestAnimationFrame(growReveal);
         }
-        shake();
+
+        function shrinkReveal() {
+            if (isPressed) return;
+            radius = Math.max(radius - 3, 0);
+            reveal.style.setProperty('--radius', radius + '%');
+            if (radius > 0) {
+                requestAnimationFrame(shrinkReveal);
+            } else {
+                reveal.classList.remove('active');
+            }
+        }
+
+        // 커서 약간의 떨림 (어금니 느낌)
+        let angle = 0, dir = 1;
+        function wobble() {
+            if (isPressed) {
+                angle += 0.15 * dir;
+                if (angle > 5) dir = -1;
+                if (angle < -5) dir = 1;
+            } else {
+                angle *= 0.9;
+            }
+            cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            requestAnimationFrame(wobble);
+        }
+        wobble();
     </script>
 </body>
 </html>
