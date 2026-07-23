@@ -81,10 +81,10 @@
             transform: translate(-50%, -50%);
         }
 
-        .cursor-molar svg {
-            width: 40px;
-            height: 52px;
-            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+        .cursor-molar img {
+            width: 50px;
+            height: auto;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
     </style>
 </head>
@@ -96,39 +96,7 @@
 
     <!-- 3D 어금니 커서 -->
     <div class="cursor-molar" id="cursor">
-        <svg viewBox="0 0 50 65" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="toothGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="30%" stop-color="#f0ede8"/>
-                    <stop offset="70%" stop-color="#d4cfc5"/>
-                    <stop offset="100%" stop-color="#b8b0a0"/>
-                </linearGradient>
-                <linearGradient id="rootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#e8e2d8"/>
-                    <stop offset="100%" stop-color="#c4b8a4"/>
-                </linearGradient>
-                <radialGradient id="toothShine" cx="35%" cy="30%" r="50%">
-                    <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/>
-                    <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                </radialGradient>
-            </defs>
-            <!-- 어금니 본체 -->
-            <path d="M 12 28 C 12 14, 19 6, 25 6 C 31 6, 38 14, 38 28 L 38 36 C 38 38, 36 40, 35 40 L 33 52 C 33 56, 31 59, 28 59 C 27 59, 26 57, 26 55 L 26 46 C 26 45, 25.5 44.5, 25 44.5 C 24.5 44.5, 24 45, 24 46 L 24 55 C 24 57, 23 59, 22 59 C 19 59, 17 56, 17 52 L 15 40 C 14 40, 12 38, 12 36 Z"
-                fill="url(#toothGrad)"/>
-            <!-- 뿌리 -->
-            <path d="M 17 40 L 15 52 C 15 56, 17 59, 19 59" fill="url(#rootGrad)"/>
-            <path d="M 33 40 L 35 52 C 35 56, 33 59, 31 59" fill="url(#rootGrad)"/>
-            <!-- 상단 울퉁불퉁 (어금니 cusp) -->
-            <ellipse cx="19" cy="10" rx="6" ry="5" fill="url(#toothGrad)"/>
-            <ellipse cx="25" cy="8" rx="5.5" ry="4.5" fill="url(#toothGrad)"/>
-            <ellipse cx="31" cy="10" rx="6" ry="5" fill="url(#toothGrad)"/>
-            <!-- 하이라이트 -->
-            <ellipse cx="22" cy="18" rx="8" ry="10" fill="url(#toothShine)" opacity="0.5"/>
-            <!-- 미세한 홈 -->
-            <path d="M 22 15 Q 25 18 28 15" stroke="rgba(0,0,0,0.08)" stroke-width="0.8" fill="none"/>
-            <path d="M 20 20 Q 25 22 30 20" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" fill="none"/>
-        </svg>
+        <img src="tooth.png" alt="어금니">
     </div>
 
     <script>
