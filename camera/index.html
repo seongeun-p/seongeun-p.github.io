@@ -482,21 +482,35 @@
             document.getElementById('progress').style.width = (playProgress*100)+'%';
         }
 
-        // CSS transform으로 X/Y/Z 회전 적용 (perspective로 입체감)
-        canvas.style.transform = `perspective(800px) rotateX(${cam.rotX}deg) rotateY(${cam.rotY}deg) rotateZ(${cam.rotZ}deg)`;
+        // 캔버스 자체는 회전 없음
+        canvas.style.transform = 'none';
 
         ctx.clearRect(0, 0, W, H);
 
-        // 배경 숲
+        // 배경 숲 (회전 적용 안 함, 이동+줌만)
         drawForest(cam.x, cam.y, cam.zoom, 0);
 
-        // 말+기수+잡혀가는 남자
+        // 피사체에만 회전 적용
+        ctx.save();
         const sceneX = W/2 - cam.x * cam.zoom;
         const sceneY = H * 0.6 - cam.y * cam.zoom;
+
+        // 피사체 중심 기준으로 회전
+        ctx.translate(sceneX, sceneY);
+        // X축 회전 = scaleY로 표현 (위아래 납작)
+        const scaleY = Math.cos(cam.rotX * Math.PI / 180);
+        // Y축 회전 = scaleX로 표현 (좌우 납작)
+        const scaleX = Math.cos(cam.rotY * Math.PI / 180);
+        // Z축 회전 = 실제 rotate
+        ctx.rotate(cam.rotZ * Math.PI / 180);
+        ctx.scale(scaleX, scaleY);
+        ctx.translate(-sceneX, -sceneY);
+
         drawDust(sceneX, sceneY, cam.zoom);
         drawScene(sceneX, sceneY, cam.zoom);
+        ctx.restore();
 
-        // 전경 나무
+        // 전경 나무 (회전 적용 안 함)
         drawForeground(cam.x, cam.y, cam.zoom);
 
         requestAnimationFrame(render);
