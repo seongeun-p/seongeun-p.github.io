@@ -48,8 +48,8 @@
     <a class="back-btn" href="../">&lt;</a>
     <canvas id="scene"></canvas>
     <div class="info">
-        좌클릭 드래그: 이동 &nbsp;|&nbsp; 우클릭 드래그: 회전 &nbsp;|&nbsp; 스크롤: 줌 &nbsp;|&nbsp; 방향키: 이동<br>
-        [S] 스타트 &nbsp; [E] 엔드 &nbsp; [Space] 재생 &nbsp; [R] 리셋
+        좌클릭 드래그: X/Y 이동 &nbsp;|&nbsp; 우클릭 드래그: X/Y축 회전 &nbsp;|&nbsp; 스크롤: 줌 &nbsp;|&nbsp; Q/E: Z축 회전<br>
+        방향키: 이동 &nbsp;|&nbsp; [S] 스타트 &nbsp; [E] 엔드 &nbsp; [Space] 재생 &nbsp; [R] 리셋
     </div>
     <div class="timeline"><div class="timeline-progress" id="progress"></div></div>
     <div class="ui">
@@ -71,18 +71,18 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // 카메라: x, y, zoom, angle(라디안)
-    let cam = { x: 0, y: 0, zoom: 1, angle: 0 };
+    // 카메라: x, y, zoom, rotX, rotY, rotZ (각도 degree)
+    let cam = { x: 0, y: 0, zoom: 1, rotX: 0, rotY: 0, rotZ: 0 };
     let startFrame = null, endFrame = null;
     let isPlaying = false, playProgress = 0;
     let frameCount = 0;
 
     // 드래그
     let isDragging = false, isRotating = false;
-    let dragStart = {x:0,y:0}, camStart = {x:0,y:0,angle:0};
+    let dragStart = {x:0,y:0}, camStart = {x:0,y:0,rotX:0,rotY:0,rotZ:0};
 
     canvas.addEventListener('mousedown', (e) => {
-        if (e.button === 2) { isRotating = true; dragStart = {x:e.clientX,y:e.clientY}; camStart.angle = cam.angle; }
+        if (e.button === 2) { isRotating = true; dragStart = {x:e.clientX,y:e.clientY}; camStart.rotX = cam.rotX; camStart.rotY = cam.rotY; }
         else { isDragging = true; dragStart = {x:e.clientX,y:e.clientY}; camStart = {x:cam.x,y:cam.y}; }
     });
     document.addEventListener('mousemove', (e) => {
@@ -92,7 +92,10 @@
             cam.y = camStart.y - (e.clientY - dragStart.y) / cam.zoom;
         }
         if (isRotating) {
-            cam.angle = camStart.angle + (e.clientX - dragStart.x) * 0.005;
+            cam.rotY = camStart.rotY + (e.clientX - dragStart.x) * 0.3;
+            cam.rotX = camStart.rotX - (e.clientY - dragStart.y) * 0.3;
+            cam.rotX = Math.max(-60, Math.min(60, cam.rotX));
+            cam.rotY = Math.max(-60, Math.min(60, cam.rotY));
         }
     });
     document.addEventListener('mouseup', () => { isDragging = false; isRotating = false; });
@@ -121,6 +124,8 @@
         if (keys['ArrowRight']) cam.x += sp;
         if (keys['ArrowUp']) cam.y -= sp;
         if (keys['ArrowDown']) cam.y += sp;
+        if (keys['q']||keys['Q']) cam.rotZ -= 1;
+        if (keys['e']||keys['E']) cam.rotZ += 1;
     }
 
     function setStart() { startFrame = {...cam}; }
@@ -131,7 +136,7 @@
         document.getElementById('btnPlay').classList.add('active');
     }
     function resetCam() {
-        cam = {x:0,y:0,zoom:1,angle:0}; startFrame=endFrame=null;
+        cam = {x:0,y:0,zoom:1,rotX:0,rotY:0,rotZ:0}; startFrame=endFrame=null;
         isPlaying=false; playProgress=0;
         document.getElementById('progress').style.width='0%';
         document.getElementById('btnPlay').classList.remove('active');
@@ -471,20 +476,19 @@
             cam.x = startFrame.x + (endFrame.x - startFrame.x) * t;
             cam.y = startFrame.y + (endFrame.y - startFrame.y) * t;
             cam.zoom = startFrame.zoom + (endFrame.zoom - startFrame.zoom) * t;
-            cam.angle = startFrame.angle + (endFrame.angle - startFrame.angle) * t;
+            cam.rotX = startFrame.rotX + (endFrame.rotX - startFrame.rotX) * t;
+            cam.rotY = startFrame.rotY + (endFrame.rotY - startFrame.rotY) * t;
+            cam.rotZ = startFrame.rotZ + (endFrame.rotZ - startFrame.rotZ) * t;
             document.getElementById('progress').style.width = (playProgress*100)+'%';
         }
 
+        // CSS transform으로 X/Y/Z 회전 적용 (perspective로 입체감)
+        canvas.style.transform = `perspective(800px) rotateX(${cam.rotX}deg) rotateY(${cam.rotY}deg) rotateZ(${cam.rotZ}deg)`;
+
         ctx.clearRect(0, 0, W, H);
 
-        // 카메라 회전 적용
-        ctx.save();
-        ctx.translate(W/2, H/2);
-        ctx.rotate(cam.angle);
-        ctx.translate(-W/2, -H/2);
-
         // 배경 숲
-        drawForest(cam.x, cam.y, cam.zoom, cam.angle);
+        drawForest(cam.x, cam.y, cam.zoom, 0);
 
         // 말+기수+잡혀가는 남자
         const sceneX = W/2 - cam.x * cam.zoom;
@@ -495,7 +499,6 @@
         // 전경 나무
         drawForeground(cam.x, cam.y, cam.zoom);
 
-        ctx.restore();
         requestAnimationFrame(render);
     }
     render();
