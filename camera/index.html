@@ -27,6 +27,8 @@
         }
         .btn:hover { background: rgba(255,255,255,0.2); }
         .btn.active { background: rgba(255,80,80,0.4); border-color: #f55; }
+        #btnStart.active { background: rgba(80,255,80,0.3); border-color: #5f5; color: #5f5; }
+        #btnEnd.active { background: rgba(255,80,80,0.3); border-color: #f55; color: #f55; }
         .info {
             position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
             font-size: 10px; color: rgba(255,255,255,0.45); text-align: center;
@@ -130,8 +132,14 @@
         if (keys['e']||keys['E']) cam.rotZ += 1;
     }
 
-    function setStart() { startFrame = {...cam}; }
-    function setEnd() { endFrame = {...cam}; }
+    function setStart() {
+        startFrame = {...cam};
+        document.getElementById('btnStart').classList.add('active');
+    }
+    function setEnd() {
+        endFrame = {...cam};
+        document.getElementById('btnEnd').classList.add('active');
+    }
     function play() {
         if (!startFrame||!endFrame) return;
         isPlaying = true; playProgress = 0;
@@ -142,6 +150,8 @@
         isPlaying=false; playProgress=0;
         document.getElementById('progress').style.width='0%';
         document.getElementById('btnPlay').classList.remove('active');
+        document.getElementById('btnStart').classList.remove('active');
+        document.getElementById('btnEnd').classList.remove('active');
     }
     document.getElementById('btnStart').onclick = setStart;
     document.getElementById('btnEnd').onclick = setEnd;
@@ -166,8 +176,8 @@
         }
     }
 
-    // 숲 배경
-    function drawForest(camX, camY, zoom, angle) {
+    // 숲 배경 — 원경 (가장 먼 나무 + 하늘)
+    function drawBackgroundFar(camX, camY, zoom) {
         // 안개 낀 숲속 배경
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#0a2a0a');
@@ -178,18 +188,21 @@
 
         // 뒤쪽 나무들 (먼 거리, 어두운)
         for (let i = 0; i < 30; i++) {
-            const tx = ((i * 97 + 20) % (W * 2) - camX * 0.3 * zoom + W) % (W * 2) - W * 0.5;
-            const ty = H * 0.85 - camY * 0.3 * zoom;
+            const tx = ((i * 97 + 20) % (W * 2) - camX * 0.1 * zoom + W) % (W * 2) - W * 0.5;
+            const ty = H * 0.85 - camY * 0.1 * zoom;
             const th = 300 + (i % 7) * 40;
             ctx.globalAlpha = 0.3;
             drawTree(tx, ty, th * zoom, 8 * zoom);
             ctx.globalAlpha = 1;
         }
+    }
 
+    // 숲 배경 — 중경 (중간 나무 + 바닥)
+    function drawBackgroundMid(camX, camY, zoom) {
         // 중간 나무들
         for (let i = 0; i < 20; i++) {
-            const tx = ((i * 137 + 50) % (W * 1.5) - camX * 0.6 * zoom + W) % (W * 1.5) - W * 0.25;
-            const ty = H * 0.9 - camY * 0.5 * zoom;
+            const tx = ((i * 137 + 50) % (W * 1.5) - camX * 0.4 * zoom + W) % (W * 1.5) - W * 0.25;
+            const ty = H * 0.9 - camY * 0.4 * zoom;
             const th = 400 + (i % 5) * 50;
             ctx.globalAlpha = 0.5;
             drawTree(tx, ty, th * zoom, 12 * zoom);
@@ -208,7 +221,7 @@
         // 바닥 풀
         ctx.fillStyle = '#2a7a2a';
         for (let i = 0; i < 60; i++) {
-            const gx = ((i * 53 + 10) % W + W - camX * 0.8 * zoom) % W;
+            const gx = ((i * 53 + 10) % W + W - camX * 0.6 * zoom) % W;
             const gy = groundY + (i % 4) * 8 * zoom;
             ctx.fillRect(gx, gy, 3*zoom, -8*zoom);
         }
@@ -218,6 +231,20 @@
         ctx.fillRect(0, groundY - 50*zoom, W, 100*zoom);
 
         return groundY;
+    }
+
+    // 전경 나무 (초 근경)
+    function drawForeground(camX, camY, zoom) {
+        for (let i = 0; i < 8; i++) {
+            const tx = ((i * 193 + 80) % (W * 1.2) - camX * 1.2 * zoom + W) % (W * 1.2) - W * 0.1;
+            const ty = H * 0.95 - camY * 0.8 * zoom;
+            ctx.globalAlpha = 0.7;
+            drawTree(tx, ty, 500 * zoom, 18 * zoom);
+            ctx.globalAlpha = 1;
+        }
+        // 전경 이파리/덤불
+        ctx.fillStyle = 'rgba(20,80,20,0.4)';
+        ctx.fillRect(0, H * 0.9 - camY * zoom, W, H * 0.1);
     }
 
     // 백마 + 대머리 기수 + 잡혀가는 남자
@@ -438,19 +465,7 @@
         ctx.restore();
     }
 
-    // 앞쪽 나무 (전경)
-    function drawForeground(camX, camY, zoom) {
-        for (let i = 0; i < 8; i++) {
-            const tx = ((i * 193 + 80) % (W * 1.2) - camX * zoom + W) % (W * 1.2) - W * 0.1;
-            const ty = H * 0.95 - camY * 0.8 * zoom;
-            ctx.globalAlpha = 0.7;
-            drawTree(tx, ty, 500 * zoom, 18 * zoom);
-            ctx.globalAlpha = 1;
-        }
-        // 전경 이파리/덤불
-        ctx.fillStyle = 'rgba(20,80,20,0.4)';
-        ctx.fillRect(0, H * 0.9 - camY * zoom, W, H * 0.1);
-    }
+    // 앞쪽 나무 (전경) — 이미 위에서 정의됨
 
     // 먼지 파티클
     function drawDust(cx, cy, zoom) {
@@ -489,10 +504,13 @@
 
         ctx.clearRect(0, 0, W, H);
 
-        // 배경 숲 (회전 적용 안 함, 이동+줌만)
-        drawForest(cam.x, cam.y, cam.zoom, 0);
+        // 1) 원경 (가장 먼 나무) — 고정
+        drawBackgroundFar(cam.x, cam.y, cam.zoom);
 
-        // 피사체에만 회전 적용
+        // 2) 중경 (중간 나무 + 바닥) — 고정
+        drawBackgroundMid(cam.x, cam.y, cam.zoom);
+
+        // 3) 피사체에만 회전 적용
         ctx.save();
         const sceneX = W/2 - cam.x * cam.zoom;
         const sceneY = H * 0.6 - cam.y * cam.zoom;
