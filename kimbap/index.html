@@ -38,7 +38,11 @@
             font-size: 15px; font-weight: 700; color: #fff;
             text-shadow: 0 1px 4px rgba(0,0,0,0.6);
         }
-        .lives { font-size: 22px; }
+        .lives {
+            font-size: 36px;
+            background: rgba(255,255,255,0.85);
+            padding: 4px 12px; border-radius: 20px;
+        }
         .round-score {
             font-size: 12px; color: rgba(255,255,255,0.7);
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -46,18 +50,20 @@
 
         /* 메인 레이아웃: 왼쪽 김밥 + 오른쪽 선택지 */
         .game-layout {
-            display: flex; align-items: center; gap: 4vw;
-            width: 90%; max-width: 900px;
+            display: flex; align-items: center; gap: 2vw;
+            width: 95%; max-width: 1100px;
+            margin-top: 40px;
         }
 
         /* 왼쪽: 접시 위 김밥 */
         .plate-area {
-            flex: 1; display: flex; flex-direction: column;
+            flex: 1.2; display: flex; flex-direction: column;
             align-items: center;
+            margin-left: -5vw;
         }
         .kimbap-img {
-            width: clamp(120px, 25vw, 220px);
-            height: clamp(120px, 25vw, 220px);
+            width: clamp(280px, 45vw, 500px);
+            height: clamp(280px, 45vw, 500px);
             object-fit: contain;
             filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
             transition: transform 0.3s ease, opacity 0.3s ease;
@@ -67,22 +73,23 @@
         }
         .kimbap-label {
             margin-top: 10px;
-            font-size: 16px; font-weight: 700; color: #fff;
+            font-size: 18px; font-weight: 700; color: #fff;
             text-shadow: 0 2px 6px rgba(0,0,0,0.6);
             background: rgba(0,0,0,0.3);
-            padding: 4px 14px; border-radius: 20px;
+            padding: 6px 18px; border-radius: 20px;
         }
 
         /* 오른쪽: 음식 선택지 */
         .choices-area {
             flex: 1; display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 14px;
+            margin-top: 8vh;
         }
         .choice-card {
             background: rgba(255,255,255,0.9);
             border-radius: 12px;
-            padding: 10px;
+            padding: 12px;
             display: flex; flex-direction: column;
             align-items: center; cursor: pointer;
             border: 3px solid transparent;
@@ -93,8 +100,8 @@
         .choice-card.correct { border-color: #2ecc71; background: #e8faf0; }
         .choice-card.wrong { border-color: #e74c3c; background: #fde8e8; }
         .choice-card img {
-            width: clamp(50px, 8vw, 80px);
-            height: clamp(50px, 8vw, 80px);
+            width: clamp(80px, 12vw, 140px);
+            height: clamp(80px, 12vw, 140px);
             object-fit: contain;
         }
         .choice-card span {
@@ -145,11 +152,39 @@
         @media (max-width: 600px) {
             .game-layout { flex-direction: column; gap: 16px; }
             .choices-area { width: 100%; }
+            .plate-area { margin-left: 0; }
         }
+
+        /* 시작 설명 화면 */
+        .intro-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 500; color: #fff; text-align: center;
+            transition: opacity 0.5s;
+        }
+        .intro-screen.hide { opacity: 0; pointer-events: none; }
+        .intro-screen h2 { font-size: 26px; margin-bottom: 20px; }
+        .intro-screen p { font-size: 15px; color: #ccc; line-height: 1.8; max-width: 320px; }
+        .intro-screen .countdown { margin-top: 20px; font-size: 13px; color: #888; }
     </style>
 </head>
 <body>
-    <div class="game-bg">
+    <!-- 시작 설명 화면 -->
+    <div class="intro-screen" id="introScreen">
+        <h2>🍙 성은이의 입맛 저격</h2>
+        <p>
+            김밥이 접시 위에 올라옵니다.<br>
+            김밥이랑 어울리는 음식을 골라주세요!<br><br>
+            ⭕ 맞히면 다음 라운드<br>
+            ❌ 틀리면 목숨 차감<br>
+            ❤️ 3번 틀리면 퇴장!
+        </p>
+        <div class="countdown" id="introCountdown">5</div>
+    </div>
+
+    <div class="game-bg" id="gameArea" style="display:none;">
         <a class="back-btn" href="../">&lt;</a>
 
         <div class="top-ui">
@@ -305,7 +340,19 @@
         livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
     }
 
-    showRound();
+    // 인트로 5초 후 게임 시작
+    let introCount = 5;
+    const introInterval = setInterval(() => {
+        introCount--;
+        if (introCount > 0) {
+            document.getElementById('introCountdown').textContent = introCount;
+        } else {
+            clearInterval(introInterval);
+            document.getElementById('introScreen').classList.add('hide');
+            document.getElementById('gameArea').style.display = 'flex';
+            showRound();
+        }
+    }, 1000);
     </script>
 </body>
 </html>
