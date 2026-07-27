@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Work</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI 오버레이 */
+        .ui {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 12px; align-items: center; z-index: 100;
+        }
+        .btn {
+            padding: 8px 16px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3); color: #fff;
+            font-family: 'Courier New', monospace; font-size: 12px;
+            cursor: pointer; border-radius: 4px; transition: background 0.2s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.25); }
+        .btn.active { background: rgba(255,100,100,0.4); border-color: #f55; }
+
+        .info {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;
+            z-index: 100; pointer-events: none;
+        }
+
+        .timeline {
+            position: fixed; bottom: 70px; left: 5%; width: 90%; height: 4px;
+            background: rgba(255,255,255,0.15); border-radius: 2px; z-index: 100;
+        }
+        .timeline-progress {
+            height: 100%; background: #f55; border-radius: 2px; width: 0%;
+            transition: width 0.05s linear;
+        }
+        .timeline-markers {
+            position: absolute; top: -8px; left: 0; width: 100%; height: 20px;
+        }
+        .marker {
+            position: absolute; top: 0; width: 3px; height: 20px;
+            background: #0f0; border-radius: 1px;
+        }
+        .marker.end { background: #f55; }
+
+        .back-btn {
+            position: fixed; top: 16px; left: 16px; z-index: 100;
+            color: #fff; text-decoration: none; font-size: 24px;
+            font-weight: 300; opacity: 0.7; transition: opacity 0.2s;
+        }
+        .back-btn:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+    <a class="back-btn" href="../">&lt;</a>
+    <canvas id="scene"></canvas>
+
+    <div class="info" id="info">
+        마우스 드래그: 카메라 이동 &nbsp;|&nbsp; 스크롤: 줌 &nbsp;|&nbsp; 방향키: 이동<br>
+        [S] 스타트 프레임 &nbsp; [E] 엔드 프레임 &nbsp; [SPACE] 재생
+    </div>
+
+    <div class="timeline">
+        <div class="timeline-progress" id="progress"></div>
+        <div class="timeline-markers" id="markers"></div>
+    </div>
+
+    <div class="ui">
+        <button class="btn" id="btnStart">Set Start [S]</button>
+        <button class="btn" id="btnEnd">Set End [E]</button>
+        <button class="btn" id="btnPlay">Play [Space]</button>
+        <button class="btn" id="btnReset">Reset</button>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W, H;
+
+    function resize() {
+        W = canvas.width = window.innerWidth * dpr;
+        H = canvas.height = window.innerHeight * dpr;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 카메라 상태
+    let cam = { x: 0, y: 0, zoom: 1 };
+    let startFrame = null;
+    let endFrame = null;
+    let isPlaying = false;
+    let playProgress = 0;
+
+    // 마우스 드래그
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let camStart = { x: 0, y: 0 };
+
+    canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragStart = { x: e.clientX, y: e.clientY };
+        camStart = { x: cam.x, y: cam.y };
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging || isPlaying) return;
+        cam.x = camStart.x - (e.clientX - dragStart.x) / cam.zoom;
+        cam.y = camStart.y - (e.clientY - dragStart.y) / cam.zoom;
+    });
+    document.addEventListener('mouseup', () => { isDragging = false; });
+
+    // 스크롤: 줌
+    canvas.addEventListener('wheel', (e) => {
+        if (isPlaying) return;
+        e.preventDefault();
+        cam.zoom *= e.deltaY > 0 ? 0.92 : 1.08;
+        cam.zoom = Math.max(0.3, Math.min(4, cam.zoom));
+    }, { passive: false });
+
+    // 방향키
+    const keys = {};
+    document.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        if (e.key === 's' || e.key === 'S') setStart();
+        if (e.key === 'e' || e.key === 'E') setEnd();
+        if (e.key === ' ') { e.preventDefault(); play(); }
+    });
+    document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+    function handleKeys() {
+        if (isPlaying) return;
+        const speed = 4 / cam.zoom;
+        if (keys['ArrowLeft']) cam.x -= speed;
+        if (keys['ArrowRight']) cam.x += speed;
+        if (keys['ArrowUp']) cam.y -= speed;
+        if (keys['ArrowDown']) cam.y += speed;
+    }
+
+    // 프레임 설정
+    function setStart() {
+        startFrame = { x: cam.x, y: cam.y, zoom: cam.zoom };
+        updateMarkers();
+    }
+    function setEnd() {
+        endFrame = { x: cam.x, y: cam.y, zoom: cam.zoom };
+        updateMarkers();
+    }
+    function updateMarkers() {
+        const m = document.getElementById('markers');
+        m.innerHTML = '';
+        if (startFrame) {
+            const el = document.createElement('div');
+            el.className = 'marker';
+            el.style.left = '0%';
+            m.appendChild(el);
+        }
+        if (endFrame) {
+            const el = document.createElement('div');
+            el.className = 'marker end';
+            el.style.left = '100%';
+            m.appendChild(el);
+        }
+    }
+
+    // 재생
+    function play() {
+        if (!startFrame || !endFrame) return;
+        isPlaying = true;
+        playProgress = 0;
+        document.getElementById('btnPlay').classList.add('active');
+    }
+
+    function resetCam() {
+        cam = { x: 0, y: 0, zoom: 1 };
+        startFrame = null;
+        endFrame = null;
+        isPlaying = false;
+        playProgress = 0;
+        document.getElementById('progress').style.width = '0%';
+        document.getElementById('markers').innerHTML = '';
+        document.getElementById('btnPlay').classList.remove('active');
+    }
+
+    // 버튼
+    document.getElementById('btnStart').addEventListener('click', setStart);
+    document.getElementById('btnEnd').addEventListener('click', setEnd);
+    document.getElementById('btnPlay').addEventListener('click', play);
+    document.getElementById('btnReset').addEventListener('click', resetCam);
+
+    // 말 타는 사람 애니메이션 (2D 실루엣)
+    let frameCount = 0;
+
+    function drawHorseRider(cx, cy, scale) {
+        const s = scale;
+        const bounce = Math.sin(frameCount * 0.15) * 3 * s;
+        const legPhase = frameCount * 0.15;
+
+        ctx.save();
+        ctx.translate(cx, cy + bounce);
+
+        // --- 말 몸통 ---
+        ctx.fillStyle = '#2a1a0a';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 60*s, 30*s, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 말 목
+        ctx.beginPath();
+        ctx.moveTo(45*s, -15*s);
+        ctx.quadraticCurveTo(65*s, -45*s, 55*s, -60*s);
+        ctx.quadraticCurveTo(50*s, -50*s, 40*s, -20*s);
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fill();
+
+        // 말 머리
+        ctx.beginPath();
+        ctx.ellipse(58*s, -62*s, 16*s, 12*s, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 말 귀
+        ctx.beginPath();
+        ctx.moveTo(55*s, -72*s);
+        ctx.lineTo(52*s, -82*s);
+        ctx.lineTo(58*s, -74*s);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(62*s, -72*s);
+        ctx.lineTo(60*s, -82*s);
+        ctx.lineTo(66*s, -74*s);
+        ctx.fill();
+
+        // 말 갈기
+        ctx.strokeStyle = '#1a0f05';
+        ctx.lineWidth = 3 * s;
+        ctx.beginPath();
+        ctx.moveTo(50*s, -55*s);
+        ctx.quadraticCurveTo(45*s, -40*s, 40*s, -20*s);
+        ctx.stroke();
+
+        // 말 꼬리
+        ctx.strokeStyle = '#1a0f05';
+        ctx.lineWidth = 4 * s;
+        ctx.beginPath();
+        ctx.moveTo(-60*s, -5*s);
+        ctx.quadraticCurveTo(-80*s, -15*s + Math.sin(frameCount*0.1)*5*s, -75*s, 10*s);
+        ctx.stroke();
+
+        // 말 다리 (달리는 모션)
+        ctx.strokeStyle = '#2a1a0a';
+        ctx.lineWidth = 6 * s;
+        ctx.lineCap = 'round';
+        // 앞다리
+        const fl1 = Math.sin(legPhase) * 25;
+        const fl2 = Math.sin(legPhase + Math.PI) * 25;
+        ctx.beginPath();
+        ctx.moveTo(35*s, 20*s);
+        ctx.lineTo((35 + fl1*0.4)*s, 55*s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(30*s, 20*s);
+        ctx.lineTo((30 + fl2*0.4)*s, 55*s);
+        ctx.stroke();
+        // 뒷다리
+        ctx.beginPath();
+        ctx.moveTo(-35*s, 20*s);
+        ctx.lineTo((-35 + fl2*0.4)*s, 55*s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-40*s, 20*s);
+        ctx.lineTo((-40 + fl1*0.4)*s, 55*s);
+        ctx.stroke();
+
+        // --- 사람 (기수) ---
+        // 몸통
+        ctx.fillStyle = '#cc3333';
+        ctx.beginPath();
+        ctx.ellipse(5*s, -40*s, 12*s, 18*s, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 머리
+        ctx.fillStyle = '#e8b87a';
+        ctx.beginPath();
+        ctx.arc(8*s, -62*s, 10*s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 헬멧
+        ctx.fillStyle = '#222';
+        ctx.beginPath();
+        ctx.arc(8*s, -65*s, 10*s, Math.PI, 0);
+        ctx.fill();
+
+        // 팔 (고삐 잡은)
+        ctx.strokeStyle = '#cc3333';
+        ctx.lineWidth = 5 * s;
+        ctx.beginPath();
+        ctx.moveTo(12*s, -35*s);
+        ctx.quadraticCurveTo(30*s, -30*s, 45*s, -40*s);
+        ctx.stroke();
+
+        // 다리
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5 * s;
+        ctx.beginPath();
+        ctx.moveTo(0, -22*s);
+        ctx.lineTo(-10*s, 5*s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(10*s, -22*s);
+        ctx.lineTo(20*s, 5*s);
+        ctx.stroke();
+
+        // 고삐 줄
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1.5 * s;
+        ctx.beginPath();
+        ctx.moveTo(45*s, -40*s);
+        ctx.lineTo(55*s, -55*s);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    // 바닥 + 배경
+    function drawBackground(camX, camY, zoom) {
+        // 하늘 그라데이션
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.6);
+        skyGrad.addColorStop(0, '#1a0033');
+        skyGrad.addColorStop(1, '#330066');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // 별
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        for (let i = 0; i < 60; i++) {
+            const sx = ((i * 137 + 50) % W + W - camX * 0.1 * zoom) % W;
+            const sy = ((i * 97 + 30) % (H * 0.5));
+            ctx.fillRect(sx, sy, 2, 2);
+        }
+
+        // 지면
+        const groundY = H / 2 + 100 * zoom - camY * zoom;
+        ctx.fillStyle = '#1a3300';
+        ctx.fillRect(0, groundY, W, H - groundY);
+
+        // 풀 디테일
+        ctx.strokeStyle = '#264d00';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 40; i++) {
+            const gx = ((i * 73) % W + W - camX * 0.8 * zoom) % W;
+            const gy = groundY + (i % 5) * 10 * zoom;
+            ctx.beginPath();
+            ctx.moveTo(gx, gy);
+            ctx.lineTo(gx + 3, gy - 12 * zoom);
+            ctx.stroke();
+        }
+
+        // 먼 산
+        ctx.fillStyle = '#220044';
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        for (let x = 0; x <= W; x += 50) {
+            const mx = (x + camX * 0.2 * zoom) * 0.005;
+            const my = groundY - (Math.sin(mx) * 60 + Math.cos(mx * 2.3) * 30) * zoom;
+            ctx.lineTo(x, my);
+        }
+        ctx.lineTo(W, groundY);
+        ctx.fill();
+
+        // 달
+        const moonX = W * 0.8 - camX * 0.05 * zoom;
+        const moonY = H * 0.15 - camY * 0.05 * zoom;
+        ctx.fillStyle = '#ffffcc';
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 30 * zoom, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 먼지 파티클
+        ctx.fillStyle = 'rgba(200,180,150,0.3)';
+        for (let i = 0; i < 15; i++) {
+            const dx = ((frameCount * 2 + i * 50) % 300) - 150;
+            const dy = Math.sin(frameCount * 0.05 + i) * 10;
+            const px = W/2 - camX * zoom + dx * zoom - 80 * zoom;
+            const py = H/2 - camY * zoom + 50 * zoom + dy * zoom;
+            ctx.fillRect(px, py, 4 * zoom, 3 * zoom);
+        }
+    }
+
+    // 메인 루프
+    function render() {
+        frameCount++;
+        handleKeys();
+
+        // 재생 중이면 보간
+        if (isPlaying) {
+            playProgress += 1 / (5 * 60); // 5초 @ 60fps
+            if (playProgress >= 1) {
+                playProgress = 1;
+                isPlaying = false;
+                document.getElementById('btnPlay').classList.remove('active');
+            }
+            // ease in-out
+            const t = playProgress < 0.5
+                ? 2 * playProgress * playProgress
+                : 1 - Math.pow(-2 * playProgress + 2, 2) / 2;
+
+            cam.x = startFrame.x + (endFrame.x - startFrame.x) * t;
+            cam.y = startFrame.y + (endFrame.y - startFrame.y) * t;
+            cam.zoom = startFrame.zoom + (endFrame.zoom - startFrame.zoom) * t;
+
+            document.getElementById('progress').style.width = (playProgress * 100) + '%';
+        }
+
+        // 그리기
+        ctx.clearRect(0, 0, W, H);
+        drawBackground(cam.x, cam.y, cam.zoom);
+
+        // 말+기수 (화면 중앙 기준, 카메라 오프셋 적용)
+        const riderX = W / 2 - cam.x * cam.zoom;
+        const riderY = H / 2 - cam.y * cam.zoom + 50 * cam.zoom;
+        drawHorseRider(riderX, riderY, cam.zoom);
+
+        requestAnimationFrame(render);
+    }
+
+    render();
+    </script>
+</body>
+</html>
