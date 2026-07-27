@@ -52,7 +52,7 @@
     <canvas id="scene"></canvas>
     <div class="info">
         좌클릭 드래그: X/Y 이동 &nbsp;|&nbsp; 우클릭 드래그: X/Y축 회전 &nbsp;|&nbsp; 스크롤: 줌 &nbsp;|&nbsp; Q/E: Z축 회전<br>
-        방향키: 이동 &nbsp;|&nbsp; [S] 스타트 &nbsp; [E] 엔드 &nbsp; [Space] 재생 &nbsp; [R] 리셋
+        방향키: 카메라 이동 &nbsp;|&nbsp; W/A/D/X: 피사체 이동 &nbsp;|&nbsp; [S] 스타트 &nbsp; [E] 엔드 &nbsp; [Space] 재생 &nbsp; [R] 리셋
     </div>
     <div class="timeline"><div class="timeline-progress" id="progress"></div></div>
     <div class="ui">
@@ -76,6 +76,8 @@
 
     // 카메라: x, y, zoom, rotX, rotY, rotZ (각도 degree)
     let cam = { x: 0, y: 0, zoom: 1, rotX: 0, rotY: 0, rotZ: 0 };
+    // 피사체 위치 (독립적으로 이동 가능)
+    let subject = { x: 0, y: 0 };
     let startFrame = null, endFrame = null;
     let isPlaying = false, playProgress = 0;
     let frameCount = 0;
@@ -124,20 +126,27 @@
     function handleKeys() {
         if (isPlaying) return;
         const sp = 4/cam.zoom;
+        // 방향키: 카메라 이동
         if (keys['ArrowLeft']) cam.x -= sp;
         if (keys['ArrowRight']) cam.x += sp;
         if (keys['ArrowUp']) cam.y -= sp;
         if (keys['ArrowDown']) cam.y += sp;
+        // Q/E: Z축 회전
         if (keys['q']||keys['Q']) cam.rotZ -= 1;
         if (keys['e']||keys['E']) cam.rotZ += 1;
+        // W/A/D/X: 피사체 이동
+        if (keys['w']||keys['W']) subject.y -= sp;
+        if (keys['x']||keys['X']) subject.y += sp;
+        if (keys['a']||keys['A']) subject.x -= sp;
+        if (keys['d']||keys['D']) subject.x += sp;
     }
 
     function setStart() {
-        startFrame = {...cam};
+        startFrame = {...cam, subX: subject.x, subY: subject.y};
         document.getElementById('btnStart').classList.add('active');
     }
     function setEnd() {
-        endFrame = {...cam};
+        endFrame = {...cam, subX: subject.x, subY: subject.y};
         document.getElementById('btnEnd').classList.add('active');
     }
     function play() {
@@ -146,7 +155,8 @@
         document.getElementById('btnPlay').classList.add('active');
     }
     function resetCam() {
-        cam = {x:0,y:0,zoom:1,rotX:0,rotY:0,rotZ:0}; startFrame=endFrame=null;
+        cam = {x:0,y:0,zoom:1,rotX:0,rotY:0,rotZ:0}; subject = {x:0,y:0};
+        startFrame=endFrame=null;
         isPlaying=false; playProgress=0;
         document.getElementById('progress').style.width='0%';
         document.getElementById('btnPlay').classList.remove('active');
@@ -496,6 +506,8 @@
             cam.rotX = startFrame.rotX + (endFrame.rotX - startFrame.rotX) * t;
             cam.rotY = startFrame.rotY + (endFrame.rotY - startFrame.rotY) * t;
             cam.rotZ = startFrame.rotZ + (endFrame.rotZ - startFrame.rotZ) * t;
+            subject.x = startFrame.subX + (endFrame.subX - startFrame.subX) * t;
+            subject.y = startFrame.subY + (endFrame.subY - startFrame.subY) * t;
             document.getElementById('progress').style.width = (playProgress*100)+'%';
         }
 
@@ -520,8 +532,8 @@
         drawBackgroundMid(cam.x, cam.y, cam.zoom);
 
         // 3) 피사체
-        const sceneX = W/2 - cam.x * cam.zoom;
-        const sceneY = H * 0.6 - cam.y * cam.zoom;
+        const sceneX = W/2 - cam.x * cam.zoom + subject.x * cam.zoom;
+        const sceneY = H * 0.6 - cam.y * cam.zoom + subject.y * cam.zoom;
         drawDust(sceneX, sceneY, cam.zoom);
         drawScene(sceneX, sceneY, cam.zoom);
 
