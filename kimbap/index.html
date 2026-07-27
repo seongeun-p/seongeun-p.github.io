@@ -7,98 +7,122 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #fff8f0;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
+            width: 100vw; height: 100vh;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #111;
         }
+
+        .game-bg {
+            width: 100%; height: 100%;
+            background: url('bg.png') center/cover no-repeat;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
         .back-btn {
             position: fixed; top: 14px; left: 14px; z-index: 100;
-            color: #333; text-decoration: none; font-size: 22px;
-            font-weight: 300; opacity: 0.6;
+            color: #fff; text-decoration: none; font-size: 22px;
+            font-weight: 300; opacity: 0.7;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
         .back-btn:hover { opacity: 1; }
 
-        h1 {
-            font-size: clamp(18px, 4vw, 28px);
-            margin-bottom: 8px; color: #333;
+        /* 상단 UI */
+        .top-ui {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px; z-index: 100;
         }
-        .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
-
-        /* 생명 */
-        .lives {
-            position: fixed; top: 14px; right: 20px;
-            font-size: 24px; z-index: 100;
+        .title {
+            font-size: 15px; font-weight: 700; color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.6);
         }
-
-        /* 점수 */
-        .score {
-            position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
-            font-size: 14px; color: #555; z-index: 100;
-            font-weight: 600;
+        .lives { font-size: 22px; }
+        .round-score {
+            font-size: 12px; color: rgba(255,255,255,0.7);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
 
-        /* 김밥 접시 영역 */
-        .plate {
-            width: clamp(120px, 30vw, 200px);
-            height: clamp(120px, 30vw, 200px);
-            border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 2px 8px rgba(0,0,0,0.04);
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 16px;
-            position: relative;
-        }
-        .plate .kimbap-name {
-            font-size: clamp(16px, 3.5vw, 24px);
-            font-weight: 700; color: #2a2a2a;
-            text-align: center; padding: 10px;
-        }
-        .plate .kimbap-emoji {
-            font-size: clamp(40px, 8vw, 64px);
-            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+        /* 메인 레이아웃: 왼쪽 김밥 + 오른쪽 선택지 */
+        .game-layout {
+            display: flex; align-items: center; gap: 4vw;
+            width: 90%; max-width: 900px;
         }
 
-        /* 선택지 */
-        .choices {
-            display: flex; flex-wrap: wrap; gap: 10px;
-            justify-content: center; max-width: 500px;
-            padding: 0 16px;
+        /* 왼쪽: 접시 위 김밥 */
+        .plate-area {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center;
         }
-        .choice-btn {
-            padding: 10px 18px;
-            background: #fff; border: 2px solid #eee;
-            border-radius: 24px; font-size: 14px;
-            cursor: pointer; transition: all 0.2s;
-            font-weight: 500; color: #333;
+        .kimbap-img {
+            width: clamp(120px, 25vw, 220px);
+            height: clamp(120px, 25vw, 220px);
+            object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        .choice-btn:hover { border-color: #ff6b35; background: #fff5f0; }
-        .choice-btn.correct { border-color: #2ecc71; background: #e8faf0; color: #1a9a55; }
-        .choice-btn.wrong { border-color: #e74c3c; background: #fde8e8; color: #c0392b; }
+        .kimbap-img.enter {
+            transform: scale(0.7); opacity: 0;
+        }
+        .kimbap-label {
+            margin-top: 10px;
+            font-size: 16px; font-weight: 700; color: #fff;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.3);
+            padding: 4px 14px; border-radius: 20px;
+        }
+
+        /* 오른쪽: 음식 선택지 */
+        .choices-area {
+            flex: 1; display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .choice-card {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex; flex-direction: column;
+            align-items: center; cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .choice-card:hover { border-color: #ff6b35; transform: scale(1.03); }
+        .choice-card.correct { border-color: #2ecc71; background: #e8faf0; }
+        .choice-card.wrong { border-color: #e74c3c; background: #fde8e8; }
+        .choice-card img {
+            width: clamp(50px, 8vw, 80px);
+            height: clamp(50px, 8vw, 80px);
+            object-fit: contain;
+        }
+        .choice-card span {
+            margin-top: 6px; font-size: 11px;
+            font-weight: 600; color: #333;
+        }
 
         /* 피드백 */
         .feedback {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
-            font-size: 64px; z-index: 200; pointer-events: none;
-            opacity: 0; transition: opacity 0.3s;
+            font-size: 80px; z-index: 200; pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
         }
         .feedback.show { opacity: 1; }
 
         /* 결과 화면 */
         .result-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,248,240,0.95);
+            background: rgba(0,0,0,0.85);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             z-index: 300; opacity: 0; pointer-events: none;
-            transition: opacity 0.4s;
+            transition: opacity 0.4s; color: #fff;
         }
         .result-screen.show { opacity: 1; pointer-events: auto; }
         .result-screen h2 { font-size: 28px; margin-bottom: 12px; }
-        .result-screen p { font-size: 16px; color: #666; margin-bottom: 8px; }
-        .result-screen .badge { font-size: 48px; margin: 16px 0; }
+        .result-screen p { font-size: 15px; color: #aaa; margin-bottom: 8px; }
+        .result-screen .badge { font-size: 56px; margin: 16px 0; }
         .result-screen button {
             margin-top: 20px; padding: 10px 28px;
             background: #ff6b35; color: #fff; border: none;
@@ -106,43 +130,47 @@
             font-weight: 600;
         }
         .result-screen button:hover { background: #e55a28; }
-
-        /* 말풍선 */
         .speech-bubble {
-            background: #fff; border: 2px solid #333;
-            border-radius: 16px; padding: 16px 24px;
-            font-size: 16px; color: #333; margin-bottom: 20px;
-            position: relative; max-width: 280px; text-align: center;
+            background: #fff; border-radius: 16px;
+            padding: 16px 24px; font-size: 16px; color: #333;
+            margin-bottom: 20px; position: relative;
+            max-width: 280px; text-align: center;
         }
         .speech-bubble::after {
-            content: ''; position: absolute; bottom: -12px; left: 50%;
+            content: ''; position: absolute; bottom: -10px; left: 50%;
             transform: translateX(-50%);
-            border: 6px solid transparent; border-top-color: #333;
+            border: 6px solid transparent; border-top-color: #fff;
         }
 
-        /* 라운드 표시 */
-        .round { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+        @media (max-width: 600px) {
+            .game-layout { flex-direction: column; gap: 16px; }
+            .choices-area { width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <a class="back-btn" href="../">&lt;</a>
-    <div class="lives" id="lives">❤️❤️❤️</div>
-    <div class="score" id="score">0 / 8</div>
+    <div class="game-bg">
+        <a class="back-btn" href="../">&lt;</a>
 
-    <div class="round" id="round">ROUND 1</div>
-    <h1>성은이의 입맛 저격</h1>
-    <div class="subtitle">김밥이랑 어울리는 음식을 골라!</div>
+        <div class="top-ui">
+            <div>
+                <div class="title">성은이의 입맛 저격</div>
+                <div class="round-score" id="roundScore">ROUND 1 &nbsp;|&nbsp; 0/8</div>
+            </div>
+            <div class="lives" id="lives">❤️❤️❤️</div>
+        </div>
 
-    <div class="plate" id="plate">
-        <div class="kimbap-emoji" id="emoji">🍙</div>
-        <div class="kimbap-name" id="kimbapName">참치김밥</div>
+        <div class="game-layout">
+            <div class="plate-area">
+                <img class="kimbap-img" id="kimbapImg" src="chamchi.png" alt="김밥">
+                <div class="kimbap-label" id="kimbapLabel">참치김밥</div>
+            </div>
+            <div class="choices-area" id="choices"></div>
+        </div>
     </div>
-
-    <div class="choices" id="choices"></div>
 
     <div class="feedback" id="feedback"></div>
 
-    <!-- 성공 화면 -->
     <div class="result-screen" id="successScreen">
         <div class="badge">🏅</div>
         <h2>맛잘알 훈장 수여!</h2>
@@ -150,7 +178,6 @@
         <button onclick="location.reload()">다시 하기</button>
     </div>
 
-    <!-- 실패 화면 -->
     <div class="result-screen" id="failScreen">
         <div class="speech-bubble">어휴 됐다 가라 ...</div>
         <h2 style="color:#e74c3c;">퇴장!</h2>
@@ -159,21 +186,26 @@
     </div>
 
     <script>
-    // 김밥 — 정답 매칭 (순서대로)
     const ROUNDS = [
-        { kimbap: '참치김밥', emoji: '🐟', answer: '열라면' },
-        { kimbap: '계란김밥', emoji: '🥚', answer: '마라샹궈' },
-        { kimbap: '스팸김밥', emoji: '🥩', answer: '까르보불닭볶음면' },
-        { kimbap: '치즈김밥', emoji: '🧀', answer: '불닭볶음면' },
-        { kimbap: '멸치김밥', emoji: '🐠', answer: '잔치국수' },
-        { kimbap: '꼬마김밥', emoji: '🍘', answer: '시장떡볶이' },
-        { kimbap: '묵은지참치김밥', emoji: '🥬', answer: '컵누들 매운맛' },
-        { kimbap: '연어김밥', emoji: '🍣', answer: '냉모밀' },
+        { kimbap: '참치김밥', img: 'chamchi.png', answer: '열라면' },
+        { kimbap: '계란김밥', img: 'gyeran.png', answer: '마라샹궈' },
+        { kimbap: '스팸김밥', img: 'spam.png', answer: '까르보불닭볶음면' },
+        { kimbap: '치즈김밥', img: 'cheese.png', answer: '불닭볶음면' },
+        { kimbap: '멸치김밥', img: 'myulchi.png', answer: '잔치국수' },
+        { kimbap: '꼬마김밥', img: 'kkoma.png', answer: '시장떡볶이' },
+        { kimbap: '묵은지참치김밥', img: 'mukchi.png', answer: '컵누들 매운맛' },
+        { kimbap: '연어김밥', img: 'yeoneo.png', answer: '냉모밀' },
     ];
 
     const ALL_CHOICES = [
-        '열라면', '마라샹궈', '까르보불닭볶음면', '불닭볶음면',
-        '잔치국수', '시장떡볶이', '컵누들 매운맛', '냉모밀'
+        { name: '열라면', img: 'yeol.png' },
+        { name: '마라샹궈', img: 'mara.png' },
+        { name: '까르보불닭볶음면', img: 'carbo.png' },
+        { name: '불닭볶음면', img: 'buldak.png' },
+        { name: '잔치국수', img: 'janchi.png' },
+        { name: '시장떡볶이', img: 'tteok.png' },
+        { name: '컵누들 매운맛', img: 'cup.png' },
+        { name: '냉모밀', img: 'momil.png' },
     ];
 
     let currentRound = 0;
@@ -181,14 +213,12 @@
     let correctCount = 0;
     let isAnimating = false;
 
-    const plateEl = document.getElementById('plate');
-    const emojiEl = document.getElementById('emoji');
-    const nameEl = document.getElementById('kimbapName');
+    const kimbapImg = document.getElementById('kimbapImg');
+    const kimbapLabel = document.getElementById('kimbapLabel');
     const choicesEl = document.getElementById('choices');
     const feedbackEl = document.getElementById('feedback');
     const livesEl = document.getElementById('lives');
-    const scoreEl = document.getElementById('score');
-    const roundEl = document.getElementById('round');
+    const roundScoreEl = document.getElementById('roundScore');
 
     function shuffle(arr) {
         const a = [...arr];
@@ -201,52 +231,45 @@
 
     function showRound() {
         if (currentRound >= ROUNDS.length) {
-            // 성공!
             document.getElementById('successScreen').classList.add('show');
             return;
         }
 
         const round = ROUNDS[currentRound];
-        roundEl.textContent = `ROUND ${currentRound + 1}`;
-        emojiEl.textContent = round.emoji;
-        nameEl.textContent = round.kimbap;
-        scoreEl.textContent = `${correctCount} / ${ROUNDS.length}`;
+        roundScoreEl.textContent = `ROUND ${currentRound + 1}  |  ${correctCount}/${ROUNDS.length}`;
+
+        // 김밥 이미지
+        kimbapImg.classList.add('enter');
+        setTimeout(() => {
+            kimbapImg.src = round.img;
+            kimbapLabel.textContent = round.kimbap;
+            kimbapImg.classList.remove('enter');
+        }, 150);
 
         // 선택지: 정답 + 랜덤 3개
-        let options = [round.answer];
-        const others = ALL_CHOICES.filter(c => c !== round.answer);
-        const shuffled = shuffle(others);
-        options.push(shuffled[0], shuffled[1], shuffled[2]);
-        options = shuffle(options);
+        const answerObj = ALL_CHOICES.find(c => c.name === round.answer);
+        let others = ALL_CHOICES.filter(c => c.name !== round.answer);
+        others = shuffle(others).slice(0, 3);
+        let options = shuffle([answerObj, ...others]);
 
         choicesEl.innerHTML = '';
         options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'choice-btn';
-            btn.textContent = opt;
-            btn.addEventListener('click', () => handleChoice(opt, btn));
-            choicesEl.appendChild(btn);
+            const card = document.createElement('div');
+            card.className = 'choice-card';
+            card.innerHTML = `<img src="${opt.img}" alt="${opt.name}"><span>${opt.name}</span>`;
+            card.addEventListener('click', () => handleChoice(opt.name, card));
+            choicesEl.appendChild(card);
         });
-
-        // 접시 등장 애니메이션
-        plateEl.style.transform = 'scale(0.8)';
-        plateEl.style.opacity = '0';
-        plateEl.style.transition = 'all 0.3s ease';
-        setTimeout(() => {
-            plateEl.style.transform = 'scale(1)';
-            plateEl.style.opacity = '1';
-        }, 50);
     }
 
-    function handleChoice(choice, btn) {
+    function handleChoice(choice, card) {
         if (isAnimating) return;
         isAnimating = true;
 
         const round = ROUNDS[currentRound];
 
         if (choice === round.answer) {
-            // 정답!
-            btn.classList.add('correct');
+            card.classList.add('correct');
             showFeedback('⭕');
             correctCount++;
             setTimeout(() => {
@@ -255,19 +278,17 @@
                 showRound();
             }, 800);
         } else {
-            // 오답!
-            btn.classList.add('wrong');
+            card.classList.add('wrong');
             showFeedback('❌');
             lives--;
             updateLives();
-
             if (lives <= 0) {
                 setTimeout(() => {
                     document.getElementById('failScreen').classList.add('show');
                 }, 800);
             } else {
                 setTimeout(() => {
-                    btn.classList.remove('wrong');
+                    card.classList.remove('wrong');
                     isAnimating = false;
                 }, 800);
             }
@@ -284,7 +305,6 @@
         livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
     }
 
-    // 시작
     showRound();
     </script>
 </body>
