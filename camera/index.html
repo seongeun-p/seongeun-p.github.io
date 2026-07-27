@@ -504,34 +504,31 @@
 
         ctx.clearRect(0, 0, W, H);
 
-        // 1) 원경 (가장 먼 나무) — 고정
-        drawBackgroundFar(cam.x, cam.y, cam.zoom);
-
-        // 2) 중경 (중간 나무 + 바닥) — 고정
-        drawBackgroundMid(cam.x, cam.y, cam.zoom);
-
-        // 3) 피사체에만 회전 적용
+        // 전체 장면에 카메라 앵글 적용
         ctx.save();
-        const sceneX = W/2 - cam.x * cam.zoom;
-        const sceneY = H * 0.6 - cam.y * cam.zoom;
-
-        // 피사체 중심 기준으로 회전
-        ctx.translate(sceneX, sceneY);
-        // X축 회전 = scaleY로 표현 (위아래 납작)
+        ctx.translate(W/2, H/2);
         const scaleY = Math.cos(cam.rotX * Math.PI / 180);
-        // Y축 회전 = scaleX로 표현 (좌우 납작)
         const scaleX = Math.cos(cam.rotY * Math.PI / 180);
-        // Z축 회전 = 실제 rotate
         ctx.rotate(cam.rotZ * Math.PI / 180);
         ctx.scale(scaleX, scaleY);
-        ctx.translate(-sceneX, -sceneY);
+        ctx.translate(-W/2, -H/2);
 
+        // 1) 원경
+        drawBackgroundFar(cam.x, cam.y, cam.zoom);
+
+        // 2) 중경
+        drawBackgroundMid(cam.x, cam.y, cam.zoom);
+
+        // 3) 피사체
+        const sceneX = W/2 - cam.x * cam.zoom;
+        const sceneY = H * 0.6 - cam.y * cam.zoom;
         drawDust(sceneX, sceneY, cam.zoom);
         drawScene(sceneX, sceneY, cam.zoom);
-        ctx.restore();
 
-        // 전경 나무 (회전 적용 안 함)
+        // 4) 전경
         drawForeground(cam.x, cam.y, cam.zoom);
+
+        ctx.restore();
 
         requestAnimationFrame(render);
     }
