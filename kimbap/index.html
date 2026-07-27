@@ -60,24 +60,26 @@
             flex: 1.2; display: flex; flex-direction: column;
             align-items: center;
             position: relative;
+            margin-left: -4vw;
+            margin-top: 5vh;
         }
         .dish-img {
-            width: clamp(240px, 40vw, 420px);
+            width: clamp(340px, 55vw, 580px);
             height: auto;
             position: relative;
         }
         .kimbap-img {
-            width: clamp(140px, 22vw, 240px);
-            height: clamp(140px, 22vw, 240px);
+            width: clamp(180px, 28vw, 320px);
+            height: clamp(180px, 28vw, 320px);
             object-fit: contain;
             position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -55%);
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
             filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
         .kimbap-img.enter {
-            transform: translate(-50%, -55%) scale(0.7); opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7); opacity: 0;
         }
         .kimbap-label {
             margin-top: 10px;
@@ -108,8 +110,8 @@
         .choice-card.correct { border-color: #2ecc71; background: #e8faf0; }
         .choice-card.wrong { border-color: #e74c3c; background: #fde8e8; }
         .choice-card img {
-            width: clamp(80px, 12vw, 140px);
-            height: clamp(80px, 12vw, 140px);
+            width: clamp(110px, 16vw, 200px);
+            height: clamp(110px, 16vw, 200px);
             object-fit: contain;
         }
         .choice-card span {
@@ -174,8 +176,12 @@
         }
         .intro-screen.hide { opacity: 0; pointer-events: none; }
         .intro-screen h2 { font-size: 26px; margin-bottom: 20px; }
-        .intro-screen p { font-size: 15px; color: #ccc; line-height: 1.8; max-width: 320px; }
-        .intro-screen .countdown { margin-top: 20px; font-size: 13px; color: #888; }
+        .intro-screen p {
+            font-size: 15px; color: #333; line-height: 1.8; max-width: 320px;
+            background: rgba(255,255,255,0.75);
+            padding: 20px 24px; border-radius: 12px;
+        }
+        .intro-screen .countdown { margin-top: 20px; font-size: 13px; color: #fff; }
     </style>
 </head>
 <body>
