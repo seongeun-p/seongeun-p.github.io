@@ -454,3 +454,51 @@
             ctx.fillRect(cx + dx*zoom - 60*zoom, cy + 40*zoom + dy*zoom, 3*zoom, 2*zoom);
         }
     }
+
+    // 메인 렌더
+    function render() {
+        frameCount++;
+        handleKeys();
+
+        // 재생 중 보간
+        if (isPlaying) {
+            playProgress += 1 / (5 * 60);
+            if (playProgress >= 1) {
+                playProgress = 1; isPlaying = false;
+                document.getElementById('btnPlay').classList.remove('active');
+            }
+            const t = playProgress < 0.5 ? 2*playProgress*playProgress : 1 - Math.pow(-2*playProgress+2,2)/2;
+            cam.x = startFrame.x + (endFrame.x - startFrame.x) * t;
+            cam.y = startFrame.y + (endFrame.y - startFrame.y) * t;
+            cam.zoom = startFrame.zoom + (endFrame.zoom - startFrame.zoom) * t;
+            cam.angle = startFrame.angle + (endFrame.angle - startFrame.angle) * t;
+            document.getElementById('progress').style.width = (playProgress*100)+'%';
+        }
+
+        ctx.clearRect(0, 0, W, H);
+
+        // 카메라 회전 적용
+        ctx.save();
+        ctx.translate(W/2, H/2);
+        ctx.rotate(cam.angle);
+        ctx.translate(-W/2, -H/2);
+
+        // 배경 숲
+        drawForest(cam.x, cam.y, cam.zoom, cam.angle);
+
+        // 말+기수+잡혀가는 남자
+        const sceneX = W/2 - cam.x * cam.zoom;
+        const sceneY = H * 0.6 - cam.y * cam.zoom;
+        drawDust(sceneX, sceneY, cam.zoom);
+        drawScene(sceneX, sceneY, cam.zoom);
+
+        // 전경 나무
+        drawForeground(cam.x, cam.y, cam.zoom);
+
+        ctx.restore();
+        requestAnimationFrame(render);
+    }
+    render();
+    </script>
+</body>
+</html>
