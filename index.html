@@ -180,7 +180,7 @@
     for (let i = 0; i < 20; i++) {
         const c = document.createElement('div');
         c.className = 'fc';
-        const size = 10 + Math.random() * 40;
+        const size = 50 + Math.random() * 50;
         c.style.width = size + 'px';
         c.style.height = size + 'px';
         c.style.background = fcColors[Math.floor(Math.random() * fcColors.length)];
@@ -191,6 +191,18 @@
         c.style.opacity = 0.7 + Math.random() * 0.3;
         fcContainer.appendChild(c);
     }
+    // 300px 큰 원 하나 맨 뒤
+    const bigFc = document.createElement('div');
+    bigFc.className = 'fc';
+    bigFc.style.width = '300px';
+    bigFc.style.height = '300px';
+    bigFc.style.background = fcColors[Math.floor(Math.random() * fcColors.length)];
+    bigFc.style.left = '20%';
+    bigFc.style.top = '20%';
+    bigFc.style.animationDuration = '10s';
+    bigFc.style.opacity = '0.4';
+    bigFc.style.zIndex = '-1';
+    fcContainer.appendChild(bigFc);
     </script>
 </body>
 </html>
