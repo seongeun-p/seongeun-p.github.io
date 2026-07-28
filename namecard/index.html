@@ -352,26 +352,35 @@
         existingDecos.forEach(d => d.remove());
         document.getElementById('cardScreen').style.background = palette.bg + '20';
 
-        // 이름 표시: "To.이름" (성 제외, 이름만)
+        // 이름 표시: "To.이름" (성 제외, 이름만) — 글자별 다른 색
         const nameArea = document.getElementById('nameArea');
         nameArea.innerHTML = '';
         const firstName = name.length >= 2 ? name.slice(1) : name;
-        nameArea.textContent = 'To.' + firstName;
+        const toText = 'To.' + firstName;
+        const CHAR_COLORS = ['#ff3b7f', '#ff8c00', '#ffd000', '#00c853', '#2979ff', '#e040fb', '#ff5252', '#00e676', '#6c5ce7', '#01a3a4', '#f368e0', '#ee5a24'];
+        for (let i = 0; i < toText.length; i++) {
+            const span = document.createElement('span');
+            span.textContent = toText[i];
+            span.style.color = CHAR_COLORS[i % CHAR_COLORS.length];
+            nameArea.appendChild(span);
+        }
 
         // 글귀
         const monthQuotes = QUOTES_BY_MONTH[month] || QUOTES_EXTRA;
         const allQuotes = [...monthQuotes, ...QUOTES_EXTRA];
         const quote = allQuotes[Math.floor(Math.random() * allQuotes.length)];
-        // 글귀도 음절별 다른 폰트 + 다른 색상
+        // 글귀도 음절별 다른 폰트 + 다른 색상 (순차적)
         const quoteEl = document.getElementById('quoteText');
         quoteEl.innerHTML = '';
-        const CHAR_COLORS = ['#ff3b7f', '#ff8c00', '#ffd000', '#00c853', '#2979ff', '#e040fb', '#ff5252', '#00e676', '#6c5ce7', '#01a3a4'];
+        const CHAR_COLORS2 = ['#ff3b7f', '#ff8c00', '#ffd000', '#00c853', '#2979ff', '#e040fb', '#ff5252', '#00e676', '#6c5ce7', '#01a3a4', '#f368e0', '#ee5a24'];
+        let colorIdx = 0;
         for (let i = 0; i < quote.length; i++) {
             const span = document.createElement('span');
             span.textContent = quote[i];
             if (quote[i] !== ' ') {
                 span.style.fontFamily = FONTS[Math.floor(Math.random() * FONTS.length)];
-                span.style.color = CHAR_COLORS[Math.floor(Math.random() * CHAR_COLORS.length)];
+                span.style.color = CHAR_COLORS2[colorIdx % CHAR_COLORS2.length];
+                colorIdx++;
             }
             quoteEl.appendChild(span);
         }
