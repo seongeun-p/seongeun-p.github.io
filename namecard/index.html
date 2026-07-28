@@ -99,7 +99,7 @@
 
         .namecard {
             width: 320px; height: 320px;
-            border-radius: 0;
+            border-radius: 50%;
             padding: 36px 30px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
@@ -109,17 +109,17 @@
             text-align: center;
             background: rgba(255,255,255,0.4);
             backdrop-filter: blur(6px);
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes gentleFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(5px, -10px); }
         }
 
         .namecard .name-area {
-            display: flex; gap: 2px; align-items: baseline;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .namecard .name-char {
-            font-size: 52px; font-weight: 700;
-            line-height: 1;
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 12px; color: #333;
         }
 
         .namecard .quote {
@@ -130,9 +130,7 @@
         }
 
         .namecard .divider {
-            width: 40px; height: 2px;
-            background: currentColor; opacity: 0.3;
-            margin: 16px auto;
+            display: none;
         }
 
         .namecard .birth {
@@ -333,25 +331,10 @@
         existingDecos.forEach(d => d.remove());
         document.getElementById('cardScreen').style.background = palette.bg + '20';
 
-        // 이름 글자별 다른 폰트
+        // 이름 표시: "ㅇㅇㅇ님의 운세"
         const nameArea = document.getElementById('nameArea');
         nameArea.innerHTML = '';
-        const usedFonts = [];
-        for (let i = 0; i < name.length; i++) {
-            let font;
-            do { font = FONTS[Math.floor(Math.random() * FONTS.length)]; }
-            while (usedFonts.includes(font) && usedFonts.length < FONTS.length);
-            usedFonts.push(font);
-
-            const span = document.createElement('span');
-            span.className = 'name-char';
-            span.textContent = name[i];
-            span.style.fontFamily = font;
-            // 약간의 크기/위치 변화
-            span.style.fontSize = (40 + Math.random() * 16) + 'px';
-            span.style.marginRight = (Math.random() * 4) + 'px';
-            nameArea.appendChild(span);
-        }
+        nameArea.textContent = name + '님의 운세';
 
         // 글귀
         const monthQuotes = QUOTES_BY_MONTH[month] || QUOTES_EXTRA;
