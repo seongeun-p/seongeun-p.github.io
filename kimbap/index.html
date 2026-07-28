@@ -21,6 +21,14 @@
         }
 
         .back-btn {
+            position: fixed; top: 14px; left: 14px; z-index: 600;
+            color: #fff; text-decoration: none; font-size: 24px;
+            font-weight: 300; opacity: 0.7;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .back-btn:hover { opacity: 1; }
+
+        .back-btn {
             position: fixed; top: 14px; left: 14px; z-index: 100;
             color: #fff; text-decoration: none; font-size: 22px;
             font-weight: 300; opacity: 0.7;
@@ -195,6 +203,7 @@
 <body>
     <!-- 시작 설명 화면 -->
     <div class="intro-screen" id="introScreen">
+        <a class="back-btn" href="../" style="position:fixed; top:14px; left:14px;">&lt;</a>
         <h2>🍙 성은이의 입맛 저격</h2>
         <p>
             김밥이 접시 위에 올라옵니다.<br>
