@@ -103,10 +103,12 @@
             padding: 36px 30px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
             position: relative;
             overflow: hidden;
             text-align: center;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
         }
 
         .namecard .name-area {
@@ -321,7 +323,7 @@
         // 색상 팔레트
         const palette = PALETTES[s % PALETTES.length];
         const card = document.getElementById('namecard');
-        card.style.background = palette.bg;
+        card.style.background = 'rgba(255,255,255,0.7)';
         card.style.color = palette.text;
         document.getElementById('deco').style.background = palette.deco;
 
@@ -367,7 +369,17 @@
         const allQuotes = [...monthQuotes, ...QUOTES_EXTRA];
         const quote = allQuotes[Math.floor(Math.random() * allQuotes.length)];
         document.getElementById('quoteText').textContent = quote;
-        document.getElementById('quoteText').style.fontFamily = FONTS[Math.floor(Math.random() * FONTS.length)];
+        // 글귀도 음절별 다른 폰트
+        const quoteEl = document.getElementById('quoteText');
+        quoteEl.innerHTML = '';
+        for (let i = 0; i < quote.length; i++) {
+            const span = document.createElement('span');
+            span.textContent = quote[i];
+            if (quote[i] !== ' ') {
+                span.style.fontFamily = FONTS[Math.floor(Math.random() * FONTS.length)];
+            }
+            quoteEl.appendChild(span);
+        }
 
         // 생년월일 숨기기
         document.getElementById('birthText').textContent = '';
