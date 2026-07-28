@@ -107,8 +107,8 @@
             position: relative;
             overflow: hidden;
             text-align: center;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(6px);
         }
 
         .namecard .name-area {
@@ -123,9 +123,10 @@
         }
 
         .namecard .quote {
-            font-size: 16px; opacity: 0.85;
-            line-height: 1.6;
+            font-size: 22px; opacity: 0.9;
+            line-height: 1.5;
             margin-top: 8px;
+            word-break: keep-all;
         }
 
         .namecard .divider {
@@ -325,23 +326,11 @@
         const card = document.getElementById('namecard');
         card.style.background = 'rgba(255,255,255,0.7)';
         card.style.color = palette.text;
-        document.getElementById('deco').style.background = palette.deco;
+        document.getElementById('deco').style.display = 'none';
 
-        // 추가 데코 도형들
+        // 추가 데코 삭제
         const existingDecos = card.querySelectorAll('.extra-deco');
         existingDecos.forEach(d => d.remove());
-        for (let i = 0; i < 4; i++) {
-            const d = document.createElement('div');
-            d.className = 'deco extra-deco';
-            const size = 40 + Math.random() * 100;
-            d.style.width = size + 'px';
-            d.style.height = size + 'px';
-            d.style.background = i % 2 === 0 ? palette.deco : palette.text;
-            d.style.top = (Math.random() * 200 - 40) + 'px';
-            d.style.right = (Math.random() * 300 - 60) + 'px';
-            d.style.opacity = 0.08 + Math.random() * 0.1;
-            card.appendChild(d);
-        }
         document.getElementById('cardScreen').style.background = palette.bg + '20';
 
         // 이름 글자별 다른 폰트
