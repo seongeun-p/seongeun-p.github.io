@@ -197,6 +197,21 @@
     const circlesContainer = document.getElementById('floatingCircles');
 
     // 큰 원 3개 (맨 뒤 레이어)
+    // 1000px 원 하나
+    const bigCircle = document.createElement('div');
+    bigCircle.className = 'circle';
+    bigCircle.style.width = '1000px';
+    bigCircle.style.height = '1000px';
+    bigCircle.style.background = CIRCLE_COLORS[Math.floor(Math.random() * CIRCLE_COLORS.length)];
+    bigCircle.style.left = '30%';
+    bigCircle.style.top = '20%';
+    bigCircle.style.animationDuration = '20s';
+    bigCircle.style.animationDelay = '-3s';
+    bigCircle.style.opacity = '0.4';
+    bigCircle.style.zIndex = '-2';
+    circlesContainer.appendChild(bigCircle);
+
+    // 350px 원 3개
     for (let i = 0; i < 3; i++) {
         const circle = document.createElement('div');
         circle.className = 'circle';
