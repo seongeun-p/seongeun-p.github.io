@@ -73,7 +73,7 @@
 
         .namecard {
             width: 420px; height: 250px;
-            border-radius: 12px;
+            border-radius: 0;
             padding: 30px 36px;
             display: flex; flex-direction: column;
             justify-content: space-between;
@@ -84,14 +84,15 @@
 
         .namecard .name-area {
             display: flex; gap: 2px; align-items: baseline;
+            flex-wrap: wrap;
         }
         .namecard .name-char {
-            font-size: 42px; font-weight: 700;
+            font-size: 72px; font-weight: 700;
             line-height: 1;
         }
 
         .namecard .quote {
-            font-size: 13px; opacity: 0.7;
+            font-size: 14px; opacity: 0.8;
             margin-top: 12px; line-height: 1.5;
         }
 
@@ -102,10 +103,8 @@
 
         .namecard .deco {
             position: absolute;
-            width: 120px; height: 120px;
             border-radius: 50%;
-            opacity: 0.1;
-            top: -30px; right: -30px;
+            opacity: 0.15;
         }
 
         .card-actions {
@@ -165,22 +164,22 @@
     ];
 
     const PALETTES = [
-        { bg: '#1a1a2e', text: '#eee', deco: '#e94560' },
-        { bg: '#0f3460', text: '#f0f0f0', deco: '#e94560' },
-        { bg: '#222831', text: '#eeeeee', deco: '#00adb5' },
-        { bg: '#2d4059', text: '#f5f5f5', deco: '#ea5455' },
-        { bg: '#f8f1f1', text: '#222', deco: '#11999e' },
-        { bg: '#ffc93c', text: '#1a1a2e', deco: '#ff6f3c' },
-        { bg: '#e4f9f5', text: '#222', deco: '#30e3ca' },
-        { bg: '#f9ed69', text: '#222', deco: '#f08a5d' },
-        { bg: '#3d5a80', text: '#f0f0f0', deco: '#ee6c4d' },
-        { bg: '#2b2d42', text: '#edf2f4', deco: '#ef233c' },
-        { bg: '#264653', text: '#f4f4f4', deco: '#e9c46a' },
-        { bg: '#6b705c', text: '#fff', deco: '#ddbea9' },
-        { bg: '#fff1e6', text: '#333', deco: '#cb997e' },
-        { bg: '#d8e2dc', text: '#222', deco: '#6d6875' },
-        { bg: '#f4a261', text: '#fff', deco: '#264653' },
-        { bg: '#e76f51', text: '#fff', deco: '#264653' },
+        { bg: '#ff6b6b', text: '#fff', deco: '#feca57' },
+        { bg: '#48dbfb', text: '#222', deco: '#ff9ff3' },
+        { bg: '#feca57', text: '#222', deco: '#ff6348' },
+        { bg: '#ff9ff3', text: '#222', deco: '#54a0ff' },
+        { bg: '#54a0ff', text: '#fff', deco: '#feca57' },
+        { bg: '#5f27cd', text: '#fff', deco: '#ff9ff3' },
+        { bg: '#10ac84', text: '#fff', deco: '#feca57' },
+        { bg: '#ee5a24', text: '#fff', deco: '#f6e58d' },
+        { bg: '#f368e0', text: '#fff', deco: '#48dbfb' },
+        { bg: '#01a3a4', text: '#fff', deco: '#f9ca24' },
+        { bg: '#6c5ce7', text: '#fff', deco: '#fd79a8' },
+        { bg: '#00b894', text: '#fff', deco: '#fdcb6e' },
+        { bg: '#e17055', text: '#fff', deco: '#81ecec' },
+        { bg: '#0984e3', text: '#fff', deco: '#ffeaa7' },
+        { bg: '#fdcb6e', text: '#222', deco: '#e17055' },
+        { bg: '#81ecec', text: '#222', deco: '#6c5ce7' },
     ];
 
     // 생년월일/이름 기반 글귀
@@ -234,6 +233,22 @@
         card.style.background = palette.bg;
         card.style.color = palette.text;
         document.getElementById('deco').style.background = palette.deco;
+
+        // 추가 데코 도형들
+        const existingDecos = card.querySelectorAll('.extra-deco');
+        existingDecos.forEach(d => d.remove());
+        for (let i = 0; i < 4; i++) {
+            const d = document.createElement('div');
+            d.className = 'deco extra-deco';
+            const size = 40 + Math.random() * 100;
+            d.style.width = size + 'px';
+            d.style.height = size + 'px';
+            d.style.background = i % 2 === 0 ? palette.deco : palette.text;
+            d.style.top = (Math.random() * 200 - 40) + 'px';
+            d.style.right = (Math.random() * 300 - 60) + 'px';
+            d.style.opacity = 0.08 + Math.random() * 0.1;
+            card.appendChild(d);
+        }
         document.getElementById('cardScreen').style.background = palette.bg + '20';
 
         // 이름 글자별 다른 폰트
@@ -251,7 +266,7 @@
             span.textContent = name[i];
             span.style.fontFamily = font;
             // 약간의 크기/위치 변화
-            span.style.fontSize = (38 + Math.random() * 12) + 'px';
+            span.style.fontSize = (60 + Math.random() * 20) + 'px';
             span.style.marginRight = (Math.random() * 4) + 'px';
             nameArea.appendChild(span);
         }
@@ -260,11 +275,11 @@
         const monthQuotes = QUOTES_BY_MONTH[month] || QUOTES_EXTRA;
         const allQuotes = [...monthQuotes, ...QUOTES_EXTRA];
         const quote = allQuotes[Math.floor(Math.random() * allQuotes.length)];
-        document.getElementById('quoteText').textContent = '"' + quote + '"';
+        document.getElementById('quoteText').textContent = quote;
         document.getElementById('quoteText').style.fontFamily = FONTS[Math.floor(Math.random() * FONTS.length)];
 
-        // 생년월일
-        document.getElementById('birthText').textContent = birth || '';
+        // 생년월일 숨기기
+        document.getElementById('birthText').textContent = '';
 
         // 화면 전환
         document.getElementById('inputScreen').classList.add('hide');
