@@ -72,28 +72,38 @@
         .card-screen.show { opacity: 1; pointer-events: auto; }
 
         .namecard {
-            width: 420px; height: 250px;
+            width: 300px; height: 420px;
             border-radius: 0;
-            padding: 30px 36px;
+            padding: 36px 30px;
             display: flex; flex-direction: column;
-            justify-content: space-between;
+            justify-content: center; align-items: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             position: relative;
             overflow: hidden;
+            text-align: center;
         }
 
         .namecard .name-area {
             display: flex; gap: 2px; align-items: baseline;
+            justify-content: center;
             flex-wrap: wrap;
+            margin-bottom: 20px;
         }
         .namecard .name-char {
-            font-size: 72px; font-weight: 700;
+            font-size: 52px; font-weight: 700;
             line-height: 1;
         }
 
         .namecard .quote {
-            font-size: 14px; opacity: 0.8;
-            margin-top: 12px; line-height: 1.5;
+            font-size: 16px; opacity: 0.85;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .namecard .divider {
+            width: 40px; height: 2px;
+            background: currentColor; opacity: 0.3;
+            margin: 16px auto;
         }
 
         .namecard .birth {
@@ -127,24 +137,23 @@
 
     <!-- 입력 화면 -->
     <div class="input-screen" id="inputScreen">
-        <h1>명함 자판기</h1>
-        <p>이름과 생년월일을 넣으면 명함이 나와요</p>
+        <h1>오늘의 운세 자판기</h1>
+        <p>이름과 생년월일을 넣으면 오늘의 운세가 나와요</p>
         <div class="input-group">
             <label>이름</label>
             <input type="text" id="nameInput" placeholder="홍길동" maxlength="6">
             <label>생년월일</label>
             <input type="text" id="birthInput" placeholder="1995.03.25">
         </div>
-        <button class="generate-btn" id="generateBtn">명함 만들기</button>
+        <button class="generate-btn" id="generateBtn">운세 뽑기</button>
     </div>
 
     <!-- 명함 결과 화면 -->
     <div class="card-screen" id="cardScreen">
         <div class="namecard" id="namecard">
-            <div>
-                <div class="name-area" id="nameArea"></div>
-                <div class="quote" id="quoteText"></div>
-            </div>
+            <div class="name-area" id="nameArea"></div>
+            <div class="divider"></div>
+            <div class="quote" id="quoteText"></div>
             <div class="birth" id="birthText"></div>
             <div class="deco" id="deco"></div>
         </div>
@@ -270,7 +279,7 @@
             span.textContent = name[i];
             span.style.fontFamily = font;
             // 약간의 크기/위치 변화
-            span.style.fontSize = (60 + Math.random() * 20) + 'px';
+            span.style.fontSize = (40 + Math.random() * 16) + 'px';
             span.style.marginRight = (Math.random() * 4) + 'px';
             nameArea.appendChild(span);
         }
