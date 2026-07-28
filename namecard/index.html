@@ -195,6 +195,22 @@
     const CIRCLE_COLORS = ['#ff3b7f', '#ff8c00', '#ffd000', '#00c853', '#2979ff', '#e040fb', '#ff5252', '#00e676'];
     const circlesContainer = document.getElementById('floatingCircles');
 
+    // 큰 원 3개 (맨 뒤 레이어)
+    for (let i = 0; i < 3; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        circle.style.width = '350px';
+        circle.style.height = '350px';
+        circle.style.background = CIRCLE_COLORS[Math.floor(Math.random() * CIRCLE_COLORS.length)];
+        circle.style.left = (10 + i * 35) + '%';
+        circle.style.top = (15 + Math.random() * 50) + '%';
+        circle.style.animationDuration = (15 + Math.random() * 8) + 's';
+        circle.style.animationDelay = -(Math.random() * 10) + 's';
+        circle.style.opacity = '0.6';
+        circle.style.zIndex = '-1';
+        circlesContainer.appendChild(circle);
+    }
+
     for (let i = 0; i < 135; i++) {
         const circle = document.createElement('div');
         circle.className = 'circle';
