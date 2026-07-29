@@ -116,7 +116,7 @@
     const cupSubdivided = new THREE.LatheGeometry(
         subdividePoints(cupPoints, 5), 120
     );
-    const cupPointsMat = new THREE.PointsMaterial({ color: 0x888888, size: 0.035, sizeAttenuation: true });
+    const cupPointsMat = new THREE.PointsMaterial({ color: 0xcccccc, size: 0.018, sizeAttenuation: true });
     const cupDots = new THREE.Points(cupSubdivided, cupPointsMat);
     scene.add(cupDots);
 
@@ -153,7 +153,7 @@
 
     // 파티클 도트 (손잡이) — 빽빽하게
     const handleDotsGeom = new THREE.TubeGeometry(handleCurve, 40, 0.07, 24, false);
-    const handleDots = new THREE.Points(handleDotsGeom, new THREE.PointsMaterial({ color: 0x888888, size: 0.04, sizeAttenuation: true }));
+    const handleDots = new THREE.Points(handleDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.018, sizeAttenuation: true }));
     scene.add(handleDots);
 
     // 받침 접시 (얇고 넓은)
@@ -181,7 +181,7 @@
 
     // 파티클 도트 (접시) — 빽빽하게
     const saucerDotsGeom = new THREE.LatheGeometry(subdividePoints(saucerPoints, 4), 80);
-    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0x888888, size: 0.03, sizeAttenuation: true }));
+    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.015, sizeAttenuation: true }));
     saucerDots.position.y = -0.02;
     scene.add(saucerDots);
 
@@ -208,59 +208,33 @@
     createBean(-0.85, 0.8, -0.5);
     createBean(-0.95, 0.9, 0.8);
 
-    // === 커피 액체 (파동 효과) ===
-    const coffeeGeom = new THREE.CircleGeometry(0.67, 32);
-    const coffeeUniforms = {
-        uTime: { value: 0 },
-        uBlowStrength: { value: 0 },
-    };
-    const coffeeMat = new THREE.ShaderMaterial({
-        uniforms: coffeeUniforms,
-        vertexShader: `
-            uniform float uTime;
-            uniform float uBlowStrength;
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                vec3 pos = position;
-                // 파동
-                float dist = length(pos.xy);
-                float wave = sin(dist * 10.0 - uTime * 5.0) * uBlowStrength * 0.05;
-                wave += sin(pos.x * 8.0 + uTime * 3.0) * uBlowStrength * 0.03;
-                wave += cos(pos.y * 6.0 - uTime * 4.0) * uBlowStrength * 0.02;
-                pos.z = wave;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform float uBlowStrength;
-            varying vec2 vUv;
-            void main() {
-                vec3 darkBrown = vec3(0.25, 0.15, 0.08);
-                vec3 lightBrown = vec3(0.4, 0.25, 0.12);
-                float f = length(vUv - 0.5) * 2.0;
-                vec3 color = mix(darkBrown, lightBrown, f + uBlowStrength * 0.3);
-                // 하이라이트
-                float highlight = smoothstep(0.8, 1.0, 1.0 - f);
-                color += highlight * 0.1;
-                gl_FragColor = vec4(color, 1.0);
-            }
-        `,
-    });
-    const coffee = new THREE.Mesh(coffeeGeom, coffeeMat);
-    coffee.rotation.x = -Math.PI / 2;
-    coffee.position.y = 1.0;
-    coffee.visible = false;
-    scene.add(coffee);
+    // === 커피 액체 (파동 효과 — 촘촘한 그리드 파티클) ===
+    const coffeeRadius = 0.62;
+    const coffeeGridSize = 40; // 40x40 그리드
+    const coffeePositions = [];
+    const coffeeOriginal = []; // 원래 위치 저장
 
-    // 파티클 도트 (커피 표면) — 빽빽하게
-    const coffeeDots = new THREE.Points(
-        new THREE.CircleGeometry(0.67, 120),
-        new THREE.PointsMaterial({ color: 0x3d1f0a, size: 0.03, sizeAttenuation: true })
-    );
-    coffeeDots.rotation.x = -Math.PI / 2;
-    coffeeDots.position.y = 1.01;
-    scene.add(coffeeDots);
+    for (let i = 0; i < coffeeGridSize; i++) {
+        for (let j = 0; j < coffeeGridSize; j++) {
+            const x = (i / (coffeeGridSize - 1) - 0.5) * coffeeRadius * 2;
+            const z = (j / (coffeeGridSize - 1) - 0.5) * coffeeRadius * 2;
+            // 원형 범위 내만
+            if (x * x + z * z <= coffeeRadius * coffeeRadius) {
+                coffeePositions.push(x, 1.0, z);
+                coffeeOriginal.push(x, 1.0, z);
+            }
+        }
+    }
+
+    const coffeeParticleGeom = new THREE.BufferGeometry();
+    coffeeParticleGeom.setAttribute('position', new THREE.Float32BufferAttribute(coffeePositions, 3));
+    const coffeeParticleMat = new THREE.PointsMaterial({
+        color: 0x3d1f0a,
+        size: 0.02,
+        sizeAttenuation: true
+    });
+    const coffeeParticles = new THREE.Points(coffeeParticleGeom, coffeeParticleMat);
+    scene.add(coffeeParticles);
 
     // === 마이크 입김 + 잔 흔들림 감지 ===
     let blowStrength = 0;
@@ -326,12 +300,27 @@
         blowStrength += (targetBlow - blowStrength) * 0.1;
         if (blowStrength < 0.005) blowStrength = 0;
 
-        // 커피 파동 = 입김 + 흔들림 (둘 다 0이면 완전 정지)
+        // 커피 파동 — 파티클 위치 직접 업데이트
         const totalStrength = hasInteracted ? Math.max(blowStrength, shakeStrength) : 0;
-        coffeeUniforms.uBlowStrength.value = totalStrength;
+        const positions = coffeeParticleGeom.attributes.position.array;
+        const time = performance.now() * 0.003;
+
         if (totalStrength > 0.001) {
-            coffeeUniforms.uTime.value += 0.016;
+            for (let i = 0; i < positions.length; i += 3) {
+                const ox = coffeeOriginal[i];
+                const oz = coffeeOriginal[i + 2];
+                const dist = Math.sqrt(ox * ox + oz * oz);
+                const wave = Math.sin(dist * 12 - time * 4) * totalStrength * 0.04
+                           + Math.sin(ox * 8 + time * 3) * totalStrength * 0.025
+                           + Math.cos(oz * 7 - time * 2.5) * totalStrength * 0.02;
+                positions[i + 1] = 1.0 + wave;
+            }
+        } else {
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i + 1] += (1.0 - positions[i + 1]) * 0.1;
+            }
         }
+        coffeeParticleGeom.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
     }
