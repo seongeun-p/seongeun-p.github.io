@@ -231,8 +231,8 @@
     let blowStrength = 0;
     let targetBlow = 0;
     let shakeStrength = 0;
-    let lastAzimuth = controls.getAzimuthalAngle();
-    let lastPolar = controls.getPolarAngle();
+    let lastAzimuth = null;
+    let lastPolar = null;
     const micDot = document.getElementById('micDot');
 
     async function initMic() {
@@ -271,6 +271,7 @@
         // 잔 흔들림 감지 (카메라 회전 속도)
         const curAzimuth = controls.getAzimuthalAngle();
         const curPolar = controls.getPolarAngle();
+        if (lastAzimuth === null) { lastAzimuth = curAzimuth; lastPolar = curPolar; }
         const deltaAz = Math.abs(curAzimuth - lastAzimuth);
         const deltaPo = Math.abs(curPolar - lastPolar);
         const rotSpeed = (deltaAz + deltaPo) * 10;
