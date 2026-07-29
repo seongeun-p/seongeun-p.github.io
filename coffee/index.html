@@ -275,16 +275,21 @@
         const deltaPo = Math.abs(curPolar - lastPolar);
         const rotSpeed = (deltaAz + deltaPo) * 10;
         shakeStrength += (Math.min(rotSpeed, 1.0) - shakeStrength) * 0.1;
-        shakeStrength *= 0.95; // 서서히 감소
+        shakeStrength *= 0.92; // 빠르게 감소 → 멈추면 잔잔해짐
+        if (shakeStrength < 0.005) shakeStrength = 0;
         lastAzimuth = curAzimuth;
         lastPolar = curPolar;
 
         // 입김 부드럽게 보간
         blowStrength += (targetBlow - blowStrength) * 0.1;
+        if (blowStrength < 0.005) blowStrength = 0;
 
-        // 커피 파동 = 입김 + 흔들림
-        coffeeUniforms.uTime.value += 0.016;
-        coffeeUniforms.uBlowStrength.value = Math.max(blowStrength, shakeStrength);
+        // 커피 파동 = 입김 + 흔들림 (둘 다 0이면 완전 정지)
+        const totalStrength = Math.max(blowStrength, shakeStrength);
+        coffeeUniforms.uBlowStrength.value = totalStrength;
+        if (totalStrength > 0) {
+            coffeeUniforms.uTime.value += 0.016;
+        }
 
         renderer.render(scene, camera);
     }
