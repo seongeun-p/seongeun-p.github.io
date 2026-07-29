@@ -297,10 +297,10 @@
         if (lastAzimuth === null) { lastAzimuth = curAzimuth; lastPolar = curPolar; }
         const deltaAz = Math.abs(curAzimuth - lastAzimuth);
         const deltaPo = Math.abs(curPolar - lastPolar);
-        const rotSpeed = (deltaAz + deltaPo) * 30;
-        shakeStrength += (Math.min(rotSpeed, 1.5) - shakeStrength) * 0.15;
-        shakeStrength *= 0.94; // 빠르게 감소 → 멈추면 잔잔해짐
-        if (shakeStrength < 0.005) shakeStrength = 0;
+        const rotSpeed = (deltaAz + deltaPo) * 60;
+        shakeStrength += (Math.min(rotSpeed, 2.0) - shakeStrength) * 0.2;
+        shakeStrength *= 0.96;
+        if (shakeStrength < 0.001) shakeStrength = 0;
         lastAzimuth = curAzimuth;
         lastPolar = curPolar;
 
@@ -318,9 +318,9 @@
                 const ox = coffeeOriginal[i];
                 const oz = coffeeOriginal[i + 2];
                 const dist = Math.sqrt(ox * ox + oz * oz);
-                const wave = Math.sin(dist * 12 - time * 4) * totalStrength * 0.04
-                           + Math.sin(ox * 8 + time * 3) * totalStrength * 0.025
-                           + Math.cos(oz * 7 - time * 2.5) * totalStrength * 0.02;
+                const wave = Math.sin(dist * 12 - time * 4) * totalStrength * 0.08
+                           + Math.sin(ox * 8 + time * 3) * totalStrength * 0.05
+                           + Math.cos(oz * 7 - time * 2.5) * totalStrength * 0.04;
                 positions[i + 1] = 1.0 + wave;
             }
         } else {
