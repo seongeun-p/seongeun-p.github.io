@@ -46,7 +46,7 @@
 
     // Camera
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 2, 5);
+    camera.position.set(0, 2, 3.5);
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -231,6 +231,7 @@
     // 첫 인터랙션 감지
     renderer.domElement.addEventListener('mousedown', () => { hasInteracted = true; });
     renderer.domElement.addEventListener('touchstart', () => { hasInteracted = true; });
+    renderer.domElement.addEventListener('mousemove', () => { hasInteracted = true; });
 
     async function initMic() {
         try {
@@ -272,9 +273,9 @@
         if (lastAzimuth === null) { lastAzimuth = curAzimuth; lastPolar = curPolar; }
         const deltaAz = Math.abs(curAzimuth - lastAzimuth);
         const deltaPo = Math.abs(curPolar - lastPolar);
-        const rotSpeed = (deltaAz + deltaPo) * 10;
-        shakeStrength += (Math.min(rotSpeed, 1.0) - shakeStrength) * 0.1;
-        shakeStrength *= 0.92; // 빠르게 감소 → 멈추면 잔잔해짐
+        const rotSpeed = (deltaAz + deltaPo) * 30;
+        shakeStrength += (Math.min(rotSpeed, 1.5) - shakeStrength) * 0.15;
+        shakeStrength *= 0.94; // 빠르게 감소 → 멈추면 잔잔해짐
         if (shakeStrength < 0.005) shakeStrength = 0;
         lastAzimuth = curAzimuth;
         lastPolar = curPolar;
