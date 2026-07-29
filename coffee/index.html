@@ -286,26 +286,31 @@
         if (blowStrength < 0.005) blowStrength = 0;
 
         // 커피 파동 — 파티클 위치 직접 업데이트
-        const totalStrength = hasInteracted ? Math.max(blowStrength, shakeStrength) : 0;
+        const isDragging = shakeStrength > 0 || blowStrength > 0;
+        const totalStrength = (hasInteracted && isDragging) ? Math.max(blowStrength, shakeStrength) : 0;
         const positions = coffeeParticleGeom.attributes.position.array;
-        const time = performance.now() * 0.003;
+        const time = performance.now() * 0.002;
 
         if (totalStrength > 0.001) {
             for (let i = 0; i < positions.length; i += 3) {
                 const ox = coffeeOriginal[i];
                 const oz = coffeeOriginal[i + 2];
                 const dist = Math.sqrt(ox * ox + oz * oz);
-                const wave = Math.sin(dist * 10 - time * 4) * totalStrength * 0.3
-                           + Math.sin(ox * 6 + time * 3) * totalStrength * 0.2
-                           + Math.cos(oz * 5 - time * 2.5) * totalStrength * 0.15;
-                positions[i + 1] = 1.0 + wave;
+                const wave = Math.sin(dist * 8 - time * 5) * totalStrength * 0.5
+                           + Math.sin(ox * 5 + time * 3) * totalStrength * 0.3
+                           + Math.cos(oz * 4 - time * 2) * totalStrength * 0.25;
+                positions[i + 1] = coffeeOriginal[i + 1] + wave;
             }
-        } else {
+            coffeeParticleGeom.attributes.position.needsUpdate = true;
+        } else if (hasInteracted) {
+            let settled = true;
             for (let i = 0; i < positions.length; i += 3) {
-                positions[i + 1] += (1.0 - positions[i + 1]) * 0.05;
+                const target = coffeeOriginal[i + 1];
+                positions[i + 1] += (target - positions[i + 1]) * 0.03;
+                if (Math.abs(positions[i + 1] - target) > 0.001) settled = false;
             }
+            coffeeParticleGeom.attributes.position.needsUpdate = true;
         }
-        coffeeParticleGeom.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
     }
