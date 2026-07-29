@@ -110,10 +110,30 @@
     const cup = new THREE.Mesh(cupGeom, cupMaterial);
     scene.add(cup);
 
-    // 파티클 도트 레이어 (컵 표면) — 빽빽하게
-    const cupPointsMat = new THREE.PointsMaterial({ color: 0x888888, size: 0.04, sizeAttenuation: true });
-    const cupDots = new THREE.Points(new THREE.LatheGeometry(cupPoints, 120), cupPointsMat);
+    // 파티클 도트 레이어 (컵 표면) — 균일 분포
+    const cupDotsGeom = new THREE.LatheGeometry(cupPoints, 120);
+    // 버텍스를 세분화해서 세로도 빽빽하게
+    const cupSubdivided = new THREE.LatheGeometry(
+        subdividePoints(cupPoints, 5), 120
+    );
+    const cupPointsMat = new THREE.PointsMaterial({ color: 0x888888, size: 0.035, sizeAttenuation: true });
+    const cupDots = new THREE.Points(cupSubdivided, cupPointsMat);
     scene.add(cupDots);
+
+    // 프로파일 포인트 세분화 함수
+    function subdividePoints(points, divisions) {
+        const result = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            for (let j = 0; j <= divisions; j++) {
+                const t = j / divisions;
+                const x = points[i].x + (points[i+1].x - points[i].x) * t;
+                const y = points[i].y + (points[i+1].y - points[i].y) * t;
+                result.push(new THREE.Vector2(x, y));
+            }
+        }
+        result.push(points[points.length - 1]);
+        return result;
+    }
 
     // 손잡이 (두꺼운 고리형)
     const handlePath = new THREE.CurvePath();
@@ -160,8 +180,8 @@
     scene.add(saucer);
 
     // 파티클 도트 (접시) — 빽빽하게
-    const saucerDotsGeom = new THREE.LatheGeometry(saucerPoints, 80);
-    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0x888888, size: 0.035, sizeAttenuation: true }));
+    const saucerDotsGeom = new THREE.LatheGeometry(subdividePoints(saucerPoints, 4), 80);
+    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0x888888, size: 0.03, sizeAttenuation: true }));
     saucerDots.position.y = -0.02;
     scene.add(saucerDots);
 
