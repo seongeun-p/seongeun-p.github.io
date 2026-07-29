@@ -231,9 +231,14 @@
     let blowStrength = 0;
     let targetBlow = 0;
     let shakeStrength = 0;
+    let hasInteracted = false;
     let lastAzimuth = null;
     let lastPolar = null;
     const micDot = document.getElementById('micDot');
+
+    // 첫 인터랙션 감지
+    canvas.addEventListener('mousedown', () => { hasInteracted = true; });
+    canvas.addEventListener('touchstart', () => { hasInteracted = true; });
 
     async function initMic() {
         try {
@@ -252,7 +257,8 @@
                 for (let i = 0; i < 20; i++) sum += data[i];
                 const avg = sum / 20;
                 targetBlow = Math.min(avg / 80, 1.0);
-                if (targetBlow > 0.2) micDot.classList.add('active');
+                if (targetBlow < 0.15) targetBlow = 0; // 소음 무시
+                if (targetBlow > 0.15) micDot.classList.add('active');
                 else micDot.classList.remove('active');
                 requestAnimationFrame(checkBlow);
             }
@@ -286,9 +292,9 @@
         if (blowStrength < 0.005) blowStrength = 0;
 
         // 커피 파동 = 입김 + 흔들림 (둘 다 0이면 완전 정지)
-        const totalStrength = Math.max(blowStrength, shakeStrength);
+        const totalStrength = hasInteracted ? Math.max(blowStrength, shakeStrength) : 0;
         coffeeUniforms.uBlowStrength.value = totalStrength;
-        if (totalStrength > 0) {
+        if (totalStrength > 0.001) {
             coffeeUniforms.uTime.value += 0.016;
         }
 
