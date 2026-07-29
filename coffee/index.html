@@ -228,10 +228,9 @@
     let lastPolar = null;
     const micDot = document.getElementById('micDot');
 
-    // 첫 인터랙션 감지
+    // 첫 인터랙션 감지 — 드래그(mousedown)할 때만
     renderer.domElement.addEventListener('mousedown', () => { hasInteracted = true; });
     renderer.domElement.addEventListener('touchstart', () => { hasInteracted = true; });
-    renderer.domElement.addEventListener('mousemove', () => { hasInteracted = true; });
 
     async function initMic() {
         try {
@@ -251,7 +250,7 @@
                 const avg = sum / 20;
                 targetBlow = Math.min(avg / 80, 1.0);
                 if (targetBlow < 0.15) targetBlow = 0; // 소음 무시
-                if (targetBlow > 0.15) micDot.classList.add('active');
+                if (targetBlow > 0.15) { micDot.classList.add('active'); hasInteracted = true; }
                 else micDot.classList.remove('active');
                 requestAnimationFrame(checkBlow);
             }
