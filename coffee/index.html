@@ -70,16 +70,19 @@
     controls.enableZoom = true;
     controls.target.set(0, 0.8, 0);
 
-    // 조명
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // 조명 (밝게)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
     dirLight.position.set(3, 5, 4);
     dirLight.castShadow = true;
     scene.add(dirLight);
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
     rimLight.position.set(-3, 2, -3);
     scene.add(rimLight);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight.position.set(0, -2, 3);
+    scene.add(fillLight);
 
     // === 커피잔 만들기 (둥근 에스프레소 컵 스타일) ===
 
