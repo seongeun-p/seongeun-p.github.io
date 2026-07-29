@@ -111,6 +111,11 @@
     cup.receiveShadow = true;
     scene.add(cup);
 
+    // 파티클 도트 레이어 (컵 표면)
+    const cupPointsMat = new THREE.PointsMaterial({ color: 0xcccccc, size: 0.02, sizeAttenuation: true });
+    const cupDots = new THREE.Points(cupGeom, cupPointsMat);
+    scene.add(cupDots);
+
     // 손잡이 (두꺼운 고리형)
     const handlePath = new THREE.CurvePath();
     const handleCurve = new THREE.CubicBezierCurve3(
@@ -127,6 +132,10 @@
     const handle = new THREE.Mesh(handleGeom, handleMat);
     handle.castShadow = true;
     scene.add(handle);
+
+    // 파티클 도트 (손잡이)
+    const handleDots = new THREE.Points(handleGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.02, sizeAttenuation: true }));
+    scene.add(handleDots);
 
     // 받침 접시 (얇고 넓은)
     const saucerPoints = [
@@ -151,6 +160,11 @@
     saucer.position.y = -0.02;
     saucer.receiveShadow = true;
     scene.add(saucer);
+
+    // 파티클 도트 (접시)
+    const saucerDots = new THREE.Points(saucerGeom, new THREE.PointsMaterial({ color: 0xbbbbbb, size: 0.02, sizeAttenuation: true }));
+    saucerDots.position.y = -0.02;
+    scene.add(saucerDots);
 
     // 커피콩 3개 (접시 위)
     function createBean(x, z, rotY) {
@@ -218,6 +232,15 @@
     coffee.rotation.x = -Math.PI / 2;
     coffee.position.y = 1.0;
     scene.add(coffee);
+
+    // 파티클 도트 (커피 표면)
+    const coffeeDots = new THREE.Points(
+        new THREE.CircleGeometry(0.67, 64),
+        new THREE.PointsMaterial({ color: 0x3d1f0a, size: 0.015, sizeAttenuation: true })
+    );
+    coffeeDots.rotation.x = -Math.PI / 2;
+    coffeeDots.position.y = 1.01;
+    scene.add(coffeeDots);
 
     // === 마이크 입김 + 잔 흔들림 감지 ===
     let blowStrength = 0;
