@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Cup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 100vw; height: 100vh; overflow: hidden;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+        }
+        canvas { display: block; }
+        .back-btn {
+            position: fixed; top: 14px; left: 14px; z-index: 100;
+            color: #333; text-decoration: none; font-size: 22px;
+            font-weight: 300; opacity: 0.5;
+        }
+        .back-btn:hover { opacity: 1; }
+        .hint {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 12px; color: #aaa; font-family: -apple-system, sans-serif;
+            pointer-events: none;
+        }
+        .mic-indicator {
+            position: fixed; top: 20px; right: 20px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #ddd; transition: background 0.1s;
+        }
+        .mic-indicator.active { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <a class="back-btn" href="../">&lt;</a>
+    <div class="mic-indicator" id="micDot"></div>
+    <div class="hint">드래그: 회전 &nbsp;|&nbsp; 마이크에 후~ 불어보세요</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2, 5);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // OrbitControls (마우스 회전)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enableZoom = true;
+    controls.target.set(0, 0.8, 0);
+
+    // 조명
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(3, 5, 4);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    rimLight.position.set(-3, 2, -3);
+    scene.add(rimLight);
+
+    // === 커피잔 만들기 ===
+
+    // 잔 몸통 (원통, 약간 위로 넓어지는)
+    const cupShape = new THREE.LatheGeometry(
+        [
+            new THREE.Vector2(0.7, 0),
+            new THREE.Vector2(0.72, 0.05),
+            new THREE.Vector2(0.68, 0.1),
+            new THREE.Vector2(0.65, 0.3),
+            new THREE.Vector2(0.65, 0.8),
+            new THREE.Vector2(0.7, 1.2),
+            new THREE.Vector2(0.78, 1.5),
+            new THREE.Vector2(0.82, 1.6),
+            new THREE.Vector2(0.82, 1.65),
+            new THREE.Vector2(0.78, 1.65),
+            new THREE.Vector2(0.74, 1.55),
+            new THREE.Vector2(0.6, 1.2),
+            new THREE.Vector2(0.58, 0.8),
+            new THREE.Vector2(0.58, 0.3),
+            new THREE.Vector2(0.62, 0.1),
+            new THREE.Vector2(0.6, 0),
+        ],
+        32
+    );
+    const cupMaterial = new THREE.MeshStandardMaterial({
+        color: 0xf5f5f0,
+        roughness: 0.3,
+        metalness: 0.05,
+    });
+    const cup = new THREE.Mesh(cupShape, cupMaterial);
+    cup.castShadow = true;
+    cup.receiveShadow = true;
+    scene.add(cup);
+
+    // 손잡이 (Torus)
+    const handleGeom = new THREE.TorusGeometry(0.35, 0.06, 12, 24, Math.PI);
+    const handleMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f5f0, roughness: 0.3, metalness: 0.05
+    });
+    const handle = new THREE.Mesh(handleGeom, handleMat);
+    handle.position.set(0.85, 0.9, 0);
+    handle.rotation.z = Math.PI / 2;
+    handle.castShadow = true;
+    scene.add(handle);
+
+    // 받침 접시
+    const saucerGeom = new THREE.CylinderGeometry(1.2, 1.3, 0.08, 32);
+    const saucerMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f5f0, roughness: 0.3, metalness: 0.05
+    });
+    const saucer = new THREE.Mesh(saucerGeom, saucerMat);
+    saucer.position.y = -0.04;
+    saucer.receiveShadow = true;
+    scene.add(saucer);
+
+    // === 커피 액체 (파동 효과) ===
+    const coffeeGeom = new THREE.CircleGeometry(0.58, 32);
+    const coffeeUniforms = {
+        uTime: { value: 0 },
+        uBlowStrength: { value: 0 },
+    };
+    const coffeeMat = new THREE.ShaderMaterial({
+        uniforms: coffeeUniforms,
+        vertexShader: `
+            uniform float uTime;
+            uniform float uBlowStrength;
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                vec3 pos = position;
+                // 파동
+                float dist = length(pos.xy);
+                float wave = sin(dist * 10.0 - uTime * 5.0) * uBlowStrength * 0.05;
+                wave += sin(pos.x * 8.0 + uTime * 3.0) * uBlowStrength * 0.03;
+                wave += cos(pos.y * 6.0 - uTime * 4.0) * uBlowStrength * 0.02;
+                pos.z = wave;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float uBlowStrength;
+            varying vec2 vUv;
+            void main() {
+                vec3 darkBrown = vec3(0.25, 0.15, 0.08);
+                vec3 lightBrown = vec3(0.4, 0.25, 0.12);
+                float f = length(vUv - 0.5) * 2.0;
+                vec3 color = mix(darkBrown, lightBrown, f + uBlowStrength * 0.3);
+                // 하이라이트
+                float highlight = smoothstep(0.8, 1.0, 1.0 - f);
+                color += highlight * 0.1;
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `,
+    });
+    const coffee = new THREE.Mesh(coffeeGeom, coffeeMat);
+    coffee.rotation.x = -Math.PI / 2;
+    coffee.position.y = 1.45;
+    scene.add(coffee);
+
+    // === 마이크 입김 감지 ===
+    let blowStrength = 0;
+    let targetBlow = 0;
+    const micDot = document.getElementById('micDot');
+
+    async function initMic() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new AudioContext();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+
+            function checkBlow() {
+                analyser.getByteFrequencyData(data);
+                // 저주파 대역 (입김은 저주파)
+                let sum = 0;
+                for (let i = 0; i < 20; i++) sum += data[i];
+                const avg = sum / 20;
+                targetBlow = Math.min(avg / 80, 1.0);
+                if (targetBlow > 0.2) micDot.classList.add('active');
+                else micDot.classList.remove('active');
+                requestAnimationFrame(checkBlow);
+            }
+            checkBlow();
+        } catch (e) {
+            console.log('마이크 접근 불가');
+        }
+    }
+    initMic();
+
+    // === 애니메이션 루프 ===
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+
+        // 입김 부드럽게 보간
+        blowStrength += (targetBlow - blowStrength) * 0.1;
+        coffeeUniforms.uTime.value += 0.016;
+        coffeeUniforms.uBlowStrength.value = blowStrength;
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // 리사이즈
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    </script>
+</body>
+</html>
