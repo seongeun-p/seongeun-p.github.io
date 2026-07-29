@@ -36,9 +36,9 @@
     <div class="mic-indicator" id="micDot"></div>
     <div class="hint">드래그: 회전 &nbsp;|&nbsp; 마이크에 후~ 불어보세요</div>
 
-    <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
 
     // Scene
     const scene = new THREE.Scene();
@@ -56,7 +56,7 @@
     document.body.appendChild(renderer.domElement);
 
     // OrbitControls (마우스 회전)
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enableZoom = true;
