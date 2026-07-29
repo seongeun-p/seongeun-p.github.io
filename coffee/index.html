@@ -107,8 +107,8 @@
     const cupGeom = new THREE.LatheGeometry(cupPoints, 48);
     const cupMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        roughness: 0.15,
-        metalness: 0.02,
+        roughness: 0.1,
+        metalness: 0.0,
         envMapIntensity: 0.5,
     });
     const cup = new THREE.Mesh(cupGeom, cupMaterial);
@@ -127,7 +127,7 @@
     handlePath.add(handleCurve);
     const handleGeom = new THREE.TubeGeometry(handleCurve, 20, 0.07, 12, false);
     const handleMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff, roughness: 0.15, metalness: 0.02
+        color: 0xffffff, roughness: 0.1, metalness: 0.0
     });
     const handle = new THREE.Mesh(handleGeom, handleMat);
     handle.castShadow = true;
@@ -150,7 +150,7 @@
     ];
     const saucerGeom = new THREE.LatheGeometry(saucerPoints, 48);
     const saucerMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff, roughness: 0.15, metalness: 0.02
+        color: 0xffffff, roughness: 0.1, metalness: 0.0
     });
     const saucer = new THREE.Mesh(saucerGeom, saucerMat);
     saucer.position.y = -0.02;
@@ -224,9 +224,12 @@
     coffee.position.y = 1.0;
     scene.add(coffee);
 
-    // === 마이크 입김 감지 ===
+    // === 마이크 입김 + 잔 흔들림 감지 ===
     let blowStrength = 0;
     let targetBlow = 0;
+    let shakeStrength = 0;
+    let lastAzimuth = controls.getAzimuthalAngle();
+    let lastPolar = controls.getPolarAngle();
     const micDot = document.getElementById('micDot');
 
     async function initMic() {
@@ -262,10 +265,23 @@
         requestAnimationFrame(animate);
         controls.update();
 
+        // 잔 흔들림 감지 (카메라 회전 속도)
+        const curAzimuth = controls.getAzimuthalAngle();
+        const curPolar = controls.getPolarAngle();
+        const deltaAz = Math.abs(curAzimuth - lastAzimuth);
+        const deltaPo = Math.abs(curPolar - lastPolar);
+        const rotSpeed = (deltaAz + deltaPo) * 10;
+        shakeStrength += (Math.min(rotSpeed, 1.0) - shakeStrength) * 0.1;
+        shakeStrength *= 0.95; // 서서히 감소
+        lastAzimuth = curAzimuth;
+        lastPolar = curPolar;
+
         // 입김 부드럽게 보간
         blowStrength += (targetBlow - blowStrength) * 0.1;
+
+        // 커피 파동 = 입김 + 흔들림
         coffeeUniforms.uTime.value += 0.016;
-        coffeeUniforms.uBlowStrength.value = blowStrength;
+        coffeeUniforms.uBlowStrength.value = Math.max(blowStrength, shakeStrength);
 
         renderer.render(scene, camera);
     }
