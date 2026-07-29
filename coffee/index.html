@@ -36,17 +36,9 @@
     <div class="mic-indicator" id="micDot"></div>
     <div class="hint">드래그: 회전 &nbsp;|&nbsp; 마이크에 후~ 불어보세요</div>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
     <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
     // Scene
     const scene = new THREE.Scene();
@@ -237,8 +229,8 @@
     const micDot = document.getElementById('micDot');
 
     // 첫 인터랙션 감지
-    canvas.addEventListener('mousedown', () => { hasInteracted = true; });
-    canvas.addEventListener('touchstart', () => { hasInteracted = true; });
+    renderer.domElement.addEventListener('mousedown', () => { hasInteracted = true; });
+    renderer.domElement.addEventListener('touchstart', () => { hasInteracted = true; });
 
     async function initMic() {
         try {
