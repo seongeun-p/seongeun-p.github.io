@@ -222,16 +222,6 @@
     let lastPolar = null;
     const micDot = document.getElementById('micDot');
 
-    // 첫 인터랙션 감지 — 드래그(mousedown)할 때만
-    renderer.domElement.addEventListener('mousedown', () => {
-        hasInteracted = true;
-        initMic(); // 마이크도 첫 클릭 이후 시작
-    });
-    renderer.domElement.addEventListener('touchstart', () => {
-        hasInteracted = true;
-        initMic();
-    });
-
     let micInitialized = false;
     async function initMic() {
         if (micInitialized) return;
@@ -262,6 +252,7 @@
             console.log('마이크 접근 불가');
         }
     }
+    initMic(); // 페이지 로드 즉시 마이크 요청
 
     // === 애니메이션 루프 ===
     function animate() {
