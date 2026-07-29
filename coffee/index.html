@@ -116,7 +116,7 @@
     const cupSubdivided = new THREE.LatheGeometry(
         subdividePoints(cupPoints, 5), 120
     );
-    const cupPointsMat = new THREE.PointsMaterial({ color: 0xcccccc, size: 0.018, sizeAttenuation: true });
+    const cupPointsMat = new THREE.PointsMaterial({ color: 0xcccccc, size: 0.01, sizeAttenuation: true });
     const cupDots = new THREE.Points(cupSubdivided, cupPointsMat);
     scene.add(cupDots);
 
@@ -153,7 +153,7 @@
 
     // 파티클 도트 (손잡이) — 빽빽하게
     const handleDotsGeom = new THREE.TubeGeometry(handleCurve, 40, 0.07, 24, false);
-    const handleDots = new THREE.Points(handleDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.018, sizeAttenuation: true }));
+    const handleDots = new THREE.Points(handleDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.01, sizeAttenuation: true }));
     scene.add(handleDots);
 
     // 받침 접시 (얇고 넓은)
@@ -181,7 +181,7 @@
 
     // 파티클 도트 (접시) — 빽빽하게
     const saucerDotsGeom = new THREE.LatheGeometry(subdividePoints(saucerPoints, 4), 80);
-    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.015, sizeAttenuation: true }));
+    const saucerDots = new THREE.Points(saucerDotsGeom, new THREE.PointsMaterial({ color: 0xcccccc, size: 0.01, sizeAttenuation: true }));
     saucerDots.position.y = -0.02;
     scene.add(saucerDots);
 
@@ -230,7 +230,7 @@
     coffeeParticleGeom.setAttribute('position', new THREE.Float32BufferAttribute(coffeePositions, 3));
     const coffeeParticleMat = new THREE.PointsMaterial({
         color: 0x3d1f0a,
-        size: 0.02,
+        size: 0.01,
         sizeAttenuation: true
     });
     const coffeeParticles = new THREE.Points(coffeeParticleGeom, coffeeParticleMat);
@@ -246,10 +246,19 @@
     const micDot = document.getElementById('micDot');
 
     // 첫 인터랙션 감지 — 드래그(mousedown)할 때만
-    renderer.domElement.addEventListener('mousedown', () => { hasInteracted = true; });
-    renderer.domElement.addEventListener('touchstart', () => { hasInteracted = true; });
+    renderer.domElement.addEventListener('mousedown', () => {
+        hasInteracted = true;
+        initMic(); // 마이크도 첫 클릭 이후 시작
+    });
+    renderer.domElement.addEventListener('touchstart', () => {
+        hasInteracted = true;
+        initMic();
+    });
 
+    let micInitialized = false;
     async function initMic() {
+        if (micInitialized) return;
+        micInitialized = true;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const audioCtx = new AudioContext();
@@ -276,7 +285,6 @@
             console.log('마이크 접근 불가');
         }
     }
-    initMic();
 
     // === 애니메이션 루프 ===
     function animate() {
