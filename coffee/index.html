@@ -185,29 +185,6 @@
     saucerDots.position.y = -0.02;
     scene.add(saucerDots);
 
-    // 커피콩 3개 (접시 위)
-    function createBean(x, z, rotY) {
-        const beanGeom = new THREE.SphereGeometry(0.08, 16, 12);
-        beanGeom.scale(1, 0.6, 1.4);
-        const beanMat = new THREE.MeshStandardMaterial({
-            color: 0x3d1f0a, roughness: 0.6, metalness: 0.1
-        });
-        const bean = new THREE.Mesh(beanGeom, beanMat);
-        bean.position.set(x, 0.08, z);
-        bean.rotation.y = rotY;
-        bean.castShadow = true;
-        // 가운데 홈 (얇은 박스로 표현)
-        const grooveGeom = new THREE.BoxGeometry(0.01, 0.04, 0.18);
-        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x1a0f05, roughness: 0.8 });
-        const groove = new THREE.Mesh(grooveGeom, grooveMat);
-        groove.position.y = 0.03;
-        bean.add(groove);
-        scene.add(bean);
-    }
-    createBean(-1.0, 0.7, 0.3);
-    createBean(-0.85, 0.8, -0.5);
-    createBean(-0.95, 0.9, 0.8);
-
     // === 커피 액체 (파동 효과 — 촘촘한 그리드 파티클) ===
     const coffeeRadius = 0.62;
     const coffeeGridSize = 40; // 40x40 그리드
