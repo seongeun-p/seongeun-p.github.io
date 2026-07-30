@@ -31,6 +31,11 @@
         .beam { position: absolute; width: 80px; height: 200px; left: 50%; top: 100%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(100,255,100,0.5), rgba(100,255,100,0)); clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .beam.on { opacity: 1; }
 
+        /* 레이더 스캔 */
+        .radar { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: 160px; height: 160px; border-radius: 50%; border: 2px solid rgba(100,255,100,0.4); opacity: 0; pointer-events: none; animation: radarPulse 1.5s infinite; }
+        .radar.on { opacity: 1; }
+        @keyframes radarPulse { 0% { width:40px; height:40px; opacity:0.8; } 100% { width:200px; height:200px; opacity:0; } }
+
         /* 말풍선 */
         .speech { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 8px 14px; font-size: 12px; font-weight: 600; color: #444; background: #e8e4df; border-radius: 14px; box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.7), inset 1px 1px 3px rgba(255,255,255,0.5); opacity: 0; transition: opacity 0.3s; }
         .speech.show { opacity: 1; }
@@ -64,6 +69,7 @@
             <div class="ufo-disc"></div>
             <div class="ufo-lights"><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div></div>
             <div class="beam" id="beam"></div>
+            <div class="radar" id="radar"></div>
         </div>
     </div>
     <div class="result" id="result"><h1 id="resultTitle"></h1><p id="resultText"></p><button onclick="location.reload()">다시하기</button></div>
@@ -127,19 +133,18 @@
     }
     createPlayer();
 
-    // 눈동자(얼굴) 방향으로 이동 — 여기서는 마우스/터치로 대체
-    document.addEventListener('mousemove', (e) => {
+    // 방향키로 이동
+    const keysDown = {};
+    document.addEventListener('keydown', (e) => { keysDown[e.key] = true; });
+    document.addEventListener('keyup', (e) => { keysDown[e.key] = false; });
+
+    function movePlayer() {
         if (gameOver) return;
-        playerX = (e.clientX / window.innerWidth) * 100;
+        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.5;
+        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.5;
         playerX = Math.max(5, Math.min(95, playerX));
         document.getElementById('player').style.left = playerX + '%';
-    });
-    document.addEventListener('touchmove', (e) => {
-        if (gameOver) return;
-        playerX = (e.touches[0].clientX / window.innerWidth) * 100;
-        playerX = Math.max(5, Math.min(95, playerX));
-        document.getElementById('player').style.left = playerX + '%';
-    });
+    }
 
     // UFO AI
     let ufoX = 50, ufoTargetX = 50;
@@ -164,6 +169,7 @@
             showSpeech('너!');
         }
         ufoState = 'targeting';
+        document.getElementById('radar').classList.add('on');
     }
 
     function catchTarget() {
@@ -183,6 +189,7 @@
                 ufoTarget.el.classList.add('caught');
                 ufoTarget.alive = false;
                 beam.classList.remove('on');
+                document.getElementById('radar').classList.remove('on');
                 caughtCount++;
                 ufoState = 'wander';
                 catchTimer = 0;
@@ -193,6 +200,9 @@
     // 게임 루프
     function gameLoop() {
         if (gameOver) return;
+
+        // 플레이어 이동
+        movePlayer();
 
         // NPC 이동 (랜덤 좌우)
         people.forEach(p => {
