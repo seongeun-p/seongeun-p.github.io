@@ -63,14 +63,6 @@
     <div class="timer" id="timer">15</div>
     <div class="scene" id="scene">
         <div class="ground"></div>
-        <div class="ufo" id="ufo" style="top:8%; left:50%;">
-            <div class="speech" id="speech"></div>
-            <div class="ufo-dome"></div>
-            <div class="ufo-disc"></div>
-            <div class="ufo-lights"><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div></div>
-            <div class="beam" id="beam"></div>
-            <div class="radar" id="radar"></div>
-        </div>
     </div>
     <div class="result" id="result"><h1 id="resultTitle"></h1><p id="resultText"></p><button onclick="location.reload()">다시하기</button></div>
 
@@ -82,7 +74,7 @@
     const timerEl = document.getElementById('timer');
     const result = document.getElementById('result');
 
-    const GAME_TIME = 15;
+    const GAME_TIME = 30;
     const COLORS = [
         {body:'#e89090',leg:'#7a8a9a'},
         {body:'#90b8e8',leg:'#6a7a6a'},
@@ -92,9 +84,8 @@
 
     let gameOver = false;
     let timeLeft = GAME_TIME;
-    let playerX = 50; // percent
+    let playerX = 50;
     let people = [];
-    let caughtCount = 0;
 
     // 카메라
     async function startCamera() {
@@ -146,56 +137,30 @@
         document.getElementById('player').style.left = playerX + '%';
     }
 
-    // UFO AI
-    let ufoX = 50, ufoTargetX = 50;
-    let ufoState = 'wander'; // wander, targeting, catching
-    let ufoTarget = null; // npc or player
-    let catchTimer = 0;
+    // UFO 배열 관리
+    let ufos = [];
+    let ufoIdCounter = 0;
 
-    function showSpeech(text) {
-        speech.textContent = text;
-        speech.classList.add('show');
-        setTimeout(() => speech.classList.remove('show'), 2000);
+    function createUFO() {
+        const id = ufoIdCounter++;
+        const el = document.createElement('div');
+        el.className = 'ufo';
+        el.id = 'ufo' + id;
+        el.style.top = (5 + Math.random() * 10) + '%';
+        el.style.left = (10 + Math.random() * 80) + '%';
+        el.innerHTML = `<div class="speech" id="speech${id}"></div><div class="ufo-dome"></div><div class="ufo-disc"></div><div class="ufo-lights"><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div></div><div class="beam" id="beam${id}"></div><div class="radar" id="radar${id}"></div>`;
+        scene.appendChild(el);
+        return { el, id, x: parseFloat(el.style.left), targetX: 50, state: 'wander', timer: 0 };
     }
 
-    function pickTarget() {
-        // 처음엔 NPC, 나중엔 플레이어
-        const aliveNPCs = people.filter(p => p.alive);
-        if (caughtCount < 2 && aliveNPCs.length > 0) {
-            ufoTarget = aliveNPCs[Math.floor(Math.random() * aliveNPCs.length)];
-            showSpeech('누굴 잡아갈까...');
-        } else {
-            ufoTarget = 'player';
-            showSpeech('너!');
-        }
-        ufoState = 'targeting';
-        document.getElementById('radar').classList.add('on');
-    }
+    // 첫 UFO
+    ufos.push(createUFO());
 
-    function catchTarget() {
-        if (ufoTarget === 'player') {
-            // 플레이어 잡힘 → 게임오버
-            beam.classList.add('on');
-            setTimeout(() => {
-                document.getElementById('player').classList.add('caught');
-                beam.classList.remove('on');
-                showSpeech('잡았다!');
-                endGame(false);
-            }, 800);
-        } else {
-            // NPC 잡힘
-            beam.classList.add('on');
-            setTimeout(() => {
-                ufoTarget.el.classList.add('caught');
-                ufoTarget.alive = false;
-                beam.classList.remove('on');
-                document.getElementById('radar').classList.remove('on');
-                caughtCount++;
-                ufoState = 'wander';
-                catchTimer = 0;
-            }, 800);
-        }
-    }
+    // 3초마다 UFO 추가
+    let spawnInterval = setInterval(() => {
+        if (gameOver) { clearInterval(spawnInterval); return; }
+        ufos.push(createUFO());
+    }, 3000);
 
     // 게임 루프
     function gameLoop() {
@@ -214,26 +179,33 @@
             p.el.style.left = p.x + '%';
         });
 
-        // UFO 이동
-        if (ufoState === 'wander') {
-            catchTimer++;
-            // 랜덤 떠다니기
-            if (Math.random() < 0.02) ufoTargetX = 10 + Math.random() * 80;
-            ufoX += (ufoTargetX - ufoX) * 0.02;
-            // 일정 시간 후 타겟 선정
-            if (catchTimer > 120) { pickTarget(); catchTimer = 0; }
-        } else if (ufoState === 'targeting') {
-            // 타겟 위로 이동 (느리게 — 피할 수 있음)
-            const targetX = ufoTarget === 'player' ? playerX : ufoTarget.x;
-            ufoX += (targetX - ufoX) * 0.015;
-            // 가까워지면 잡기 (더 가까이 와야 잡힘)
-            if (Math.abs(ufoX - targetX) < 2) {
-                ufoState = 'catching';
-                catchTarget();
+        // UFO들 이동
+        ufos.forEach(u => {
+            if (u.state === 'wander') {
+                u.timer++;
+                if (Math.random() < 0.02) u.targetX = 10 + Math.random() * 80;
+                u.x += (u.targetX - u.x) * 0.02;
+                // 일정 시간 후 플레이어 추적
+                if (u.timer > 90) {
+                    u.state = 'targeting';
+                    u.timer = 0;
+                    const speechEl = document.getElementById('speech' + u.id);
+                    if (speechEl) { speechEl.textContent = '너!'; speechEl.classList.add('show'); setTimeout(() => speechEl.classList.remove('show'), 1500); }
+                    const radarEl = document.getElementById('radar' + u.id);
+                    if (radarEl) radarEl.classList.add('on');
+                }
+            } else if (u.state === 'targeting') {
+                u.x += (playerX - u.x) * 0.015;
+                if (Math.abs(u.x - playerX) < 2) {
+                    // 잡힘
+                    const beamEl = document.getElementById('beam' + u.id);
+                    if (beamEl) beamEl.classList.add('on');
+                    document.getElementById('player').classList.add('caught');
+                    endGame(false);
+                }
             }
-        }
-
-        ufo.style.left = ufoX + '%';
+            u.el.style.left = u.x + '%';
+        });
         requestAnimationFrame(gameLoop);
     }
 
