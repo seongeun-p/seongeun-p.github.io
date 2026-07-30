@@ -140,8 +140,8 @@
 
     function movePlayer() {
         if (gameOver) return;
-        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 2;
-        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 2;
+        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.2;
+        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.2;
         playerX = Math.max(5, Math.min(95, playerX));
         document.getElementById('player').style.left = playerX + '%';
     }
