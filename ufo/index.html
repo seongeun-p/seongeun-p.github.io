@@ -104,7 +104,8 @@
         el.className = 'person';
         el.id = 'npc' + id;
         el.style.left = (15 + Math.random() * 70) + '%';
-        el.innerHTML = `<div class="person-head"></div><div class="person-body" style="background:${color.body}"></div><div class="person-legs"><div class="person-leg" style="background:${color.leg}"></div><div class="person-leg" style="background:${color.leg}"></div></div>`;
+        const faces = ['⚫ ⚫<br>⚫', '• •<br>︶', '◉ ◉<br>▽', '● ●<br>○'];
+        el.innerHTML = `<div class="person-head" style="display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1.2;text-align:center;color:#555;">${faces[id % faces.length]}</div><div class="person-body" style="background:${color.body}"></div><div class="person-legs"><div class="person-leg" style="background:${color.leg}"></div><div class="person-leg" style="background:${color.leg}"></div></div>`;
         scene.appendChild(el);
         return { el, x: parseFloat(el.style.left), dir: Math.random() > 0.5 ? 1 : -1, speed: 0.3 + Math.random() * 0.4, alive: true };
     }
