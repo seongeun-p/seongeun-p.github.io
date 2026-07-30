@@ -140,8 +140,8 @@
 
     function movePlayer() {
         if (gameOver) return;
-        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.5;
-        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.5;
+        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 2;
+        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 2;
         playerX = Math.max(5, Math.min(95, playerX));
         document.getElementById('player').style.left = playerX + '%';
     }
@@ -223,11 +223,11 @@
             // 일정 시간 후 타겟 선정
             if (catchTimer > 120) { pickTarget(); catchTimer = 0; }
         } else if (ufoState === 'targeting') {
-            // 타겟 위로 이동
+            // 타겟 위로 이동 (느리게 — 피할 수 있음)
             const targetX = ufoTarget === 'player' ? playerX : ufoTarget.x;
-            ufoX += (targetX - ufoX) * 0.04;
-            // 가까워지면 잡기
-            if (Math.abs(ufoX - targetX) < 3) {
+            ufoX += (targetX - ufoX) * 0.015;
+            // 가까워지면 잡기 (더 가까이 와야 잡힘)
+            if (Math.abs(ufoX - targetX) < 2) {
                 ufoState = 'catching';
                 catchTarget();
             }
