@@ -3,301 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UFO Abduction</title>
+    <title>UFO Survival</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            width: 100vw; height: 100vh; overflow: hidden;
-            background: #e8e4df;
-            font-family: -apple-system, sans-serif;
-        }
-        .back-btn {
-            position: fixed; top: 14px; left: 14px; z-index: 200;
-            color: #666; text-decoration: none; font-size: 22px;
-            font-weight: 300; opacity: 0.6;
-        }
+        body { width: 100vw; height: 100vh; overflow: hidden; background: #e8e4df; font-family: -apple-system, sans-serif; }
+        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 200; color: #666; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.6; }
         .back-btn:hover { opacity: 1; }
+        .scene { width: 100%; height: 100%; position: relative; overflow: hidden; }
+        .ground { position: absolute; bottom: 0; left: 0; width: 100%; height: 22%; background: #d4cfc8; border-radius: 50% 50% 0 0 / 15% 15% 0 0; box-shadow: inset 0 8px 20px rgba(0,0,0,0.04); }
 
-        .scene {
-            width: 100%; height: 100%; position: relative;
-            perspective: 800px;
-            overflow: hidden;
-        }
+        /* 타이머 */
+        .timer { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); font-size: 32px; font-weight: 800; color: #555; z-index: 100; font-family: 'Courier New', monospace; }
 
-        /* 바닥 */
-        .ground {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 25%;
-            background: #d4cfc8;
-            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
-            box-shadow: inset 0 10px 30px rgba(0,0,0,0.05), 0 -5px 15px rgba(0,0,0,0.03);
-        }
-
-        /* Claymorphism 공통 */
-        .clay {
-            background: #e8e4df;
-            border-radius: 20px;
-            box-shadow:
-                8px 8px 20px rgba(0,0,0,0.12),
-                -4px -4px 12px rgba(255,255,255,0.8),
-                inset 2px 2px 4px rgba(255,255,255,0.6),
-                inset -1px -1px 3px rgba(0,0,0,0.05);
-        }
+        /* Clay 스타일 */
+        .clay { border-radius: 20px; box-shadow: 6px 6px 16px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.7), inset 2px 2px 4px rgba(255,255,255,0.5), inset -1px -1px 3px rgba(0,0,0,0.04); }
 
         /* UFO */
-        .ufo {
-            position: absolute; top: -150px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            transition: top 2s ease-out, left 1.5s ease-in-out;
-        }
-        .ufo.enter { top: 8%; }
-        .ufo.wander1 { left: 35%; top: 12%; }
-        .ufo.wander2 { left: 65%; top: 6%; }
-        .ufo.wander3 { left: 45%; top: 10%; }
-        .ufo.target { left: 50%; top: 12%; }
-        .ufo.leave { top: -200px; transition: top 1.5s ease-in; }
-
-        .ufo-body {
-            width: 140px; height: 60px; position: relative;
-        }
-        .ufo-dome {
-            width: 60px; height: 40px;
-            background: linear-gradient(180deg, #c8d8e8 0%, #a8b8c8 100%);
-            border-radius: 50% 50% 40% 40%;
-            margin: 0 auto -10px;
-            box-shadow:
-                6px 6px 15px rgba(0,0,0,0.1),
-                -3px -3px 8px rgba(255,255,255,0.7),
-                inset 2px 2px 5px rgba(255,255,255,0.5);
-        }
-        .ufo-disc {
-            width: 140px; height: 35px;
-            background: linear-gradient(180deg, #bbb8b0 0%, #a8a49c 100%);
-            border-radius: 50%;
-            box-shadow:
-                8px 8px 20px rgba(0,0,0,0.15),
-                -4px -4px 10px rgba(255,255,255,0.6),
-                inset 3px 3px 6px rgba(255,255,255,0.4),
-                inset -2px -2px 4px rgba(0,0,0,0.08);
-        }
-        .ufo-lights {
-            display: flex; justify-content: center; gap: 12px;
-            margin-top: -18px; position: relative; z-index: 2;
-        }
-        .ufo-light {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #90ee90;
-            box-shadow: 0 0 8px rgba(100,255,100,0.6);
-            animation: blink 0.8s infinite alternate;
-        }
-        .ufo-light:nth-child(2n) { animation-delay: 0.4s; background: #ffee55; box-shadow: 0 0 8px rgba(255,238,85,0.6); }
-        @keyframes blink { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+        .ufo { position: absolute; z-index: 50; transition: left 0.8s ease, top 0.8s ease; }
+        .ufo-dome { width: 50px; height: 32px; background: linear-gradient(180deg, #c8d8e8, #a8b8c8); border-radius: 50% 50% 40% 40%; margin: 0 auto -8px; box-shadow: 5px 5px 12px rgba(0,0,0,0.1), -3px -3px 8px rgba(255,255,255,0.6); }
+        .ufo-disc { width: 120px; height: 30px; background: linear-gradient(180deg, #bbb8b0, #a8a49c); border-radius: 50%; box-shadow: 6px 6px 16px rgba(0,0,0,0.12), -3px -3px 8px rgba(255,255,255,0.6); }
+        .ufo-lights { display: flex; justify-content: center; gap: 10px; margin-top: -14px; }
+        .ufo-light { width: 8px; height: 8px; border-radius: 50%; background: #90ee90; box-shadow: 0 0 6px rgba(100,255,100,0.5); animation: blink 0.6s infinite alternate; }
+        .ufo-light:nth-child(2n) { background: #ffee55; animation-delay: 0.3s; }
+        @keyframes blink { 0%{opacity:0.4} 100%{opacity:1} }
 
         /* 빔 */
-        .beam {
-            position: absolute; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; top: 18%;
-            background: linear-gradient(180deg, rgba(100,255,100,0.5) 0%, rgba(100,255,100,0) 100%);
-            clip-path: polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%);
-            z-index: 5; opacity: 0;
-            transition: width 0.6s, height 0.6s, opacity 0.4s;
-        }
-        .beam.active { width: 180px; height: 60vh; opacity: 1; }
-        .beam.off { opacity: 0; }
+        .beam { position: absolute; width: 80px; height: 200px; left: 50%; top: 100%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(100,255,100,0.5), rgba(100,255,100,0)); clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .beam.on { opacity: 1; }
 
-        /* 사람 캐릭터 */
-        .person {
-            position: absolute; bottom: 22%;
-            display: flex; flex-direction: column; align-items: center;
-            z-index: 10;
-            animation: walk 6s linear infinite;
-        }
-        .person.target-person {
-            animation: none;
-            left: 50%; transform: translateX(-50%);
-            transition: transform 2s ease-in;
-        }
-        .person.abducted {
-            transform: translateX(-50%) translateY(-120vh);
-        }
+        /* 말풍선 */
+        .speech { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 8px 14px; font-size: 12px; font-weight: 600; color: #444; background: #e8e4df; border-radius: 14px; box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.7), inset 1px 1px 3px rgba(255,255,255,0.5); opacity: 0; transition: opacity 0.3s; }
+        .speech.show { opacity: 1; }
+        .speech::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #e8e4df; }
 
-        @keyframes walk {
-            0% { transform: translateX(-50vw); }
-            100% { transform: translateX(100vw); }
-        }
+        /* 사람 */
+        .person { position: absolute; bottom: 20%; display: flex; flex-direction: column; align-items: center; z-index: 10; transition: left 0.5s ease, opacity 0.3s; }
+        .person.caught { opacity: 0; transform: scale(0.5); transition: opacity 0.5s, transform 0.5s; }
+        .person-head { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.6); background: #d4cfc8; }
+        .person-head video { width: 150%; height: 150%; object-fit: cover; transform: scaleX(-1) translate(15%, 10%); }
+        .person-body { width: 26px; height: 40px; margin-top: -4px; border-radius: 10px 10px 6px 6px; box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.6); }
+        .person-legs { display: flex; gap: 3px; margin-top: -2px; }
+        .person-leg { width: 10px; height: 28px; border-radius: 5px; box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -1px -1px 4px rgba(255,255,255,0.5); }
 
-        .person-head {
-            width: 50px; height: 50px; border-radius: 50%;
-            overflow: hidden;
-            box-shadow:
-                5px 5px 12px rgba(0,0,0,0.1),
-                -3px -3px 8px rgba(255,255,255,0.7),
-                inset 2px 2px 4px rgba(255,255,255,0.5);
-            background: #d4cfc8;
-        }
-        .person-head video {
-            width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
-        }
-        .person-body {
-            width: 30px; height: 50px; margin-top: -5px;
-            border-radius: 12px 12px 8px 8px;
-            box-shadow:
-                5px 5px 12px rgba(0,0,0,0.1),
-                -3px -3px 8px rgba(255,255,255,0.7),
-                inset 2px 2px 4px rgba(255,255,255,0.4);
-        }
-        .person-legs {
-            display: flex; gap: 4px; margin-top: -2px;
-        }
-        .person-leg {
-            width: 12px; height: 35px;
-            border-radius: 6px;
-            box-shadow:
-                3px 3px 8px rgba(0,0,0,0.08),
-                -2px -2px 5px rgba(255,255,255,0.6);
-            animation: legMove 0.6s infinite alternate;
-        }
-        .person-leg:nth-child(2) { animation-delay: 0.3s; }
-        @keyframes legMove { 0% { transform: rotate(-8deg); } 100% { transform: rotate(8deg); } }
-
-        /* 사람 색상 */
-        .person:nth-child(1) .person-body { background: #e89090; }
-        .person:nth-child(1) .person-leg { background: #7a8a9a; }
-        .person:nth-child(2) .person-body { background: #90b8e8; }
-        .person:nth-child(2) .person-leg { background: #6a7a6a; }
-        .person:nth-child(3) .person-body { background: #e8d090; }
-        .person:nth-child(3) .person-leg { background: #8a7a6a; }
-        .person:nth-child(4) .person-body { background: #90e8b8; }
-        .person:nth-child(4) .person-leg { background: #7a7a8a; }
-        .person:nth-child(5) .person-body { background: #c890e8; }
-        .person:nth-child(5) .person-leg { background: #6a6a7a; }
-
-        /* 물음표 (고민) */
-        .thought {
-            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-            font-size: 28px; opacity: 0; transition: opacity 0.3s;
-        }
-        .thought.show { opacity: 1; }
-
-        /* 메시지 */
-        .message {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
-            font-size: 28px; font-weight: 700; color: #555;
-            z-index: 100; opacity: 0; letter-spacing: 4px;
-            font-family: 'Courier New', monospace;
-        }
-        .message.show { opacity: 1; transition: opacity 0.5s; }
+        /* 결과 */
+        .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        .result.show { opacity: 1; pointer-events: auto; }
+        .result h1 { font-size: 36px; color: #444; margin-bottom: 10px; }
+        .result p { font-size: 14px; color: #888; margin-bottom: 16px; }
+        .result button { padding: 10px 24px; border: none; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; background: #e8e4df; color: #444; box-shadow: 4px 4px 10px rgba(0,0,0,0.1), -2px -2px 6px rgba(255,255,255,0.7); }
     </style>
 </head>
 <body>
     <a class="back-btn" href="../">&lt;</a>
+    <div class="timer" id="timer">15</div>
     <div class="scene" id="scene">
         <div class="ground"></div>
-
-        <!-- UFO -->
-        <div class="ufo" id="ufo">
-            <div class="ufo-body">
-                <div class="ufo-dome"></div>
-                <div class="ufo-disc"></div>
-                <div class="ufo-lights">
-                    <div class="ufo-light"></div>
-                    <div class="ufo-light"></div>
-                    <div class="ufo-light"></div>
-                    <div class="ufo-light"></div>
-                </div>
-            </div>
-            <div class="thought" id="thought">🤔</div>
-        </div>
-
-        <!-- 빔 -->
-        <div class="beam" id="beam"></div>
-
-        <!-- 사람 5명 -->
-        <div class="person" id="p1" style="animation-duration:7s; animation-delay:-2s;">
-            <div class="person-head"></div>
-            <div class="person-body"></div>
-            <div class="person-legs"><div class="person-leg"></div><div class="person-leg"></div></div>
-        </div>
-        <div class="person" id="p2" style="animation-duration:9s; animation-delay:-5s;">
-            <div class="person-head"></div>
-            <div class="person-body"></div>
-            <div class="person-legs"><div class="person-leg"></div><div class="person-leg"></div></div>
-        </div>
-        <div class="person" id="p3" style="animation-duration:8s; animation-delay:-1s;">
-            <div class="person-head"></div>
-            <div class="person-body"></div>
-            <div class="person-legs"><div class="person-leg"></div><div class="person-leg"></div></div>
-        </div>
-        <div class="person" id="p4" style="animation-duration:10s; animation-delay:-7s;">
-            <div class="person-head"></div>
-            <div class="person-body"></div>
-            <div class="person-legs"><div class="person-leg"></div><div class="person-leg"></div></div>
-        </div>
-        <!-- 타겟 (내 얼굴) -->
-        <div class="person target-person" id="target">
-            <div class="person-head"><video id="faceVideo" autoplay playsinline muted></video></div>
-            <div class="person-body" style="background:#e8c890;"></div>
-            <div class="person-legs"><div class="person-leg" style="background:#5a6a7a;"></div><div class="person-leg" style="background:#5a6a7a;"></div></div>
+        <div class="ufo" id="ufo" style="top:8%; left:50%;">
+            <div class="speech" id="speech"></div>
+            <div class="ufo-dome"></div>
+            <div class="ufo-disc"></div>
+            <div class="ufo-lights"><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div><div class="ufo-light"></div></div>
+            <div class="beam" id="beam"></div>
         </div>
     </div>
-
-    <div class="message" id="message">ABDUCTED</div>
+    <div class="result" id="result"><h1 id="resultTitle"></h1><p id="resultText"></p><button onclick="location.reload()">다시하기</button></div>
 
     <script>
+    const scene = document.getElementById('scene');
     const ufo = document.getElementById('ufo');
     const beam = document.getElementById('beam');
-    const target = document.getElementById('target');
-    const thought = document.getElementById('thought');
-    const message = document.getElementById('message');
+    const speech = document.getElementById('speech');
+    const timerEl = document.getElementById('timer');
+    const result = document.getElementById('result');
+
+    const GAME_TIME = 15;
+    const COLORS = [
+        {body:'#e89090',leg:'#7a8a9a'},
+        {body:'#90b8e8',leg:'#6a7a6a'},
+        {body:'#e8d090',leg:'#8a7a6a'},
+        {body:'#90e8b8',leg:'#7a7a8a'},
+    ];
+
+    let gameOver = false;
+    let timeLeft = GAME_TIME;
+    let playerX = 50; // percent
+    let people = [];
+    let caughtCount = 0;
 
     // 카메라
     async function startCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 200, height: 200 } });
-            document.getElementById('faceVideo').srcObject = stream;
-        } catch (e) {}
-    }
-    startCamera();
-
-    // 시퀀스 타이밍
-    function startSequence() {
-        // 1) UFO 등장 (2초)
-        setTimeout(() => { ufo.classList.add('enter'); }, 1000);
-
-        // 2) 두리번거리며 떠다님 (간 보기)
-        setTimeout(() => { ufo.classList.add('wander1'); thought.textContent = '👀'; thought.classList.add('show'); }, 3500);
-        setTimeout(() => { thought.classList.remove('show'); }, 5000);
-        setTimeout(() => { ufo.classList.remove('wander1'); ufo.classList.add('wander2'); }, 5500);
-        setTimeout(() => { thought.textContent = '🤔'; thought.classList.add('show'); }, 6500);
-        setTimeout(() => { thought.classList.remove('show'); }, 8000);
-        setTimeout(() => { ufo.classList.remove('wander2'); ufo.classList.add('wander3'); }, 8500);
-        setTimeout(() => { thought.textContent = '😈'; thought.classList.add('show'); }, 9500);
-        setTimeout(() => { thought.classList.remove('show'); }, 10500);
-
-        // 3) 타겟 위로 이동
-        setTimeout(() => {
-            ufo.classList.remove('wander3');
-            ufo.classList.add('target');
-        }, 11000);
-
-        // 4) 빔!
-        setTimeout(() => { beam.classList.add('active'); }, 12500);
-
-        // 5) 납치
-        setTimeout(() => { target.classList.add('abducted'); }, 13500);
-
-        // 6) 빔 끄기 + UFO 떠남
-        setTimeout(() => { beam.classList.remove('active'); beam.classList.add('off'); }, 15500);
-        setTimeout(() => { ufo.classList.add('leave'); ufo.classList.remove('target'); }, 16000);
-
-        // 7) 메시지
-        setTimeout(() => { message.classList.add('show'); }, 17000);
-
-        // 8) 리셋
-        setTimeout(() => { location.reload(); }, 20000);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 200, height: 200 }});
+            document.getElementById('playerVideo').srcObject = stream;
+        } catch(e) {}
     }
 
-    startSequence();
+    // NPC 생성
+    function createNPC(id, color) {
+        const el = document.createElement('div');
+        el.className = 'person';
+        el.id = 'npc' + id;
+        el.style.left = (15 + Math.random() * 70) + '%';
+        el.innerHTML = `<div class="person-head"></div><div class="person-body" style="background:${color.body}"></div><div class="person-legs"><div class="person-leg" style="background:${color.leg}"></div><div class="person-leg" style="background:${color.leg}"></div></div>`;
+        scene.appendChild(el);
+        return { el, x: parseFloat(el.style.left), dir: Math.random() > 0.5 ? 1 : -1, speed: 0.3 + Math.random() * 0.4, alive: true };
+    }
+
+    // 플레이어 생성
+    function createPlayer() {
+        const el = document.createElement('div');
+        el.className = 'person';
+        el.id = 'player';
+        el.style.left = '50%';
+        el.innerHTML = `<div class="person-head"><video id="playerVideo" autoplay playsinline muted></video></div><div class="person-body" style="background:#e8c890"></div><div class="person-legs"><div class="person-leg" style="background:#5a6a7a"></div><div class="person-leg" style="background:#5a6a7a"></div></div>`;
+        scene.appendChild(el);
+        startCamera();
+    }
+
+    // 초기화
+    for (let i = 0; i < 4; i++) {
+        people.push(createNPC(i, COLORS[i]));
+    }
+    createPlayer();
+
+    // 눈동자(얼굴) 방향으로 이동 — 여기서는 마우스/터치로 대체
+    document.addEventListener('mousemove', (e) => {
+        if (gameOver) return;
+        playerX = (e.clientX / window.innerWidth) * 100;
+        playerX = Math.max(5, Math.min(95, playerX));
+        document.getElementById('player').style.left = playerX + '%';
+    });
+    document.addEventListener('touchmove', (e) => {
+        if (gameOver) return;
+        playerX = (e.touches[0].clientX / window.innerWidth) * 100;
+        playerX = Math.max(5, Math.min(95, playerX));
+        document.getElementById('player').style.left = playerX + '%';
+    });
+
+    // UFO AI
+    let ufoX = 50, ufoTargetX = 50;
+    let ufoState = 'wander'; // wander, targeting, catching
+    let ufoTarget = null; // npc or player
+    let catchTimer = 0;
+
+    function showSpeech(text) {
+        speech.textContent = text;
+        speech.classList.add('show');
+        setTimeout(() => speech.classList.remove('show'), 2000);
+    }
+
+    function pickTarget() {
+        // 처음엔 NPC, 나중엔 플레이어
+        const aliveNPCs = people.filter(p => p.alive);
+        if (caughtCount < 2 && aliveNPCs.length > 0) {
+            ufoTarget = aliveNPCs[Math.floor(Math.random() * aliveNPCs.length)];
+            showSpeech('누굴 잡아갈까...');
+        } else {
+            ufoTarget = 'player';
+            showSpeech('너!');
+        }
+        ufoState = 'targeting';
+    }
+
+    function catchTarget() {
+        if (ufoTarget === 'player') {
+            // 플레이어 잡힘 → 게임오버
+            beam.classList.add('on');
+            setTimeout(() => {
+                document.getElementById('player').classList.add('caught');
+                beam.classList.remove('on');
+                showSpeech('잡았다!');
+                endGame(false);
+            }, 800);
+        } else {
+            // NPC 잡힘
+            beam.classList.add('on');
+            setTimeout(() => {
+                ufoTarget.el.classList.add('caught');
+                ufoTarget.alive = false;
+                beam.classList.remove('on');
+                caughtCount++;
+                ufoState = 'wander';
+                catchTimer = 0;
+            }, 800);
+        }
+    }
+
+    // 게임 루프
+    function gameLoop() {
+        if (gameOver) return;
+
+        // NPC 이동 (랜덤 좌우)
+        people.forEach(p => {
+            if (!p.alive) return;
+            if (Math.random() < 0.02) p.dir *= -1; // 가끔 방향 전환
+            p.x += p.dir * p.speed;
+            if (p.x < 5) { p.x = 5; p.dir = 1; }
+            if (p.x > 95) { p.x = 95; p.dir = -1; }
+            p.el.style.left = p.x + '%';
+        });
+
+        // UFO 이동
+        if (ufoState === 'wander') {
+            catchTimer++;
+            // 랜덤 떠다니기
+            if (Math.random() < 0.02) ufoTargetX = 10 + Math.random() * 80;
+            ufoX += (ufoTargetX - ufoX) * 0.02;
+            // 일정 시간 후 타겟 선정
+            if (catchTimer > 120) { pickTarget(); catchTimer = 0; }
+        } else if (ufoState === 'targeting') {
+            // 타겟 위로 이동
+            const targetX = ufoTarget === 'player' ? playerX : ufoTarget.x;
+            ufoX += (targetX - ufoX) * 0.04;
+            // 가까워지면 잡기
+            if (Math.abs(ufoX - targetX) < 3) {
+                ufoState = 'catching';
+                catchTarget();
+            }
+        }
+
+        ufo.style.left = ufoX + '%';
+        requestAnimationFrame(gameLoop);
+    }
+
+    // 타이머
+    function countdown() {
+        if (gameOver) return;
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            endGame(true);
+        } else {
+            setTimeout(countdown, 1000);
+        }
+    }
+
+    function endGame(survived) {
+        gameOver = true;
+        const title = document.getElementById('resultTitle');
+        const text = document.getElementById('resultText');
+        if (survived) {
+            title.textContent = '🎉 생존 성공!';
+            text.textContent = '15초 동안 UFO를 피했습니다';
+        } else {
+            title.textContent = '🛸 납치됨...';
+            text.textContent = 'UFO에게 잡혔습니다';
+        }
+        result.classList.add('show');
+    }
+
+    // 시작
+    setTimeout(() => { gameLoop(); countdown(); }, 1500);
     </script>
 </body>
 </html>
