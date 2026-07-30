@@ -32,9 +32,10 @@
         .beam.on { opacity: 1; }
 
         /* 레이더 스캔 */
-        .radar { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: 160px; height: 160px; border-radius: 50%; border: 2px solid rgba(100,255,100,0.4); opacity: 0; pointer-events: none; animation: radarPulse 1.5s infinite; }
+        .radar { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: 160px; height: 160px; border-radius: 50%; border: 3px solid rgba(100,255,100,0.6); opacity: 0; pointer-events: none; animation: radarPulse 1.5s infinite; }
         .radar.on { opacity: 1; }
-        @keyframes radarPulse { 0% { width:40px; height:40px; opacity:0.8; } 100% { width:200px; height:200px; opacity:0; } }
+        .radar.danger { border-color: rgba(255,80,80,0.8); }
+        @keyframes radarPulse { 0% { width:60px; height:60px; opacity:0.9; } 100% { width:250px; height:250px; opacity:0; } }
 
         /* 말풍선 */
         .speech { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 8px 14px; font-size: 12px; font-weight: 600; color: #444; background: #e8e4df; border-radius: 14px; box-shadow: 4px 4px 10px rgba(0,0,0,0.08), -2px -2px 6px rgba(255,255,255,0.7), inset 1px 1px 3px rgba(255,255,255,0.5); opacity: 0; transition: opacity 0.3s; }
@@ -131,8 +132,8 @@
 
     function movePlayer() {
         if (gameOver) return;
-        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.8;
-        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.8;
+        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 0.8;
+        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 0.8;
         playerX = Math.max(5, Math.min(95, playerX));
         document.getElementById('player').style.left = playerX + '%';
     }
@@ -156,11 +157,11 @@
     // 첫 UFO
     ufos.push(createUFO());
 
-    // 3초마다 UFO 추가
+    // 10초마다 UFO 추가
     let spawnInterval = setInterval(() => {
         if (gameOver) { clearInterval(spawnInterval); return; }
         ufos.push(createUFO());
-    }, 3000);
+    }, 10000);
 
     // 게임 루프
     function gameLoop() {
@@ -196,6 +197,12 @@
                 }
             } else if (u.state === 'targeting') {
                 u.x += (playerX - u.x) * 0.008;
+                // 레이더 색 변경 (가까우면 빨간색)
+                const radarEl = document.getElementById('radar' + u.id);
+                if (radarEl) {
+                    if (Math.abs(u.x - playerX) < 15) radarEl.classList.add('danger');
+                    else radarEl.classList.remove('danger');
+                }
                 if (Math.abs(u.x - playerX) < 2) {
                     // 잡힘
                     const beamEl = document.getElementById('beam' + u.id);
