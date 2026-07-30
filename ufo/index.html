@@ -131,8 +131,8 @@
 
     function movePlayer() {
         if (gameOver) return;
-        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.2;
-        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.2;
+        if (keysDown['ArrowLeft'] || keysDown['a']) playerX -= 1.8;
+        if (keysDown['ArrowRight'] || keysDown['d']) playerX += 1.8;
         playerX = Math.max(5, Math.min(95, playerX));
         document.getElementById('player').style.left = playerX + '%';
     }
@@ -185,8 +185,8 @@
                 u.timer++;
                 if (Math.random() < 0.02) u.targetX = 10 + Math.random() * 80;
                 u.x += (u.targetX - u.x) * 0.02;
-                // 일정 시간 후 플레이어 추적
-                if (u.timer > 90) {
+                // 일정 시간 후 플레이어 추적 (더 오래 떠다님)
+                if (u.timer > 200) {
                     u.state = 'targeting';
                     u.timer = 0;
                     const speechEl = document.getElementById('speech' + u.id);
@@ -195,7 +195,7 @@
                     if (radarEl) radarEl.classList.add('on');
                 }
             } else if (u.state === 'targeting') {
-                u.x += (playerX - u.x) * 0.015;
+                u.x += (playerX - u.x) * 0.008;
                 if (Math.abs(u.x - playerX) < 2) {
                     // 잡힘
                     const beamEl = document.getElementById('beam' + u.id);
