@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Line Sketch</title>
+    <title>Fake Typography</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #f0f0f0;
+            background: #fff;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, sans-serif;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
         }
@@ -19,217 +19,124 @@
             font-weight: 300; opacity: 0.5;
         }
         .back-btn:hover { opacity: 1; }
-
-        h1 { font-size: 20px; margin-bottom: 8px; color: #222; }
-        .subtitle { font-size: 12px; color: #888; margin-bottom: 20px; }
-
-        .upload-area {
-            display: flex; gap: 12px; margin-bottom: 20px;
+        h1 { font-size: 18px; margin-bottom: 6px; color: #222; }
+        .subtitle { font-size: 12px; color: #999; margin-bottom: 16px; }
+        .upload-area { display: flex; gap: 10px; margin-bottom: 16px; }
+        .btn {
+            padding: 9px 18px; border-radius: 20px; font-size: 12px;
+            font-weight: 600; cursor: pointer; border: none;
+            background: #222; color: #fff;
         }
-        .upload-btn, .camera-btn {
-            padding: 10px 20px; border-radius: 24px;
-            font-size: 13px; font-weight: 600; cursor: pointer;
-            border: none; transition: background 0.2s;
-        }
-        .upload-btn { background: #222; color: #fff; }
-        .upload-btn:hover { background: #444; }
-        .camera-btn { background: #0984e3; color: #fff; }
-        .camera-btn:hover { background: #0770c2; }
-
+        .btn:hover { background: #444; }
+        .btn.cam { background: #0984e3; }
         #fileInput { display: none; }
-
-        .result-area {
-            display: flex; gap: 16px; flex-wrap: wrap;
-            justify-content: center; align-items: flex-start;
-            max-width: 95vw;
-        }
-        .result-area canvas, .result-area video {
-            max-width: 45vw; max-height: 70vh;
-            border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        #original { display: none; }
-        #output { display: none; }
-
-        .camera-view {
-            display: none; flex-direction: column; align-items: center; gap: 12px;
-        }
+        .result { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 95vw; }
+        .result canvas { max-width: 45vw; max-height: 70vh; border: 1px solid #eee; }
+        #original, #output { display: none; }
+        .camera-view { display: none; flex-direction: column; align-items: center; gap: 10px; }
         .camera-view.show { display: flex; }
-        .camera-view video {
-            max-width: 45vw; max-height: 60vh; border-radius: 4px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .snap-btn {
-            padding: 10px 24px; background: #e74c3c; color: #fff;
-            border: none; border-radius: 24px; font-size: 13px;
-            font-weight: 600; cursor: pointer;
-        }
-        .snap-btn:hover { background: #c0392b; }
-
-        .controls {
-            display: none; gap: 12px; margin: 16px 0; align-items: center;
-        }
-        .controls.show { display: flex; }
-        .controls label { font-size: 11px; color: #666; }
-        .controls input[type="range"] { width: 100px; }
-        .download-btn {
-            padding: 8px 16px; background: #27ae60; color: #fff;
-            border: none; border-radius: 20px; font-size: 12px;
-            font-weight: 600; cursor: pointer;
-        }
-
-        .loading {
-            display: none; font-size: 13px; color: #666; margin: 20px;
-        }
+        .camera-view video { max-width: 45vw; max-height: 50vh; border-radius: 4px; }
+        .snap-btn { padding: 9px 20px; background: #e74c3c; color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .loading { display: none; font-size: 12px; color: #888; margin: 12px; }
         .loading.show { display: block; }
     </style>
 </head>
 <body>
     <a class="back-btn" href="../">&lt;</a>
-    <h1>Line Sketch</h1>
-    <div class="subtitle">사진을 올리면 선 그래픽으로 변환해요</div>
-
+    <h1>Fake Typography</h1>
+    <div class="subtitle">사진을 올리면 가짜 글자로 바꿔줘요</div>
     <div class="upload-area">
-        <button class="upload-btn" id="uploadBtn">사진 올리기</button>
-        <button class="camera-btn" id="cameraBtn">카메라 촬영</button>
+        <button class="btn" id="uploadBtn">사진 올리기</button>
+        <button class="btn cam" id="cameraBtn">카메라</button>
         <input type="file" id="fileInput" accept="image/*">
     </div>
-
     <div class="camera-view" id="cameraView">
         <video id="video" autoplay playsinline></video>
         <button class="snap-btn" id="snapBtn">촬영</button>
     </div>
-
-    <div class="controls" id="controls">
-        <label>감도 <input type="range" id="threshold" min="20" max="120" value="50"></label>
-        <label>선 굵기 <input type="range" id="lineWidth" min="1" max="5" value="2"></label>
-        <button class="download-btn" id="downloadBtn">저장</button>
-    </div>
-
     <div class="loading" id="loading">변환 중...</div>
-
-    <div class="result-area">
+    <div class="result">
         <canvas id="original"></canvas>
         <canvas id="output"></canvas>
     </div>
 
     <script>
     const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const cameraBtn = document.getElementById('cameraBtn');
     const cameraView = document.getElementById('cameraView');
     const video = document.getElementById('video');
-    const snapBtn = document.getElementById('snapBtn');
     const originalCanvas = document.getElementById('original');
     const outputCanvas = document.getElementById('output');
-    const controls = document.getElementById('controls');
     const loading = document.getElementById('loading');
-    const thresholdSlider = document.getElementById('threshold');
-    const lineWidthSlider = document.getElementById('lineWidth');
-    const downloadBtn = document.getElementById('downloadBtn');
 
-    let currentImageData = null;
-
-    uploadBtn.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', (e) => {
+    document.getElementById('uploadBtn').onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => loadImage(ev.target.result);
         reader.readAsDataURL(file);
-    });
+    };
 
-    // 카메라
-    cameraBtn.addEventListener('click', async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            cameraView.classList.add('show');
-        } catch (err) {
-            alert('카메라를 사용할 수 없습니다');
-        }
-    });
-
-    snapBtn.addEventListener('click', () => {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = video.videoWidth;
-        tempCanvas.height = video.videoHeight;
-        tempCanvas.getContext('2d').drawImage(video, 0, 0);
-        const dataUrl = tempCanvas.toDataURL('image/jpeg');
-        // 카메라 끄기
+    document.getElementById('cameraBtn').onclick = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        cameraView.classList.add('show');
+    };
+    document.getElementById('snapBtn').onclick = () => {
+        const c = document.createElement('canvas');
+        c.width = video.videoWidth; c.height = video.videoHeight;
+        c.getContext('2d').drawImage(video, 0, 0);
         video.srcObject.getTracks().forEach(t => t.stop());
         cameraView.classList.remove('show');
-        loadImage(dataUrl);
-    });
+        loadImage(c.toDataURL('image/jpeg'));
+    };
 
     function loadImage(src) {
         loading.classList.add('show');
         const img = new Image();
         img.onload = () => {
-            // 리사이즈 (너무 크면 느려짐)
-            const maxSize = 800;
+            const maxSize = 600;
             let w = img.width, h = img.height;
             if (w > maxSize || h > maxSize) {
-                const ratio = Math.min(maxSize / w, maxSize / h);
-                w = Math.floor(w * ratio);
-                h = Math.floor(h * ratio);
+                const r = Math.min(maxSize / w, maxSize / h);
+                w = Math.floor(w * r); h = Math.floor(h * r);
             }
-
-            originalCanvas.width = w;
-            originalCanvas.height = h;
+            originalCanvas.width = w; originalCanvas.height = h;
             const octx = originalCanvas.getContext('2d');
             octx.drawImage(img, 0, 0, w, h);
             originalCanvas.style.display = 'block';
-
-            currentImageData = octx.getImageData(0, 0, w, h);
-            processImage();
-            controls.classList.add('show');
+            processImage(octx.getImageData(0, 0, w, h), w, h);
             loading.classList.remove('show');
         };
         img.src = src;
     }
 
-    // 슬라이더 변경 시 재처리
-    thresholdSlider.addEventListener('input', processImage);
-    lineWidthSlider.addEventListener('input', processImage);
-
-    function processImage() {
-        if (!currentImageData) return;
-        const w = currentImageData.width;
-        const h = currentImageData.height;
-        const src = currentImageData.data;
-
-        outputCanvas.width = w;
-        outputCanvas.height = h;
+    function processImage(imageData, w, h) {
+        const src = imageData.data;
+        outputCanvas.width = w; outputCanvas.height = h;
         outputCanvas.style.display = 'block';
         const ctx = outputCanvas.getContext('2d');
 
-        // 배경 (회색)
-        ctx.fillStyle = '#c8c8c8';
+        // 배경 흰색
+        ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, w, h);
 
-        const threshold = parseInt(thresholdSlider.value);
-        const lw = parseInt(lineWidthSlider.value);
-
-        // 그레이스케일 변환
+        // 그레이스케일
         const gray = new Uint8Array(w * h);
         for (let i = 0; i < w * h; i++) {
             const idx = i * 4;
             gray[i] = Math.round(src[idx] * 0.299 + src[idx+1] * 0.587 + src[idx+2] * 0.114);
         }
 
-        // Sobel 엣지 검출
+        // Sobel 엣지
         const edges = new Float32Array(w * h);
         const angles = new Float32Array(w * h);
         for (let y = 1; y < h - 1; y++) {
             for (let x = 1; x < w - 1; x++) {
                 const idx = y * w + x;
-                // Sobel X
                 const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)]
                          - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)]
                          - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
-                // Sobel Y
                 const gy = -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)]
                          + gray[(y+1)*w+(x-1)] + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
                 edges[idx] = Math.sqrt(gx * gx + gy * gy);
@@ -237,58 +144,69 @@
             }
         }
 
-        // 색상 분류: 원본 색상 기반으로 선 색 결정
-        // 녹색 계열 / 빨간-갈색 계열 / 기타
-        ctx.lineWidth = lw;
+        // 글자 격자로 분할해서 그리기
+        const cellSize = 28; // 한 "글자" 크기
+        const padding = 4;
+        const threshold = 40;
+
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
 
-        // 엣지 위치에서 선 그리기 (스트로크 방식)
-        const step = Math.max(2, 6 - lw);
-        for (let y = step; y < h - step; y += step) {
-            for (let x = step; x < w - step; x += step) {
-                const idx = y * w + x;
-                if (edges[idx] < threshold) continue;
+        for (let cy = 0; cy < h; cy += cellSize) {
+            for (let cx = 0; cx < w; cx += cellSize) {
+                // 셀 내부 엣지 포인트 수집
+                const strokes = [];
+                let lastX = -1, lastY = -1;
+                let hasContent = false;
 
-                // 원본 색상에서 선 색 결정
-                const si = idx * 4;
-                const r = src[si], g = src[si+1], b = src[si+2];
-                let color;
-                if (g > r * 1.2 && g > b * 1.2) {
-                    color = '#00cc44'; // 녹색 계열
-                } else if (r > g * 1.1 && r > b) {
-                    color = '#e63333'; // 빨간/갈색 계열
-                } else if (b > r && b > g) {
-                    color = '#3366ff'; // 파란 계열
-                } else if (r > 150 && g > 150 && b < 100) {
-                    color = '#ccaa00'; // 노란 계열
-                } else {
-                    color = '#e63333'; // 기본 빨간
+                // 셀 내부를 스캔해서 연결된 선 추출
+                for (let sy = cy + padding; sy < Math.min(cy + cellSize - padding, h); sy += 2) {
+                    for (let sx = cx + padding; sx < Math.min(cx + cellSize - padding, w); sx += 2) {
+                        const idx = sy * w + sx;
+                        if (edges[idx] > threshold) {
+                            hasContent = true;
+                            const angle = angles[idx];
+                            const len = 3 + Math.random() * 4;
+                            strokes.push({
+                                x1: sx, y1: sy,
+                                x2: sx + Math.cos(angle) * len,
+                                y2: sy + Math.sin(angle) * len
+                            });
+                        }
+                    }
                 }
 
-                ctx.strokeStyle = color;
+                if (!hasContent) continue;
 
-                // 엣지 방향에 수직으로 짧은 선 그리기
-                const angle = angles[idx];
-                const len = 4 + Math.random() * 8;
-                const cx = x, cy = y;
-                const dx = Math.cos(angle) * len;
-                const dy = Math.sin(angle) * len;
-
+                // 선분들을 연결해서 "글자처럼" 그리기
                 ctx.beginPath();
-                ctx.moveTo(cx - dx, cy - dy);
-                ctx.lineTo(cx + dx, cy + dy);
+                strokes.forEach((s, i) => {
+                    if (i === 0 || Math.random() > 0.6) {
+                        ctx.moveTo(s.x1, s.y1);
+                    }
+                    ctx.lineTo(s.x2, s.y2);
+                    // 가끔 곡선으로 연결 (글자 느낌)
+                    if (i < strokes.length - 1 && Math.random() > 0.4) {
+                        const next = strokes[i + 1];
+                        ctx.quadraticCurveTo(
+                            (s.x2 + next.x1) / 2 + (Math.random() - 0.5) * 6,
+                            (s.y2 + next.y1) / 2 + (Math.random() - 0.5) * 6,
+                            next.x1, next.y1
+                        );
+                    }
+                });
                 ctx.stroke();
+
+                // 셀 테두리 (살짝 보이게 — 글자 격자감)
+                if (hasContent && Math.random() > 0.7) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.03)';
+                    ctx.strokeRect(cx, cy, cellSize, cellSize);
+                    ctx.strokeStyle = '#111';
+                }
             }
         }
     }
-
-    // 다운로드
-    downloadBtn.addEventListener('click', () => {
-        const link = document.createElement('a');
-        link.download = 'line-sketch.png';
-        link.href = outputCanvas.toDataURL('image/png');
-        link.click();
-    });
     </script>
 </body>
 </html>
