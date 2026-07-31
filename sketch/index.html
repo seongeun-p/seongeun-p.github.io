@@ -21,7 +21,7 @@
 
         /* SVG 마키 */
         .marquee-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .marquee-letter { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: 42px; }
+        .marquee-letter { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: 420px; fill: #000; }
 
         /* 메인 */
         .main { display: none; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
@@ -38,8 +38,8 @@
         .loading.show { display: block; }
 
         /* 결과물 */
-        .result-area { margin: 20px 0; }
-        .result-area canvas { max-width: 80vw; max-height: 60vh; border: 1px solid #eee; display: none; }
+        .result-area { margin: 20px 0; display: flex; gap: 16px; align-items: flex-start; }
+        .result-area canvas { max-width: 38vw; max-height: 55vh; border: 1px solid #eee; display: none; }
 
         /* 히스토리 */
         .history { margin-top: 40px; width: 100%; max-width: 700px; }
@@ -55,26 +55,20 @@
 
     <!-- 인트로 -->
     <div class="intro" id="intro">
-        <svg class="marquee-container" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
+        <svg class="marquee-container" viewBox="0 0 10000 6000" preserveAspectRatio="xMidYMid meet">
             <defs>
-                <path id="path1" d="M -50,150 Q 250,50 500,150 T 1050,150" fill="none"/>
-                <path id="path2" d="M -50,300 Q 250,200 500,300 T 1050,300" fill="none"/>
-                <path id="path3" d="M -50,450 Q 250,350 500,450 T 1050,450" fill="none"/>
+                <path id="path1" d="M -500,1500 Q 2500,500 5000,1500 T 10500,1500" fill="none"/>
+                <path id="path2" d="M -500,3000 Q 2500,2000 5000,3000 T 10500,3000" fill="none"/>
+                <path id="path3" d="M -500,4500 Q 2500,3500 5000,4500 T 10500,4500" fill="none"/>
             </defs>
             <text class="marquee-letter">
-                <textPath href="#path1" id="tp1">
-                    <tspan fill="#e63946">F</tspan> <tspan fill="#2a9d8f">A</tspan> <tspan fill="#e9c46a">K</tspan> <tspan fill="#264653">E</tspan> <tspan fill="#f4a261">T</tspan> <tspan fill="#e76f51">Y</tspan> <tspan fill="#606c38">P</tspan> <tspan fill="#283618">O</tspan> <tspan fill="#dda15e">G</tspan> <tspan fill="#bc6c25">R</tspan> <tspan fill="#6d6875">A</tspan> <tspan fill="#b5838d">P</tspan> <tspan fill="#e63946">H</tspan> <tspan fill="#457b9d">Y</tspan>
-                </textPath>
+                <textPath href="#path1" id="tp1">F A K E T Y P O G R A P H Y</textPath>
             </text>
             <text class="marquee-letter">
-                <textPath href="#path2" id="tp2">
-                    <tspan fill="#457b9d">F</tspan> <tspan fill="#e63946">A</tspan> <tspan fill="#2a9d8f">K</tspan> <tspan fill="#e9c46a">E</tspan> <tspan fill="#264653">T</tspan> <tspan fill="#f4a261">Y</tspan> <tspan fill="#e76f51">P</tspan> <tspan fill="#606c38">O</tspan> <tspan fill="#283618">G</tspan> <tspan fill="#dda15e">R</tspan> <tspan fill="#bc6c25">A</tspan> <tspan fill="#6d6875">P</tspan> <tspan fill="#b5838d">H</tspan> <tspan fill="#e63946">Y</tspan>
-                </textPath>
+                <textPath href="#path2" id="tp2">F A K E T Y P O G R A P H Y</textPath>
             </text>
             <text class="marquee-letter">
-                <textPath href="#path3" id="tp3">
-                    <tspan fill="#b5838d">F</tspan> <tspan fill="#457b9d">A</tspan> <tspan fill="#e63946">K</tspan> <tspan fill="#2a9d8f">E</tspan> <tspan fill="#e9c46a">T</tspan> <tspan fill="#264653">Y</tspan> <tspan fill="#f4a261">P</tspan> <tspan fill="#e76f51">O</tspan> <tspan fill="#606c38">G</tspan> <tspan fill="#283618">R</tspan> <tspan fill="#dda15e">A</tspan> <tspan fill="#bc6c25">P</tspan> <tspan fill="#6d6875">H</tspan> <tspan fill="#b5838d">Y</tspan>
-                </textPath>
+                <textPath href="#path3" id="tp3">F A K E T Y P O G R A P H Y</textPath>
             </text>
         </svg>
         <div class="intro-center">
@@ -96,6 +90,7 @@
         </div>
         <div class="loading" id="loading">Processing...</div>
         <div class="result-area">
+            <canvas id="originalCanvas"></canvas>
             <canvas id="output"></canvas>
         </div>
         <div class="history" id="history">
@@ -106,9 +101,9 @@
 
     <script>
     // 마키 애니메이션
-    let offset1 = 0, offset2 = 500, offset3 = 250;
+    let offset1 = 0, offset2 = 5000, offset3 = 2500;
     function animateMarquee() {
-        offset1 -= 0.5; offset2 -= 0.7; offset3 -= 0.3;
+        offset1 -= 3; offset2 -= 4; offset3 -= 2;
         document.getElementById('tp1').setAttribute('startOffset', offset1);
         document.getElementById('tp2').setAttribute('startOffset', offset2);
         document.getElementById('tp3').setAttribute('startOffset', offset3);
@@ -146,6 +141,11 @@
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = w; tempCanvas.height = h;
             tempCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            // 원본 표시
+            const origCanvas = document.getElementById('originalCanvas');
+            origCanvas.width = w; origCanvas.height = h;
+            origCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            origCanvas.style.display = 'block';
             processImage(tempCanvas.getContext('2d').getImageData(0,0,w,h), w, h);
             loading.classList.remove('show');
         };
@@ -214,14 +214,10 @@
         // 타이포 포스터 메타데이터 텍스트
         const now = new Date();
         const meta = [
-            `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`,
-            `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
-            `Detected: "${letter}"`,
-            `Aspect: ${aspectRatio.toFixed(2)}`,
-            `Resolution: ${w}×${h}`,
-            `Edge density: ${(cnt/(w*h)*100).toFixed(1)}%`,
+            `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+            `Detected: "${letter}"  |  ${w}×${h}`,
+            `Edge: ${(cnt/(w*h)*100).toFixed(1)}%  |  Ratio: ${aspectRatio.toFixed(2)}`,
             'FAKE TYPOGRAPHY',
-            'Generated output',
         ];
 
         ctx.fillStyle = '#333';
