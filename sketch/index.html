@@ -148,16 +148,27 @@
         const pad = 4;
         const threshold = 45;
 
-        ctx.strokeStyle = '#111';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        // 엣지 방향 조합에 따라 영어 알파벳 매핑
+        const ALPHABET_MAP = [
+            { h: true, v: true, d1: false, d2: false, chars: ['T','L','E','F','H'] },
+            { h: true, v: false, d1: false, d2: false, chars: ['C','S','Z','—'] },
+            { h: false, v: true, d1: false, d2: false, chars: ['I','l','|','i'] },
+            { h: true, v: true, d1: true, d2: false, chars: ['K','R','B','P'] },
+            { h: true, v: true, d1: false, d2: true, chars: ['N','Z','k'] },
+            { h: false, v: false, d1: true, d2: false, chars: ['\\','v','w'] },
+            { h: false, v: false, d1: false, d2: true, chars: ['/','V','W'] },
+            { h: false, v: false, d1: true, d2: true, chars: ['X','x','Y'] },
+            { h: true, v: false, d1: true, d2: true, chars: ['A','M','W'] },
+            { h: false, v: true, d1: true, d2: true, chars: ['Y','X','K'] },
+        ];
+
+        ctx.fillStyle = '#111';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
         for (let cy = 0; cy < h; cy += cellSize) {
             for (let cx = 0; cx < w; cx += cellSize) {
-                // 셀 내 엣지 방향 분석 — 4방향으로 분류
-                const bins = { h: 0, v: 0, d1: 0, d2: 0 }; // 가로, 세로, ↘, ↗
-                const hPoints = [], vPoints = [], d1Points = [], d2Points = [];
+                const bins = { h: 0, v: 0, d1: 0, d2: 0 };
                 let total = 0;
 
                 for (let sy = cy + pad; sy < Math.min(cy + cellSize - pad, h); sy += 3) {
@@ -165,52 +176,47 @@
                         const idx = sy * w + sx;
                         if (edges[idx] < threshold) continue;
                         total++;
-                        const a = ((angles[idx] % Math.PI) + Math.PI) % Math.PI; // 0~PI
-                        if (a < Math.PI * 0.2 || a > Math.PI * 0.8) { bins.h++; hPoints.push({x:sx,y:sy}); }
-                        else if (a > Math.PI * 0.3 && a < Math.PI * 0.7) { bins.v++; vPoints.push({x:sx,y:sy}); }
-                        else if (a >= Math.PI * 0.2 && a <= Math.PI * 0.3) { bins.d1++; d1Points.push({x:sx,y:sy}); }
-                        else { bins.d2++; d2Points.push({x:sx,y:sy}); }
+                        const a = ((angles[idx] % Math.PI) + Math.PI) % Math.PI;
+                        if (a < Math.PI * 0.2 || a > Math.PI * 0.8) bins.h++;
+                        else if (a > Math.PI * 0.3 && a < Math.PI * 0.7) bins.v++;
+                        else if (a >= Math.PI * 0.2 && a <= Math.PI * 0.3) bins.d1++;
+                        else bins.d2++;
                     }
                 }
 
                 if (total < 3) continue;
 
-                // 주요 방향의 획을 깔끔한 직선/곡선으로 그리기
-                const cellCx = cx + cellSize / 2;
-                const cellCy = cy + cellSize / 2;
-                const halfCell = cellSize / 2 - pad;
+                // 방향 조합에 맞는 알파벳 선택
+                const hasH = bins.h > total * 0.2;
+                const hasV = bins.v > total * 0.2;
+                const hasD1 = bins.d1 > total * 0.12;
+                const hasD2 = bins.d2 > total * 0.12;
 
-                ctx.beginPath();
-
-                // 가로획
-                if (bins.h > total * 0.2 && hPoints.length > 2) {
-                    const avgY = hPoints.reduce((s,p) => s+p.y, 0) / hPoints.length;
-                    ctx.moveTo(cx + pad + Math.random()*3, avgY + (Math.random()-0.5)*2);
-                    ctx.lineTo(cx + cellSize - pad - Math.random()*3, avgY + (Math.random()-0.5)*2);
-                }
-                // 세로획
-                if (bins.v > total * 0.2 && vPoints.length > 2) {
-                    const avgX = vPoints.reduce((s,p) => s+p.x, 0) / vPoints.length;
-                    ctx.moveTo(avgX + (Math.random()-0.5)*2, cy + pad + Math.random()*3);
-                    ctx.lineTo(avgX + (Math.random()-0.5)*2, cy + cellSize - pad - Math.random()*3);
-                }
-                // 대각선 ↘
-                if (bins.d1 > total * 0.15 && d1Points.length > 2) {
-                    ctx.moveTo(cx + pad + Math.random()*4, cy + pad + Math.random()*4);
-                    ctx.lineTo(cx + cellSize - pad - Math.random()*4, cy + cellSize - pad - Math.random()*4);
-                }
-                // 대각선 ↗
-                if (bins.d2 > total * 0.15 && d2Points.length > 2) {
-                    ctx.moveTo(cx + pad + Math.random()*4, cy + cellSize - pad - Math.random()*4);
-                    ctx.lineTo(cx + cellSize - pad - Math.random()*4, cy + pad + Math.random()*4);
-                }
-                // 원형 (엣지가 고르게 분포하면)
-                if (total > 8 && Math.abs(bins.h - bins.v) < total * 0.15) {
-                    ctx.moveTo(cellCx + halfCell * 0.6, cellCy);
-                    ctx.arc(cellCx, cellCy, halfCell * 0.5, 0, Math.PI * 1.6);
+                // 원형 (고르게 분포) → O
+                if (total > 6 && Math.abs(bins.h - bins.v) < total * 0.15 && !hasD1 && !hasD2) {
+                    const fontSize = 14 + Math.min(total, 20) * 0.8;
+                    ctx.font = `${fontSize}px serif`;
+                    ctx.fillText('O', cx + cellSize/2, cy + cellSize/2);
+                    continue;
                 }
 
-                ctx.stroke();
+                let char = '';
+                for (const m of ALPHABET_MAP) {
+                    if (m.h === hasH && m.v === hasV && m.d1 === hasD1 && m.d2 === hasD2) {
+                        char = m.chars[Math.floor(Math.random() * m.chars.length)];
+                        break;
+                    }
+                }
+                if (!char) {
+                    // fallback — 밀도 기반
+                    const density = total;
+                    const fallback = 'abcdefghijklmnopqrstuvwxyz';
+                    char = fallback[Math.floor((density / 30) * fallback.length) % fallback.length];
+                }
+
+                const fontSize = 12 + Math.min(total, 15) * 1;
+                ctx.font = `${fontSize}px 'Courier New', monospace`;
+                ctx.fillText(char, cx + cellSize/2, cy + cellSize/2);
             }
         }
     }
