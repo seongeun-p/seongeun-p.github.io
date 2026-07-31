@@ -12,16 +12,15 @@
 
         /* 인트로 */
         .intro { width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .marquee-path { position: absolute; width: 100%; height: 100%; }
-        .marquee-text { font-size: 48px; font-weight: 900; letter-spacing: 8px; }
-        .intro-center { z-index: 10; text-align: center; }
+        .marquee-track { position: absolute; top: 50%; transform: translateY(-50%); white-space: nowrap; display: flex; animation: scrollMarquee 8s linear infinite; }
+        .marquee-track span { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: 35vw; color: #000; letter-spacing: -0.02em; padding-right: 5vw; }
+        @keyframes scrollMarquee { 0% { transform: translateY(-50%) translateX(0); } 100% { transform: translateY(-50%) translateX(-50%); } }
+        .intro-center { z-index: 10; text-align: center; position: relative; }
         .intro-center p { font-size: 13px; color: #888; margin-bottom: 20px; }
         .intro-btn { padding: 12px 28px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Helvetica, sans-serif; }
         .intro-btn:hover { background: #333; }
 
-        /* SVG 마키 */
-        .marquee-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .marquee-letter { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: 12000px; fill: #000; }
+        .marquee-container { display: none; }
 
         /* 메인 */
         .main { display: none; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
@@ -55,14 +54,10 @@
 
     <!-- 인트로 -->
     <div class="intro" id="intro">
-        <svg class="marquee-container" viewBox="0 0 300000 20000" preserveAspectRatio="xMidYMid slice">
-            <defs>
-                <path id="path2" d="M -20000,10000 Q 75000,5000 150000,10000 T 320000,10000" fill="none"/>
-            </defs>
-            <text class="marquee-letter">
-                <textPath href="#path2" id="tp2">F A K E T Y P O G R A P H Y</textPath>
-            </text>
-        </svg>
+        <div class="marquee-track">
+            <span>FAKE TYPOGRAPHY</span>
+            <span>FAKE TYPOGRAPHY</span>
+        </div>
         <div class="intro-center">
             <p>사진 속 형태를 알파벳으로 해석합니다</p>
             <button class="intro-btn" id="startBtn">START →</button>
@@ -92,15 +87,6 @@
     </div>
 
     <script>
-    // 마키 애니메이션
-    let offset2 = 0;
-    function animateMarquee() {
-        offset2 -= 30;
-        document.getElementById('tp2').setAttribute('startOffset', offset2);
-        requestAnimationFrame(animateMarquee);
-    }
-    animateMarquee();
-
     // 인트로 → 메인
     document.getElementById('startBtn').onclick = () => {
         document.getElementById('intro').style.display = 'none';
