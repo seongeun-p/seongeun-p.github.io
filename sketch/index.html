@@ -12,15 +12,13 @@
 
         /* 인트로 */
         .intro { width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .marquee-track { position: absolute; top: 50%; transform: translateY(-50%); white-space: nowrap; display: flex; animation: scrollMarquee 8s linear infinite; }
-        .marquee-track span { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: 35vw; color: #000; letter-spacing: -0.02em; padding-right: 5vw; }
-        @keyframes scrollMarquee { 0% { transform: translateY(-50%) translateX(0); } 100% { transform: translateY(-50%) translateX(-50%); } }
+        .marquee-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .intro-center { z-index: 10; text-align: center; position: relative; }
         .intro-center p { font-size: 13px; color: #888; margin-bottom: 20px; }
         .intro-btn { padding: 12px 28px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Helvetica, sans-serif; }
         .intro-btn:hover { background: #333; }
 
-        .marquee-container { display: none; }
+        .marquee-container { }
 
         /* 메인 */
         .main { display: none; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
@@ -54,10 +52,14 @@
 
     <!-- 인트로 -->
     <div class="intro" id="intro">
-        <div class="marquee-track">
-            <span>FAKE TYPOGRAPHY</span>
-            <span>FAKE TYPOGRAPHY</span>
-        </div>
+        <svg class="marquee-svg" viewBox="0 0 1400 500" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <path id="wavePath" d="M -200,250 C 100,100 300,400 500,250 C 700,100 900,400 1100,250 C 1300,100 1500,400 1700,250" fill="none"/>
+            </defs>
+            <text font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="200" fill="#000" letter-spacing="10">
+                <textPath href="#wavePath" id="tp">FAKE TYPOGRAPHY FAKE TYPOGRAPHY</textPath>
+            </text>
+        </svg>
         <div class="intro-center">
             <p>사진 속 형태를 알파벳으로 해석합니다</p>
             <button class="intro-btn" id="startBtn">START →</button>
@@ -87,6 +89,15 @@
     </div>
 
     <script>
+    // 마키 애니메이션 (느리게)
+    let marqueeOffset = 0;
+    function animateMarquee() {
+        marqueeOffset -= 0.3;
+        document.getElementById('tp').setAttribute('startOffset', marqueeOffset);
+        requestAnimationFrame(animateMarquee);
+    }
+    animateMarquee();
+
     // 인트로 → 메인
     document.getElementById('startBtn').onclick = () => {
         document.getElementById('intro').style.display = 'none';
