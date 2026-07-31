@@ -117,7 +117,6 @@
         outputCanvas.style.display = 'block';
         const ctx = outputCanvas.getContext('2d');
 
-        // 배경 흰색
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, w, h);
 
@@ -144,66 +143,74 @@
             }
         }
 
-        // 글자 격자로 분할해서 그리기
-        const cellSize = 28; // 한 "글자" 크기
-        const padding = 4;
-        const threshold = 40;
+        // 글자 격자
+        const cellSize = 32;
+        const pad = 4;
+        const threshold = 45;
 
         ctx.strokeStyle = '#111';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
         ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
         for (let cy = 0; cy < h; cy += cellSize) {
             for (let cx = 0; cx < w; cx += cellSize) {
-                // 셀 내부 엣지 포인트 수집
-                const strokes = [];
-                let lastX = -1, lastY = -1;
-                let hasContent = false;
+                // 셀 내 엣지 방향 분석 — 4방향으로 분류
+                const bins = { h: 0, v: 0, d1: 0, d2: 0 }; // 가로, 세로, ↘, ↗
+                const hPoints = [], vPoints = [], d1Points = [], d2Points = [];
+                let total = 0;
 
-                // 셀 내부를 스캔해서 연결된 선 추출
-                for (let sy = cy + padding; sy < Math.min(cy + cellSize - padding, h); sy += 2) {
-                    for (let sx = cx + padding; sx < Math.min(cx + cellSize - padding, w); sx += 2) {
+                for (let sy = cy + pad; sy < Math.min(cy + cellSize - pad, h); sy += 3) {
+                    for (let sx = cx + pad; sx < Math.min(cx + cellSize - pad, w); sx += 3) {
                         const idx = sy * w + sx;
-                        if (edges[idx] > threshold) {
-                            hasContent = true;
-                            const angle = angles[idx];
-                            const len = 3 + Math.random() * 4;
-                            strokes.push({
-                                x1: sx, y1: sy,
-                                x2: sx + Math.cos(angle) * len,
-                                y2: sy + Math.sin(angle) * len
-                            });
-                        }
+                        if (edges[idx] < threshold) continue;
+                        total++;
+                        const a = ((angles[idx] % Math.PI) + Math.PI) % Math.PI; // 0~PI
+                        if (a < Math.PI * 0.2 || a > Math.PI * 0.8) { bins.h++; hPoints.push({x:sx,y:sy}); }
+                        else if (a > Math.PI * 0.3 && a < Math.PI * 0.7) { bins.v++; vPoints.push({x:sx,y:sy}); }
+                        else if (a >= Math.PI * 0.2 && a <= Math.PI * 0.3) { bins.d1++; d1Points.push({x:sx,y:sy}); }
+                        else { bins.d2++; d2Points.push({x:sx,y:sy}); }
                     }
                 }
 
-                if (!hasContent) continue;
+                if (total < 3) continue;
 
-                // 선분들을 연결해서 "글자처럼" 그리기
+                // 주요 방향의 획을 깔끔한 직선/곡선으로 그리기
+                const cellCx = cx + cellSize / 2;
+                const cellCy = cy + cellSize / 2;
+                const halfCell = cellSize / 2 - pad;
+
                 ctx.beginPath();
-                strokes.forEach((s, i) => {
-                    if (i === 0 || Math.random() > 0.6) {
-                        ctx.moveTo(s.x1, s.y1);
-                    }
-                    ctx.lineTo(s.x2, s.y2);
-                    // 가끔 곡선으로 연결 (글자 느낌)
-                    if (i < strokes.length - 1 && Math.random() > 0.4) {
-                        const next = strokes[i + 1];
-                        ctx.quadraticCurveTo(
-                            (s.x2 + next.x1) / 2 + (Math.random() - 0.5) * 6,
-                            (s.y2 + next.y1) / 2 + (Math.random() - 0.5) * 6,
-                            next.x1, next.y1
-                        );
-                    }
-                });
-                ctx.stroke();
 
-                // 셀 테두리 (살짝 보이게 — 글자 격자감)
-                if (hasContent && Math.random() > 0.7) {
-                    ctx.strokeStyle = 'rgba(0,0,0,0.03)';
-                    ctx.strokeRect(cx, cy, cellSize, cellSize);
-                    ctx.strokeStyle = '#111';
+                // 가로획
+                if (bins.h > total * 0.2 && hPoints.length > 2) {
+                    const avgY = hPoints.reduce((s,p) => s+p.y, 0) / hPoints.length;
+                    ctx.moveTo(cx + pad + Math.random()*3, avgY + (Math.random()-0.5)*2);
+                    ctx.lineTo(cx + cellSize - pad - Math.random()*3, avgY + (Math.random()-0.5)*2);
                 }
+                // 세로획
+                if (bins.v > total * 0.2 && vPoints.length > 2) {
+                    const avgX = vPoints.reduce((s,p) => s+p.x, 0) / vPoints.length;
+                    ctx.moveTo(avgX + (Math.random()-0.5)*2, cy + pad + Math.random()*3);
+                    ctx.lineTo(avgX + (Math.random()-0.5)*2, cy + cellSize - pad - Math.random()*3);
+                }
+                // 대각선 ↘
+                if (bins.d1 > total * 0.15 && d1Points.length > 2) {
+                    ctx.moveTo(cx + pad + Math.random()*4, cy + pad + Math.random()*4);
+                    ctx.lineTo(cx + cellSize - pad - Math.random()*4, cy + cellSize - pad - Math.random()*4);
+                }
+                // 대각선 ↗
+                if (bins.d2 > total * 0.15 && d2Points.length > 2) {
+                    ctx.moveTo(cx + pad + Math.random()*4, cy + cellSize - pad - Math.random()*4);
+                    ctx.lineTo(cx + cellSize - pad - Math.random()*4, cy + pad + Math.random()*4);
+                }
+                // 원형 (엣지가 고르게 분포하면)
+                if (total > 8 && Math.abs(bins.h - bins.v) < total * 0.15) {
+                    ctx.moveTo(cellCx + halfCell * 0.6, cellCy);
+                    ctx.arc(cellCx, cellCy, halfCell * 0.5, 0, Math.PI * 1.6);
+                }
+
+                ctx.stroke();
             }
         }
     }
