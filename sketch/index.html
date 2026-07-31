@@ -194,10 +194,28 @@
         const VIVID_COLORS = ['#ff0055', '#00e5ff', '#76ff03', '#ff6d00', '#d500f9', '#00c853', '#2979ff', '#ff1744', '#ffea00', '#00bfa5'];
         const resultColor = VIVID_COLORS[Math.floor(Math.random() * VIVID_COLORS.length)];
         
-        // 70% 흰바탕+색글자, 30% 색바탕+흰글자
-        const invertMode = Math.random() < 0.3;
+        // 60% 검정, 30% 컬러(흰바탕), 10% 반전(색바탕+흰글자)
+        const rand = Math.random();
+        let letterColor, bgColor, invertMode;
+        if (rand < 0.6) {
+            // 검정
+            letterColor = '#000';
+            bgColor = '#fff';
+            invertMode = false;
+        } else if (rand < 0.9) {
+            // 컬러
+            letterColor = VIVID_COLORS[Math.floor(Math.random() * VIVID_COLORS.length)];
+            bgColor = '#fff';
+            invertMode = false;
+        } else {
+            // 반전
+            letterColor = '#fff';
+            bgColor = VIVID_COLORS[Math.floor(Math.random() * VIVID_COLORS.length)];
+            invertMode = true;
+        }
+
         if (invertMode) {
-            ctx.fillStyle = resultColor;
+            ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, w, h);
         }
 
@@ -205,10 +223,10 @@
         ctx.font = `bold ${fontSize}px Helvetica, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = invertMode ? '#fff' : resultColor;
+        ctx.fillStyle = letterColor;
         ctx.fillText(letter, bcx, bcy);
 
-        // 메타 텍스트 — 반전 모드면 흰색, 아니면 검정
+        // 메타 텍스트
         const metaColor = invertMode ? '#fff' : '#000';
 
         // 타이포 포스터 메타데이터 텍스트
