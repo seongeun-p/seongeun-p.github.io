@@ -6,27 +6,13 @@
     <title>Fake Typography</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #fff;
-            min-height: 100vh;
-            font-family: -apple-system, sans-serif;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-        .back-btn {
-            position: fixed; top: 14px; left: 14px; z-index: 100;
-            color: #333; text-decoration: none; font-size: 22px;
-            font-weight: 300; opacity: 0.5;
-        }
+        body { background: #fff; min-height: 100vh; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #333; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
         .back-btn:hover { opacity: 1; }
         h1 { font-size: 18px; margin-bottom: 6px; color: #222; }
         .subtitle { font-size: 12px; color: #999; margin-bottom: 16px; }
         .upload-area { display: flex; gap: 10px; margin-bottom: 16px; }
-        .btn {
-            padding: 9px 18px; border-radius: 20px; font-size: 12px;
-            font-weight: 600; cursor: pointer; border: none;
-            background: #222; color: #fff;
-        }
+        .btn { padding: 9px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: #222; color: #fff; }
         .btn:hover { background: #444; }
         .btn.cam { background: #0984e3; }
         #fileInput { display: none; }
@@ -44,7 +30,7 @@
 <body>
     <a class="back-btn" href="../">&lt;</a>
     <h1>Fake Typography</h1>
-    <div class="subtitle">사진을 올리면 가짜 글자로 바꿔줘요</div>
+    <div class="subtitle">사진 속 피사체를 알파벳 하나로 표현해요</div>
     <div class="upload-area">
         <button class="btn" id="uploadBtn">사진 올리기</button>
         <button class="btn cam" id="cameraBtn">카메라</button>
@@ -59,7 +45,6 @@
         <canvas id="original"></canvas>
         <canvas id="output"></canvas>
     </div>
-
     <script>
     const fileInput = document.getElementById('fileInput');
     const cameraView = document.getElementById('cameraView');
@@ -69,27 +54,9 @@
     const loading = document.getElementById('loading');
 
     document.getElementById('uploadBtn').onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => loadImage(ev.target.result);
-        reader.readAsDataURL(file);
-    };
-
-    document.getElementById('cameraBtn').onclick = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        video.srcObject = stream;
-        cameraView.classList.add('show');
-    };
-    document.getElementById('snapBtn').onclick = () => {
-        const c = document.createElement('canvas');
-        c.width = video.videoWidth; c.height = video.videoHeight;
-        c.getContext('2d').drawImage(video, 0, 0);
-        video.srcObject.getTracks().forEach(t => t.stop());
-        cameraView.classList.remove('show');
-        loadImage(c.toDataURL('image/jpeg'));
-    };
+    fileInput.onchange = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = (ev) => loadImage(ev.target.result); r.readAsDataURL(f); };
+    document.getElementById('cameraBtn').onclick = async () => { const s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); video.srcObject = s; cameraView.classList.add('show'); };
+    document.getElementById('snapBtn').onclick = () => { const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight; c.getContext('2d').drawImage(video,0,0); video.srcObject.getTracks().forEach(t=>t.stop()); cameraView.classList.remove('show'); loadImage(c.toDataURL('image/jpeg')); };
 
     function loadImage(src) {
         loading.classList.add('show');
@@ -97,15 +64,12 @@
         img.onload = () => {
             const maxSize = 600;
             let w = img.width, h = img.height;
-            if (w > maxSize || h > maxSize) {
-                const r = Math.min(maxSize / w, maxSize / h);
-                w = Math.floor(w * r); h = Math.floor(h * r);
-            }
+            if (w > maxSize || h > maxSize) { const r = Math.min(maxSize/w, maxSize/h); w = Math.floor(w*r); h = Math.floor(h*r); }
             originalCanvas.width = w; originalCanvas.height = h;
             const octx = originalCanvas.getContext('2d');
             octx.drawImage(img, 0, 0, w, h);
             originalCanvas.style.display = 'block';
-            processImage(octx.getImageData(0, 0, w, h), w, h);
+            processImage(octx.getImageData(0,0,w,h), w, h);
             loading.classList.remove('show');
         };
         img.src = src;
@@ -116,109 +80,115 @@
         outputCanvas.width = w; outputCanvas.height = h;
         outputCanvas.style.display = 'block';
         const ctx = outputCanvas.getContext('2d');
-
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = '#c8c8c8';
         ctx.fillRect(0, 0, w, h);
 
         // 그레이스케일
         const gray = new Uint8Array(w * h);
-        for (let i = 0; i < w * h; i++) {
-            const idx = i * 4;
-            gray[i] = Math.round(src[idx] * 0.299 + src[idx+1] * 0.587 + src[idx+2] * 0.114);
-        }
+        for (let i = 0; i < w*h; i++) { const idx = i*4; gray[i] = Math.round(src[idx]*0.299 + src[idx+1]*0.587 + src[idx+2]*0.114); }
 
         // Sobel 엣지
         const edges = new Float32Array(w * h);
-        const angles = new Float32Array(w * h);
-        for (let y = 1; y < h - 1; y++) {
-            for (let x = 1; x < w - 1; x++) {
-                const idx = y * w + x;
-                const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)]
-                         - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)]
-                         - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
-                const gy = -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)]
-                         + gray[(y+1)*w+(x-1)] + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
-                edges[idx] = Math.sqrt(gx * gx + gy * gy);
-                angles[idx] = Math.atan2(gy, gx);
+        for (let y = 1; y < h-1; y++) {
+            for (let x = 1; x < w-1; x++) {
+                const idx = y*w+x;
+                const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)] - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)] - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
+                const gy = -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)] + gray[(y+1)*w+(x-1)] + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
+                edges[idx] = Math.sqrt(gx*gx + gy*gy);
             }
         }
 
-        // 글자 격자
-        const cellSize = 32;
-        const pad = 4;
-        const threshold = 45;
+        // 피사체 바운딩 박스 찾기 (엣지 밀도 높은 영역)
+        const threshold = 50;
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        let edgeCount = 0;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                if (edges[y*w+x] > threshold) {
+                    edgeCount++;
+                    if (x < minX) minX = x; if (x > maxX) maxX = x;
+                    if (y < minY) minY = y; if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (edgeCount < 20) return;
 
-        // 엣지 방향 조합에 따라 영어 알파벳 매핑
-        const ALPHABET_MAP = [
-            { h: true, v: true, d1: false, d2: false, chars: ['T','L','E','F','H'] },
-            { h: true, v: false, d1: false, d2: false, chars: ['C','S','Z','—'] },
-            { h: false, v: true, d1: false, d2: false, chars: ['I','l','|','i'] },
-            { h: true, v: true, d1: true, d2: false, chars: ['K','R','B','P'] },
-            { h: true, v: true, d1: false, d2: true, chars: ['N','Z','k'] },
-            { h: false, v: false, d1: true, d2: false, chars: ['\\','v','w'] },
-            { h: false, v: false, d1: false, d2: true, chars: ['/','V','W'] },
-            { h: false, v: false, d1: true, d2: true, chars: ['X','x','Y'] },
-            { h: true, v: false, d1: true, d2: true, chars: ['A','M','W'] },
-            { h: false, v: true, d1: true, d2: true, chars: ['Y','X','K'] },
-        ];
+        const bw = maxX - minX;
+        const bh = maxY - minY;
+        const bcx = minX + bw/2;
+        const bcy = minY + bh/2;
+        const aspectRatio = bw / (bh || 1);
 
-        ctx.fillStyle = '#111';
+        // 중앙 빈 정도 (도넛형 = O)
+        let centerEdge = 0, totalSampled = 0;
+        for (let y = bcy - bh*0.2; y < bcy + bh*0.2; y += 3) {
+            for (let x = bcx - bw*0.2; x < bcx + bw*0.2; x += 3) {
+                if (x >= 0 && x < w && y >= 0 && y < h) {
+                    totalSampled++;
+                    if (edges[Math.floor(y)*w + Math.floor(x)] > threshold) centerEdge++;
+                }
+            }
+        }
+        const centerRatio = totalSampled > 0 ? centerEdge / totalSampled : 0;
+
+        // 상하좌우 분포
+        let top = 0, bottom = 0, left = 0, right = 0;
+        for (let y = minY; y <= maxY; y += 3) {
+            for (let x = minX; x <= maxX; x += 3) {
+                if (edges[y*w+x] > threshold) {
+                    if (y < bcy) top++; else bottom++;
+                    if (x < bcx) left++; else right++;
+                }
+            }
+        }
+
+        // 알파벳 결정
+        let letter;
+        if (aspectRatio < 0.35) letter = 'I';
+        else if (aspectRatio > 3) letter = '~';
+        else if (centerRatio < 0.08 && aspectRatio > 0.6 && aspectRatio < 1.5) letter = 'O';
+        else if (top > bottom * 2) letter = ['T','Y','V'][Math.floor(Math.random()*3)];
+        else if (bottom > top * 2) letter = ['A','U','L'][Math.floor(Math.random()*3)];
+        else if (left > right * 1.8) letter = ['C','J','b'][Math.floor(Math.random()*3)];
+        else if (right > left * 1.8) letter = ['P','d','7'][Math.floor(Math.random()*3)];
+        else if (aspectRatio > 1.2) letter = ['W','M','m'][Math.floor(Math.random()*3)];
+        else if (aspectRatio < 0.6) letter = ['f','l','t'][Math.floor(Math.random()*3)];
+        else letter = ['X','H','K','N','R','B','S'][Math.floor(Math.random()*7)];
+
+        // 원본에서 피사체 주요 색 추출
+        let rS=0,gS=0,bS=0,cnt=0;
+        for (let y = minY; y <= maxY; y += 5) {
+            for (let x = minX; x <= maxX; x += 5) {
+                if (edges[y*w+x] > threshold) {
+                    const idx = (y*w+x)*4;
+                    rS += src[idx]; gS += src[idx+1]; bS += src[idx+2]; cnt++;
+                }
+            }
+        }
+        cnt = cnt || 1;
+        const mainR = Math.round(rS/cnt), mainG = Math.round(gS/cnt), mainB = Math.round(bS/cnt);
+
+        // 색 결정: 원본 기반 + 보색
+        const isGreenish = mainG > mainR * 1.2 && mainG > mainB * 1.2;
+        const color1 = isGreenish ? '#00cc44' : `rgb(${Math.min(255,mainR+40)},${Math.min(255,mainG+20)},${Math.min(255,mainB+20)})`;
+        const color2 = isGreenish ? '#e63333' : '#e63333';
+
+        // 글자를 피사체 크기/위치에 맞춰 크게 그리기 (선으로만)
+        const fontSize = Math.max(bw, bh) * 1.1;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
 
-        for (let cy = 0; cy < h; cy += cellSize) {
-            for (let cx = 0; cx < w; cx += cellSize) {
-                const bins = { h: 0, v: 0, d1: 0, d2: 0 };
-                let total = 0;
+        // 레이어 1: 메인 색 stroke
+        ctx.font = `bold ${fontSize}px Georgia, serif`;
+        ctx.lineWidth = Math.max(4, fontSize * 0.025);
+        ctx.strokeStyle = color1;
+        ctx.strokeText(letter, bcx, bcy);
 
-                for (let sy = cy + pad; sy < Math.min(cy + cellSize - pad, h); sy += 3) {
-                    for (let sx = cx + pad; sx < Math.min(cx + cellSize - pad, w); sx += 3) {
-                        const idx = sy * w + sx;
-                        if (edges[idx] < threshold) continue;
-                        total++;
-                        const a = ((angles[idx] % Math.PI) + Math.PI) % Math.PI;
-                        if (a < Math.PI * 0.2 || a > Math.PI * 0.8) bins.h++;
-                        else if (a > Math.PI * 0.3 && a < Math.PI * 0.7) bins.v++;
-                        else if (a >= Math.PI * 0.2 && a <= Math.PI * 0.3) bins.d1++;
-                        else bins.d2++;
-                    }
-                }
-
-                if (total < 3) continue;
-
-                // 방향 조합에 맞는 알파벳 선택
-                const hasH = bins.h > total * 0.2;
-                const hasV = bins.v > total * 0.2;
-                const hasD1 = bins.d1 > total * 0.12;
-                const hasD2 = bins.d2 > total * 0.12;
-
-                // 원형 (고르게 분포) → O
-                if (total > 6 && Math.abs(bins.h - bins.v) < total * 0.15 && !hasD1 && !hasD2) {
-                    const fontSize = 14 + Math.min(total, 20) * 0.8;
-                    ctx.font = `${fontSize}px serif`;
-                    ctx.fillText('O', cx + cellSize/2, cy + cellSize/2);
-                    continue;
-                }
-
-                let char = '';
-                for (const m of ALPHABET_MAP) {
-                    if (m.h === hasH && m.v === hasV && m.d1 === hasD1 && m.d2 === hasD2) {
-                        char = m.chars[Math.floor(Math.random() * m.chars.length)];
-                        break;
-                    }
-                }
-                if (!char) {
-                    // fallback — 밀도 기반
-                    const density = total;
-                    const fallback = 'abcdefghijklmnopqrstuvwxyz';
-                    char = fallback[Math.floor((density / 30) * fallback.length) % fallback.length];
-                }
-
-                const fontSize = 12 + Math.min(total, 15) * 1;
-                ctx.font = `${fontSize}px 'Courier New', monospace`;
-                ctx.fillText(char, cx + cellSize/2, cy + cellSize/2);
-            }
-        }
+        // 레이어 2: 보조 색 (얇게, 약간 오프셋)
+        ctx.lineWidth = Math.max(2, fontSize * 0.015);
+        ctx.strokeStyle = color2;
+        ctx.strokeText(letter, bcx + 3, bcy + 3);
     }
     </script>
 </body>
