@@ -89,6 +89,11 @@
     </div>
 
     <script>
+    // 썸네일 모드 — 작은 텍스트 숨기기
+    if (new URLSearchParams(window.location.search).get('thumb') === '1') {
+        document.querySelector('.intro-center').style.display = 'none';
+    }
+
     // 마키 애니메이션 (느리게)
     let marqueeOffset = 0;
     function animateMarquee() {
