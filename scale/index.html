@@ -6,12 +6,12 @@
     <title>키로의 무게는?</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { width: 100vw; height: 100vh; overflow: hidden; background: #f8f6f3; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; }
-        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #333; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
+        body { width: 100vw; height: 100vh; overflow: hidden; background: #7c3aed; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #fff; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
         .back-btn:hover { opacity: 1; }
 
-        h1 { margin-top: 20px; font-size: 18px; color: #333; }
-        .subtitle { font-size: 12px; color: #999; margin-top: 4px; margin-bottom: 16px; }
+        h1 { margin-top: 20px; font-size: 18px; color: #fff; }
+        .subtitle { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; margin-bottom: 16px; }
 
         /* 저울 */
         .scale-area { position: relative; width: 500px; height: 300px; margin: 0 auto; }
@@ -24,22 +24,30 @@
         .pan-items { position: absolute; bottom: 12px; width: 100px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; align-items: flex-end; }
 
         /* 키로 유령 */
-        .kiro { position: absolute; bottom: 20px; left: 30px; font-size: 48px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); animation: float 2s ease-in-out infinite; }
+        .kiro { position: absolute; bottom: 14px; left: 15px; width: 60px; height: 70px; animation: float 2s ease-in-out infinite; }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+        /* 연기 효과 */
+        .smoke-container { position: absolute; bottom: 10px; left: 25px; width: 50px; height: 80px; pointer-events: none; }
+        .smoke { position: absolute; width: 14px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: smokeRise 3s ease-out infinite; opacity: 0; }
+        .smoke:nth-child(2) { left: 15px; animation-delay: 0.8s; width: 10px; height: 10px; }
+        .smoke:nth-child(3) { left: 30px; animation-delay: 1.5s; width: 12px; height: 12px; }
+        .smoke:nth-child(4) { left: 8px; animation-delay: 2.2s; width: 8px; height: 8px; }
+        @keyframes smokeRise { 0% { transform: translateY(0) scale(1); opacity: 0.4; } 50% { opacity: 0.2; } 100% { transform: translateY(-60px) scale(2.5) translateX(10px); opacity: 0; } }
 
         /* 올려진 아이템 */
         .placed-item { font-size: 20px; line-height: 1; }
 
         /* 물건 통 */
-        .tray { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 16px; max-width: 500px; margin-top: 20px; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
-        .tray-item { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: #fafafa; border-radius: 12px; cursor: grab; border: 2px solid #eee; transition: transform 0.15s, border-color 0.15s; user-select: none; }
-        .tray-item:hover { transform: scale(1.1); border-color: #ccc; }
+        .tray { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 16px; max-width: 500px; margin-top: 20px; background: rgba(255,255,255,0.1); border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); }
+        .tray-item { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: rgba(255,255,255,0.08); border-radius: 12px; cursor: grab; border: 2px solid rgba(255,255,255,0.15); transition: transform 0.15s, border-color 0.15s; user-select: none; }
+        .tray-item:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.4); }
         .tray-item:active { transform: scale(0.95); }
         .tray-item .weight-label { font-size: 8px; color: #aaa; position: absolute; bottom: 2px; }
 
         /* 상태 표시 */
-        .status { margin-top: 12px; font-size: 13px; color: #666; height: 20px; }
-        .weight-display { font-family: 'Courier New', monospace; font-size: 14px; color: #333; margin-top: 6px; }
+        .status { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.7); height: 20px; }
+        .weight-display { font-family: 'Courier New', monospace; font-size: 14px; color: #fff; margin-top: 6px; }
 
         /* 결과 */
         .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 32px 48px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -63,7 +71,19 @@
         <div class="pivot-base"></div>
         <div class="beam" id="beam">
             <div class="pan pan-left">
-                <div class="kiro">👻</div>
+                <div class="kiro">
+                    <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 110 55 115 C 45 115 35 108 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
+                        <ellipse cx="52" cy="52" rx="7" ry="9" fill="#111"/>
+                        <ellipse cx="72" cy="52" rx="7" ry="9" fill="#111"/>
+                    </svg>
+                </div>
+                <div class="smoke-container">
+                    <div class="smoke"></div>
+                    <div class="smoke"></div>
+                    <div class="smoke"></div>
+                    <div class="smoke"></div>
+                </div>
                 <div class="pan-items" id="leftItems"></div>
             </div>
             <div class="pan pan-right">
