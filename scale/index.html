@@ -6,199 +6,241 @@
     <title>키로의 무게는?</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { width: 100vw; height: 100vh; overflow: hidden; background: #7c3aed; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        body { width: 100vw; height: 100vh; overflow: hidden; background: #7c3aed; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; user-select: none; }
         .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #fff; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
         .back-btn:hover { opacity: 1; }
+        h1 { margin-top: 16px; font-size: 17px; color: #fff; }
+        .subtitle { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; margin-bottom: 10px; }
 
-        h1 { margin-top: 20px; font-size: 18px; color: #fff; }
-        .subtitle { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; margin-bottom: 16px; }
+        /* 저울 영역 */
+        .scale-area { position: relative; width: 460px; height: 260px; }
+        .pivot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 100px; background: #5b21b6; border-radius: 3px; }
+        .pivot-base { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 12px; background: #4c1d95; border-radius: 3px; }
+        .beam { position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%) rotate(0deg); transform-origin: center center; width: 380px; height: 6px; background: #a78bfa; border-radius: 3px; transition: transform 0.4s ease; }
 
-        /* 저울 */
-        .scale-area { position: relative; width: 500px; height: 300px; margin: 0 auto; }
-        .pivot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 12px; height: 120px; background: #8B7355; border-radius: 4px; }
-        .pivot-base { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 16px; background: #6B5344; border-radius: 4px; }
-        .beam { position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%) rotate(0deg); transform-origin: center center; width: 400px; height: 8px; background: #A0896B; border-radius: 4px; transition: transform 0.5s ease; }
-        .pan { position: absolute; top: 8px; width: 100px; height: 12px; background: #C4A97D; border-radius: 0 0 50% 50%; transition: transform 0.5s ease; }
-        .pan-left { left: 20px; }
-        .pan-right { right: 20px; }
-        .pan-items { position: absolute; bottom: 12px; width: 100px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; align-items: flex-end; }
+        /* 접시 */
+        .pan { position: absolute; top: 6px; width: 110px; height: 80px; }
+        .pan-left { left: 10px; }
+        .pan-right { right: 10px; }
+        .pan-plate { width: 110px; height: 14px; background: #ddd6fe; border-radius: 0 0 50% 50%; }
+        .pan-content { position: relative; width: 110px; min-height: 50px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 3px; padding: 4px; }
+
+        /* 드롭 존 */
+        .drop-zone { position: absolute; top: 6px; right: 10px; width: 110px; height: 80px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
+        .drop-zone.hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); }
 
         /* 키로 유령 */
-        .kiro { position: absolute; bottom: 14px; left: 15px; width: 60px; height: 70px; animation: float 2s ease-in-out infinite; }
+        .kiro-wrap { position: absolute; top: -50px; left: 25px; animation: float 2s ease-in-out infinite; }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .smoke { position: absolute; width: 10px; height: 10px; background: rgba(255,255,255,0.25); border-radius: 50%; animation: smokeRise 2.5s ease-out infinite; opacity: 0; }
+        .smoke:nth-child(1) { bottom: -5px; left: 5px; }
+        .smoke:nth-child(2) { bottom: -5px; left: 20px; animation-delay: 0.7s; }
+        .smoke:nth-child(3) { bottom: -5px; left: 35px; animation-delay: 1.4s; width: 8px; height: 8px; }
+        @keyframes smokeRise { 0%{transform:translateY(0) scale(1);opacity:0.35} 100%{transform:translateY(-40px) scale(2.2) translateX(8px);opacity:0} }
 
-        /* 연기 효과 */
-        .smoke-container { position: absolute; bottom: 10px; left: 25px; width: 50px; height: 80px; pointer-events: none; }
-        .smoke { position: absolute; width: 14px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: smokeRise 3s ease-out infinite; opacity: 0; }
-        .smoke:nth-child(2) { left: 15px; animation-delay: 0.8s; width: 10px; height: 10px; }
-        .smoke:nth-child(3) { left: 30px; animation-delay: 1.5s; width: 12px; height: 12px; }
-        .smoke:nth-child(4) { left: 8px; animation-delay: 2.2s; width: 8px; height: 8px; }
-        @keyframes smokeRise { 0% { transform: translateY(0) scale(1); opacity: 0.4; } 50% { opacity: 0.2; } 100% { transform: translateY(-60px) scale(2.5) translateX(10px); opacity: 0; } }
+        /* 물건 아이템 */
+        .item { width: 40px; height: 40px; border-radius: 8px; cursor: grab; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .item:active { cursor: grabbing; transform: scale(1.15); }
+        .item svg { width: 28px; height: 28px; }
+        .item-on-scale { cursor: pointer; }
+        .item-on-scale:hover { transform: scale(1.2); }
 
-        /* 올려진 아이템 */
-        .placed-item { font-size: 20px; line-height: 1; }
+        /* 트레이 */
+        .tray { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 14px; max-width: 480px; margin-top: 12px; background: rgba(255,255,255,0.08); border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* 물건 통 */
-        .tray { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 16px; max-width: 500px; margin-top: 20px; background: rgba(255,255,255,0.1); border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); }
-        .tray-item { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: rgba(255,255,255,0.08); border-radius: 12px; cursor: grab; border: 2px solid rgba(255,255,255,0.15); transition: transform 0.15s, border-color 0.15s; user-select: none; }
-        .tray-item:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.4); }
-        .tray-item:active { transform: scale(0.95); }
-        .tray-item .weight-label { font-size: 8px; color: #aaa; position: absolute; bottom: 2px; }
-
-        /* 상태 표시 */
-        .status { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.7); height: 20px; }
-        .weight-display { font-family: 'Courier New', monospace; font-size: 14px; color: #fff; margin-top: 6px; }
+        /* 상태 */
+        .info-bar { display: flex; gap: 20px; align-items: center; margin-top: 10px; }
+        .weight-display { font-family: 'Courier New', monospace; font-size: 13px; color: #fff; }
+        .status { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .guess-btn { margin-top: 10px; padding: 8px 20px; background: #fff; color: #7c3aed; border: none; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .guess-btn:hover { background: #ede9fe; }
 
         /* 결과 */
-        .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 32px 48px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 28px 40px; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .result.show { opacity: 1; pointer-events: auto; }
-        .result h2 { font-size: 22px; margin-bottom: 8px; }
-        .result p { font-size: 13px; color: #888; margin-bottom: 16px; }
-        .result button { padding: 9px 24px; background: #222; color: #fff; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; }
+        .result h2 { font-size: 20px; margin-bottom: 6px; color: #333; }
+        .result p { font-size: 12px; color: #888; margin-bottom: 14px; }
+        .result button { padding: 8px 20px; background: #7c3aed; color: #fff; border: none; border-radius: 16px; font-size: 12px; cursor: pointer; }
 
-        .guess-area { margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; }
-        .guess-btn { padding: 8px 20px; background: #222; color: #fff; border: none; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .guess-btn:hover { background: #444; }
+        /* 드래그 유령 */
+        .drag-ghost { position: fixed; pointer-events: none; z-index: 999; opacity: 0.8; }
     </style>
 </head>
 <body>
     <a class="back-btn" href="../">&lt;</a>
-    <h1>키로의 무게는? 👻</h1>
-    <div class="subtitle">물건을 올려서 균형을 맞춰보세요</div>
+    <h1>키로의 무게는?</h1>
+    <div class="subtitle">물건을 드래그해서 저울에 올려보세요 (클릭하면 빼기)</div>
 
-    <div class="scale-area" id="scaleArea">
+    <div class="scale-area">
         <div class="pivot"></div>
         <div class="pivot-base"></div>
         <div class="beam" id="beam">
             <div class="pan pan-left">
-                <div class="kiro">
-                    <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 110 55 115 C 45 115 35 108 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
-                        <ellipse cx="52" cy="52" rx="7" ry="9" fill="#111"/>
-                        <ellipse cx="72" cy="52" rx="7" ry="9" fill="#111"/>
+                <div class="kiro-wrap">
+                    <svg width="55" height="65" viewBox="0 0 100 120">
+                        <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 112 55 115 C 45 112 35 105 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
+                        <ellipse cx="52" cy="50" rx="7" ry="9" fill="#111"/>
+                        <ellipse cx="72" cy="50" rx="7" ry="9" fill="#111"/>
                     </svg>
-                </div>
-                <div class="smoke-container">
-                    <div class="smoke"></div>
                     <div class="smoke"></div>
                     <div class="smoke"></div>
                     <div class="smoke"></div>
                 </div>
-                <div class="pan-items" id="leftItems"></div>
+                <div class="pan-plate"></div>
             </div>
             <div class="pan pan-right">
-                <div class="pan-items" id="rightItems"></div>
+                <div class="pan-content" id="scalePan"></div>
+                <div class="pan-plate"></div>
             </div>
         </div>
+        <div class="drop-zone" id="dropZone" style="position:absolute; top:60px; right:30px;"></div>
     </div>
 
-    <div class="weight-display" id="weightDisplay">올린 무게: 0g</div>
-    <div class="status" id="status">물건을 클릭해서 저울 오른쪽에 올려보세요</div>
-
-    <div class="guess-area">
-        <button class="guess-btn" id="guessBtn">이 정도면 균형! 🎯</button>
+    <div class="info-bar">
+        <div class="weight-display" id="weightDisplay">올린 무게: 0g</div>
+        <div class="status" id="status">저울에 물건을 올려보세요</div>
     </div>
+    <button class="guess-btn" id="guessBtn">균형 맞추기!</button>
 
     <div class="tray" id="tray"></div>
-
-    <div class="result" id="result">
-        <h2 id="resultTitle"></h2>
-        <p id="resultText"></p>
-        <button onclick="location.reload()">다시 하기</button>
-    </div>
+    <div class="result" id="result"><h2 id="resultTitle"></h2><p id="resultText"></p><button onclick="location.reload()">다시</button></div>
 
     <script>
-    // 물건들 (이름, 이모지, 무게g)
+    // SVG 아이콘들
     const ITEMS = [
-        { name: '깃털', emoji: '🪶', weight: 1 },
-        { name: '유리구슬', emoji: '🔮', weight: 5 },
-        { name: '풍선', emoji: '🎈', weight: 2 },
-        { name: '나뭇가지', emoji: '🌿', weight: 3 },
-        { name: '꽃 한 송이', emoji: '🌸', weight: 2 },
-        { name: '별사탕', emoji: '⭐', weight: 1 },
-        { name: '조약돌', emoji: '🪨', weight: 8 },
-        { name: '도토리', emoji: '🌰', weight: 3 },
-        { name: '나비', emoji: '🦋', weight: 0.5 },
-        { name: '클로버', emoji: '🍀', weight: 1 },
-        { name: '솜사탕', emoji: '🍬', weight: 1.5 },
-        { name: '종이학', emoji: '🕊️', weight: 2 },
-        { name: '무당벌레', emoji: '🐞', weight: 0.5 },
-        { name: '열쇠', emoji: '🔑', weight: 6 },
-        { name: '동전', emoji: '🪙', weight: 4 },
+        { name:'깃털', weight:1, svg:'<svg viewBox="0 0 24 24"><path d="M3 21l8-8M12 3c-1 4-3 7-6 9 3 0 6 1 8 3 1-3 2-8-2-12z" stroke="#a78bfa" fill="none" stroke-width="2" stroke-linecap="round"/></svg>' },
+        { name:'유리구슬', weight:5, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#c4b5fd" stroke="#7c3aed" stroke-width="1.5"/><circle cx="9" cy="9" r="3" fill="rgba(255,255,255,0.4)"/></svg>' },
+        { name:'풍선', weight:2, svg:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="10" rx="7" ry="8" fill="#fb923c"/><line x1="12" y1="18" x2="12" y2="23" stroke="#888" stroke-width="1"/></svg>' },
+        { name:'나뭇가지', weight:3, svg:'<svg viewBox="0 0 24 24"><path d="M4 20L12 4M12 4L16 10M12 8L8 12" stroke="#92400e" fill="none" stroke-width="2" stroke-linecap="round"/></svg>' },
+        { name:'꽃', weight:2, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="#fbbf24"/><circle cx="12" cy="6" r="3" fill="#f9a8d4"/><circle cx="12" cy="18" r="3" fill="#f9a8d4"/><circle cx="6" cy="12" r="3" fill="#f9a8d4"/><circle cx="18" cy="12" r="3" fill="#f9a8d4"/></svg>' },
+        { name:'별사탕', weight:1, svg:'<svg viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" fill="#fde68a" stroke="#f59e0b" stroke-width="0.5"/></svg>' },
+        { name:'조약돌', weight:8, svg:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="14" rx="9" ry="6" fill="#a8a29e"/><ellipse cx="10" cy="12" rx="5" ry="3" fill="#d6d3d1" opacity="0.5"/></svg>' },
+        { name:'도토리', weight:3, svg:'<svg viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="5" rx="2" fill="#92400e"/><ellipse cx="12" cy="14" rx="6" ry="7" fill="#d97706"/></svg>' },
+        { name:'나비', weight:0.5, svg:'<svg viewBox="0 0 24 24"><ellipse cx="8" cy="10" rx="5" ry="6" fill="#c084fc" opacity="0.7"/><ellipse cx="16" cy="10" rx="5" ry="6" fill="#a855f7" opacity="0.7"/><line x1="12" y1="6" x2="12" y2="18" stroke="#333" stroke-width="1.5"/></svg>' },
+        { name:'클로버', weight:1, svg:'<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4" fill="#22c55e"/><circle cx="14" cy="8" r="4" fill="#16a34a"/><circle cx="12" cy="12" r="4" fill="#15803d"/><line x1="12" y1="14" x2="12" y2="22" stroke="#15803d" stroke-width="2"/></svg>' },
+        { name:'솜사탕', weight:1.5, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="8" fill="#fbcfe8" opacity="0.8"/><circle cx="9" cy="8" r="4" fill="#f9a8d4" opacity="0.6"/><line x1="12" y1="16" x2="12" y2="23" stroke="#a16207" stroke-width="1.5"/></svg>' },
+        { name:'동전', weight:4, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#92400e" font-weight="bold">$</text></svg>' },
+        { name:'열쇠', weight:6, svg:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="5" fill="none" stroke="#9ca3af" stroke-width="2.5"/><line x1="12" y1="10" x2="20" y2="18" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="15" x2="19" y2="13" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>' },
     ];
 
-    // 키로 무게 (랜덤 15~35g)
-    const KIRO_WEIGHT = 15 + Math.floor(Math.random() * 21);
-
+    const KIRO_WEIGHT = 15 + Math.floor(Math.random() * 16); // 15~30g
     let placedWeight = 0;
     let placedItems = [];
-    const beam = document.getElementById('beam');
-    const rightItems = document.getElementById('rightItems');
-    const weightDisplay = document.getElementById('weightDisplay');
-    const status = document.getElementById('status');
-    const tray = document.getElementById('tray');
 
-    // 트레이에 물건 배치
-    ITEMS.forEach(item => {
+    const tray = document.getElementById('tray');
+    const scalePan = document.getElementById('scalePan');
+    const dropZone = document.getElementById('dropZone');
+    const beam = document.getElementById('beam');
+    const weightDisplay = document.getElementById('weightDisplay');
+    const statusEl = document.getElementById('status');
+
+    let dragItem = null;
+    let dragGhost = null;
+
+    // 트레이 생성
+    ITEMS.forEach((item, idx) => {
         const el = document.createElement('div');
-        el.className = 'tray-item';
-        el.textContent = item.emoji;
+        el.className = 'item';
+        el.innerHTML = item.svg;
         el.title = `${item.name} (${item.weight}g)`;
-        el.onclick = () => addItem(item);
+        el.dataset.idx = idx;
+        el.addEventListener('mousedown', (e) => startDrag(e, item, el));
+        el.addEventListener('touchstart', (e) => startDrag(e, item, el), {passive:false});
         tray.appendChild(el);
     });
 
-    function addItem(item) {
-        placedWeight += item.weight;
-        placedItems.push(item);
-
-        // 저울 위에 아이템 표시
-        const el = document.createElement('span');
-        el.className = 'placed-item';
-        el.textContent = item.emoji;
-        rightItems.appendChild(el);
-
-        // 저울 기울기 업데이트
-        updateScale();
-        weightDisplay.textContent = `올린 무게: ${placedWeight}g`;
-
-        // 상태 메시지
-        const diff = KIRO_WEIGHT - placedWeight;
-        if (diff > 5) status.textContent = '아직 가벼워요... 더 올려보세요';
-        else if (diff > 0) status.textContent = '거의 다 왔어요!';
-        else if (diff === 0) status.textContent = '완벽한 균형! 🎉';
-        else if (diff > -5) status.textContent = '살짝 무거운 것 같은데...';
-        else status.textContent = '너무 무거워요!';
+    function startDrag(e, item, el) {
+        e.preventDefault();
+        dragItem = item;
+        // 고스트
+        dragGhost = document.createElement('div');
+        dragGhost.className = 'drag-ghost';
+        dragGhost.innerHTML = `<div class="item">${item.svg}</div>`;
+        document.body.appendChild(dragGhost);
+        moveGhost(e);
+        document.addEventListener('mousemove', moveGhost);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchmove', moveGhost, {passive:false});
+        document.addEventListener('touchend', endDrag);
     }
 
-    function updateScale() {
+    function moveGhost(e) {
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        if (dragGhost) { dragGhost.style.left = (x-20)+'px'; dragGhost.style.top = (y-20)+'px'; }
+        // 드롭존 하이라이트
+        const rect = dropZone.getBoundingClientRect();
+        if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) {
+            dropZone.classList.add('hover');
+        } else {
+            dropZone.classList.remove('hover');
+        }
+    }
+
+    function endDrag(e) {
+        const x = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+        const y = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+        const rect = dropZone.getBoundingClientRect();
+        if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom && dragItem) {
+            addToScale(dragItem);
+        }
+        if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+        dragItem = null;
+        dropZone.classList.remove('hover');
+        document.removeEventListener('mousemove', moveGhost);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchmove', moveGhost);
+        document.removeEventListener('touchend', endDrag);
+    }
+
+    function addToScale(item) {
+        placedWeight += item.weight;
+        placedItems.push(item);
+        renderScale();
+        updateBeam();
+    }
+
+    function removeFromScale(idx) {
+        placedWeight -= placedItems[idx].weight;
+        placedItems.splice(idx, 1);
+        renderScale();
+        updateBeam();
+    }
+
+    function renderScale() {
+        scalePan.innerHTML = '';
+        placedItems.forEach((item, i) => {
+            const el = document.createElement('div');
+            el.className = 'item item-on-scale';
+            el.innerHTML = item.svg;
+            el.title = `${item.name} (${item.weight}g) — 클릭하면 빼기`;
+            el.onclick = () => removeFromScale(i);
+            scalePan.appendChild(el);
+        });
+        weightDisplay.textContent = `올린 무게: ${placedWeight}g`;
+        const diff = KIRO_WEIGHT - placedWeight;
+        if (diff > 5) statusEl.textContent = '아직 가벼워요';
+        else if (diff > 0) statusEl.textContent = '거의 다 왔어요!';
+        else if (diff === 0) statusEl.textContent = '완벽한 균형!';
+        else if (diff > -5) statusEl.textContent = '살짝 무거운 것 같은데...';
+        else statusEl.textContent = '너무 무거워요!';
+    }
+
+    function updateBeam() {
         const diff = placedWeight - KIRO_WEIGHT;
-        // -30 ~ +30 범위를 -12도 ~ +12도로
-        const angle = Math.max(-12, Math.min(12, diff * 0.5));
+        const angle = Math.max(-10, Math.min(10, diff * 0.4));
         beam.style.transform = `translateX(-50%) rotate(${angle}deg)`;
     }
 
-    // 균형 맞추기 버튼
     document.getElementById('guessBtn').onclick = () => {
         const diff = Math.abs(placedWeight - KIRO_WEIGHT);
-        const resultEl = document.getElementById('result');
-        const title = document.getElementById('resultTitle');
-        const text = document.getElementById('resultText');
-
-        if (diff === 0) {
-            title.textContent = '🎉 완벽!';
-            text.textContent = `키로의 무게는 정확히 ${KIRO_WEIGHT}g이었어요!`;
-        } else if (diff <= 2) {
-            title.textContent = '👏 거의 맞았어요!';
-            text.textContent = `키로: ${KIRO_WEIGHT}g / 올린 무게: ${placedWeight}g (${diff}g 차이)`;
-        } else if (diff <= 5) {
-            title.textContent = '🤔 아쉬워요';
-            text.textContent = `키로: ${KIRO_WEIGHT}g / 올린 무게: ${placedWeight}g (${diff}g 차이)`;
-        } else {
-            title.textContent = '😅 많이 차이나요';
-            text.textContent = `키로: ${KIRO_WEIGHT}g / 올린 무게: ${placedWeight}g (${diff}g 차이)`;
-        }
-        resultEl.classList.add('show');
+        const t = document.getElementById('resultTitle');
+        const p = document.getElementById('resultText');
+        if (diff === 0) { t.textContent = '완벽!'; p.textContent = `키로: ${KIRO_WEIGHT}g 정확히 맞췄어요!`; }
+        else if (diff <= 2) { t.textContent = '거의 맞았어요!'; p.textContent = `키로: ${KIRO_WEIGHT}g / 올린: ${placedWeight}g (${diff}g 차이)`; }
+        else if (diff <= 5) { t.textContent = '아쉬워요'; p.textContent = `키로: ${KIRO_WEIGHT}g / 올린: ${placedWeight}g (${diff}g 차이)`; }
+        else { t.textContent = '많이 차이나요'; p.textContent = `키로: ${KIRO_WEIGHT}g / 올린: ${placedWeight}g (${diff}g 차이)`; }
+        document.getElementById('result').classList.add('show');
     };
     </script>
 </body>
