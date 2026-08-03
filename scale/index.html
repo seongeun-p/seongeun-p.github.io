@@ -19,11 +19,11 @@
         .beam { position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%) rotate(0deg); transform-origin: center center; width: 380px; height: 6px; background: #a78bfa; border-radius: 3px; transition: transform 0.4s ease; }
 
         /* 접시 */
-        .pan { position: absolute; top: 6px; width: 110px; height: 80px; }
+        .pan { position: absolute; top: 6px; width: 110px; height: 80px; display: flex; flex-direction: column-reverse; }
         .pan-left { left: 10px; }
         .pan-right { right: 10px; }
-        .pan-plate { width: 110px; height: 14px; background: #ddd6fe; border-radius: 0 0 50% 50%; }
-        .pan-content { position: absolute; bottom: 14px; width: 110px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 2px; padding: 2px; }
+        .pan-plate { width: 110px; height: 14px; background: #ddd6fe; border-radius: 0 0 50% 50%; flex-shrink: 0; }
+        .pan-content { width: 110px; display: flex; flex-wrap: wrap-reverse; justify-content: center; align-items: flex-end; gap: 2px; padding: 2px; }
 
         /* 드롭 존 */
         .drop-zone { position: absolute; top: 6px; right: 10px; width: 110px; height: 80px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
