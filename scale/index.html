@@ -9,92 +9,93 @@
         body { width: 100vw; height: 100vh; overflow: hidden; background: url('bg.png') center/cover no-repeat #7c3aed; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none; }
         .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #fff; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
         .back-btn:hover { opacity: 1; }
-        h1 { font-size: 17px; color: #fff; }
-        .subtitle { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; margin-bottom: 10px; }
+        h1 { font-size: 17px; color: #fff; margin-bottom: 4px; }
+        .subtitle { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
 
-        /* 저울 영역 */
-        .scale-area { position: relative; width: 460px; height: 260px; background: rgba(255,255,255,0.4); border-radius: 16px; padding: 10px; }
-        .pivot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 100px; background: #5b21b6; border-radius: 3px; }
-        .pivot-base { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 12px; background: #4c1d95; border-radius: 3px; }
-        .beam { position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%) rotate(0deg); transform-origin: center center; width: 380px; height: 6px; background: #5b21b6; border-radius: 3px; transition: transform 0.4s ease; z-index: 1; }
+        /* 저울 컨테이너 */
+        .scale-wrap { position: relative; width: 500px; height: 280px; background: rgba(255,255,255,0.4); border-radius: 16px; display: flex; align-items: flex-end; justify-content: center; }
 
-        /* 접시 */
-        .pan { position: absolute; top: -14px; width: 110px; z-index: 2; }
-        .pan-left { left: 10px; }
-        .pan-right { right: 10px; }
-        .pan-plate { width: 110px; height: 14px; background: #5b21b6; border-radius: 50%; }
-        .pan-content { width: 110px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 2px; position: absolute; bottom: 14px; left: 0; }
+        /* SVG 저울 */
+        .scale-svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
 
-        /* 드롭 존 */
-        .drop-zone { position: absolute; top: 6px; right: 10px; width: 110px; height: 80px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
-        .drop-zone.hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); }
+        /* 물건 올리는 영역 (빔 양쪽 끝 위) */
+        .pan-area { position: absolute; bottom: 145px; width: 100px; height: 100px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; align-content: flex-end; gap: 3px; padding: 4px; }
+        .pan-left-area { left: 40px; }
+        .pan-right-area { right: 40px; }
 
-        /* 키로 유령 */
-        .kiro-wrap { position: absolute; top: -50px; left: 25px; animation: float 2s ease-in-out infinite; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-        .smoke { position: absolute; width: 10px; height: 10px; background: rgba(255,255,255,0.25); border-radius: 50%; animation: smokeRise 2.5s ease-out infinite; opacity: 0; }
-        .smoke:nth-child(1) { bottom: -5px; left: 5px; }
-        .smoke:nth-child(2) { bottom: -5px; left: 20px; animation-delay: 0.7s; }
-        .smoke:nth-child(3) { bottom: -5px; left: 35px; animation-delay: 1.4s; width: 8px; height: 8px; }
-        @keyframes smokeRise { 0%{transform:translateY(0) scale(1);opacity:0.35} 100%{transform:translateY(-40px) scale(2.2) translateX(8px);opacity:0} }
+        /* 드롭 존 표시 */
+        .pan-right-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
+        .pan-right-area.hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
 
-        /* 물건 아이템 */
-        .item { width: 40px; height: 40px; border-radius: 8px; cursor: grab; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
-        .item:active { cursor: grabbing; transform: scale(1.15); }
-        .item svg { width: 28px; height: 28px; }
-        .item-on-scale { cursor: pointer; }
+        /* 키로 */
+        .kiro-on-pan { position: absolute; bottom: 148px; left: 55px; animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        .smoke { position: absolute; width: 8px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 50%; animation: smokeRise 2.5s ease-out infinite; opacity: 0; }
+        .smoke:nth-child(2) { left: 15px; animation-delay: 0.8s; }
+        .smoke:nth-child(3) { left: 30px; animation-delay: 1.5s; width: 6px; height: 6px; }
+        @keyframes smokeRise { 0%{transform:translateY(0) scale(1);opacity:0.3} 100%{transform:translateY(-30px) scale(2);opacity:0} }
+
+        /* 아이템 */
+        .item { width: 36px; height: 36px; border-radius: 8px; cursor: grab; display: flex; align-items: center; justify-content: center; }
+        .item:active { cursor: grabbing; }
+        .item svg { width: 26px; height: 26px; }
+        .item-on-scale { cursor: pointer; width: 28px; height: 28px; }
         .item-on-scale:hover { transform: scale(1.2); }
+        .item-on-scale svg { width: 20px; height: 20px; }
 
         /* 트레이 */
-        .tray { display: flex; gap: 8px; justify-content: center; padding: 12px 20px; max-width: 90vw; margin-top: 14px; background: rgba(255,255,255,0.4); border-radius: 14px; border: 1px solid rgba(255,255,255,0.2); overflow-x: auto; flex-wrap: nowrap; }
+        .tray { display: flex; gap: 6px; justify-content: center; padding: 10px 16px; max-width: 90vw; margin-top: 12px; background: rgba(255,255,255,0.4); border-radius: 12px; flex-wrap: nowrap; overflow-x: auto; }
 
-        /* 상태 */
-        .info-bar { display: flex; gap: 20px; align-items: center; margin-top: 10px; }
+        /* 정보 */
+        .info-bar { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
         .weight-display { font-family: 'Courier New', monospace; font-size: 13px; color: #fff; }
-        .status { font-size: 12px; color: rgba(255,255,255,0.6); }
-        .guess-btn { margin-top: 10px; padding: 8px 20px; background: #fff; color: #7c3aed; border: none; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .guess-btn:hover { background: #ede9fe; }
+        .status { font-size: 11px; color: rgba(255,255,255,0.6); }
+        .guess-btn { margin-top: 8px; padding: 7px 18px; background: #fff; color: #7c3aed; border: none; border-radius: 16px; font-size: 12px; font-weight: 700; cursor: pointer; }
 
         /* 결과 */
-        .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 28px 40px; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .result { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 28px 36px; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .result.show { opacity: 1; pointer-events: auto; }
-        .result h2 { font-size: 20px; margin-bottom: 6px; color: #333; }
-        .result p { font-size: 12px; color: #888; margin-bottom: 14px; }
-        .result button { padding: 8px 20px; background: #7c3aed; color: #fff; border: none; border-radius: 16px; font-size: 12px; cursor: pointer; }
+        .result h2 { font-size: 18px; margin-bottom: 6px; color: #333; }
+        .result p { font-size: 12px; color: #888; margin-bottom: 12px; }
+        .result button { padding: 7px 18px; background: #7c3aed; color: #fff; border: none; border-radius: 14px; font-size: 12px; cursor: pointer; }
 
-        /* 드래그 유령 */
         .drag-ghost { position: fixed; pointer-events: none; z-index: 999; opacity: 0.8; }
     </style>
 </head>
 <body>
     <a class="back-btn" href="../">&lt;</a>
     <h1>키로의 무게는?</h1>
-    <div class="subtitle">물건을 드래그해서 저울에 올려보세요 (클릭하면 빼기)</div>
+    <div class="subtitle">물건을 드래그해서 오른쪽 접시에 올려보세요 (클릭하면 빼기)</div>
 
-    <div class="scale-area">
-        <div class="pivot"></div>
-        <div class="pivot-base"></div>
-        <div class="beam" id="beam">
-            <div class="pan pan-left">
-                <div class="pan-plate"></div>
-                <div class="kiro-wrap">
-                    <svg width="55" height="65" viewBox="0 0 100 120">
-                        <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 112 55 115 C 45 112 35 105 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
-                        <ellipse cx="52" cy="50" rx="7" ry="9" fill="#111"/>
-                        <ellipse cx="72" cy="50" rx="7" ry="9" fill="#111"/>
-                    </svg>
-                    <div class="smoke"></div>
-                    <div class="smoke"></div>
-                    <div class="smoke"></div>
-                </div>
-                </div>
-            </div>
-            <div class="pan pan-right">
-                <div class="pan-plate"></div>
-                <div class="pan-content" id="scalePan"></div>
-            </div>
+    <div class="scale-wrap">
+        <!-- SVG 저울 -->
+        <svg class="scale-svg" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet">
+            <!-- 받침대 -->
+            <rect x="240" y="170" width="20" height="100" rx="4" fill="#4c1d95"/>
+            <!-- 받침대 바닥 -->
+            <rect x="210" y="260" width="80" height="14" rx="4" fill="#3b0764"/>
+            <!-- 빔 (가로 막대) -->
+            <rect x="50" y="155" width="400" height="8" rx="4" fill="#5b21b6" id="beamSvg"/>
+            <!-- 왼쪽 접시 -->
+            <ellipse cx="100" cy="155" rx="55" ry="10" fill="#5b21b6"/>
+            <!-- 오른쪽 접시 -->
+            <ellipse cx="400" cy="155" rx="55" ry="10" fill="#5b21b6"/>
+        </svg>
+
+        <!-- 키로 유령 (왼쪽 접시 위) -->
+        <div class="kiro-on-pan">
+            <svg width="50" height="58" viewBox="0 0 100 120">
+                <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 112 55 115 C 45 112 35 105 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
+                <ellipse cx="52" cy="50" rx="7" ry="9" fill="#111"/>
+                <ellipse cx="72" cy="50" rx="7" ry="9" fill="#111"/>
+            </svg>
+            <div class="smoke"></div>
+            <div class="smoke"></div>
+            <div class="smoke"></div>
         </div>
-        <div class="drop-zone" id="dropZone" style="position:absolute; top:60px; right:30px;"></div>
+
+        <!-- 오른쪽 접시 물건 영역 -->
+        <div class="pan-area pan-right-area" id="scalePan"></div>
     </div>
 
     <div class="info-bar">
@@ -102,12 +103,10 @@
         <div class="status" id="status">저울에 물건을 올려보세요</div>
     </div>
     <button class="guess-btn" id="guessBtn">균형 맞추기!</button>
-
     <div class="tray" id="tray"></div>
     <div class="result" id="result"><h2 id="resultTitle"></h2><p id="resultText"></p><button onclick="location.reload()">다시</button></div>
 
     <script>
-    // SVG 아이콘들
     const ITEMS = [
         { name:'깃털', weight:1, svg:'<svg viewBox="0 0 24 24"><path d="M3 21l8-8M12 3c-1 4-3 7-6 9 3 0 6 1 8 3 1-3 2-8-2-12z" stroke="#a78bfa" fill="none" stroke-width="2" stroke-linecap="round"/></svg>' },
         { name:'유리구슬', weight:5, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#c4b5fd" stroke="#7c3aed" stroke-width="1.5"/><circle cx="9" cy="9" r="3" fill="rgba(255,255,255,0.4)"/></svg>' },
@@ -119,41 +118,35 @@
         { name:'도토리', weight:3, svg:'<svg viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="5" rx="2" fill="#92400e"/><ellipse cx="12" cy="14" rx="6" ry="7" fill="#d97706"/></svg>' },
         { name:'나비', weight:0.5, svg:'<svg viewBox="0 0 24 24"><ellipse cx="8" cy="10" rx="5" ry="6" fill="#c084fc" opacity="0.7"/><ellipse cx="16" cy="10" rx="5" ry="6" fill="#a855f7" opacity="0.7"/><line x1="12" y1="6" x2="12" y2="18" stroke="#333" stroke-width="1.5"/></svg>' },
         { name:'클로버', weight:1, svg:'<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4" fill="#22c55e"/><circle cx="14" cy="8" r="4" fill="#16a34a"/><circle cx="12" cy="12" r="4" fill="#15803d"/><line x1="12" y1="14" x2="12" y2="22" stroke="#15803d" stroke-width="2"/></svg>' },
-        { name:'솜사탕', weight:1.5, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="8" fill="#fbcfe8" opacity="0.8"/><circle cx="9" cy="8" r="4" fill="#f9a8d4" opacity="0.6"/><line x1="12" y1="16" x2="12" y2="23" stroke="#a16207" stroke-width="1.5"/></svg>' },
         { name:'동전', weight:4, svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#92400e" font-weight="bold">$</text></svg>' },
         { name:'열쇠', weight:6, svg:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="5" fill="none" stroke="#9ca3af" stroke-width="2.5"/><line x1="12" y1="10" x2="20" y2="18" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="15" x2="19" y2="13" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>' },
     ];
 
-    const KIRO_WEIGHT = 15 + Math.floor(Math.random() * 16); // 15~30g
+    const KIRO_WEIGHT = 15 + Math.floor(Math.random() * 16);
     let placedWeight = 0;
     let placedItems = [];
 
     const tray = document.getElementById('tray');
     const scalePan = document.getElementById('scalePan');
-    const dropZone = document.getElementById('dropZone');
-    const beam = document.getElementById('beam');
+    const beamSvg = document.getElementById('beamSvg');
     const weightDisplay = document.getElementById('weightDisplay');
     const statusEl = document.getElementById('status');
 
-    let dragItem = null;
-    let dragGhost = null;
+    let dragItem = null, dragGhost = null;
 
-    // 트레이 생성
-    ITEMS.forEach((item, idx) => {
+    ITEMS.forEach(item => {
         const el = document.createElement('div');
         el.className = 'item';
         el.innerHTML = item.svg;
         el.title = `${item.name} (${item.weight}g)`;
-        el.dataset.idx = idx;
-        el.addEventListener('mousedown', (e) => startDrag(e, item, el));
-        el.addEventListener('touchstart', (e) => startDrag(e, item, el), {passive:false});
+        el.addEventListener('mousedown', e => startDrag(e, item));
+        el.addEventListener('touchstart', e => startDrag(e, item), {passive:false});
         tray.appendChild(el);
     });
 
-    function startDrag(e, item, el) {
+    function startDrag(e, item) {
         e.preventDefault();
         dragItem = item;
-        // 고스트
         dragGhost = document.createElement('div');
         dragGhost.className = 'drag-ghost';
         dragGhost.innerHTML = `<div class="item">${item.svg}</div>`;
@@ -168,26 +161,21 @@
     function moveGhost(e) {
         const x = e.clientX || (e.touches && e.touches[0].clientX);
         const y = e.clientY || (e.touches && e.touches[0].clientY);
-        if (dragGhost) { dragGhost.style.left = (x-20)+'px'; dragGhost.style.top = (y-20)+'px'; }
-        // 드롭존 하이라이트
-        const rect = dropZone.getBoundingClientRect();
-        if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) {
-            dropZone.classList.add('hover');
-        } else {
-            dropZone.classList.remove('hover');
-        }
+        if (dragGhost) { dragGhost.style.left = (x-18)+'px'; dragGhost.style.top = (y-18)+'px'; }
+        const rect = scalePan.getBoundingClientRect();
+        scalePan.classList.toggle('hover', x > rect.left && x < rect.right && y > rect.top && y < rect.bottom);
     }
 
     function endDrag(e) {
         const x = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
         const y = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
-        const rect = dropZone.getBoundingClientRect();
+        const rect = scalePan.getBoundingClientRect();
         if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom && dragItem) {
             addToScale(dragItem);
         }
         if (dragGhost) { dragGhost.remove(); dragGhost = null; }
         dragItem = null;
-        dropZone.classList.remove('hover');
+        scalePan.classList.remove('hover');
         document.removeEventListener('mousemove', moveGhost);
         document.removeEventListener('mouseup', endDrag);
         document.removeEventListener('touchmove', moveGhost);
@@ -198,23 +186,22 @@
         placedWeight += item.weight;
         placedItems.push(item);
         renderScale();
-        updateBeam();
     }
 
     function removeFromScale(idx) {
         placedWeight -= placedItems[idx].weight;
         placedItems.splice(idx, 1);
         renderScale();
-        updateBeam();
     }
 
     function renderScale() {
         scalePan.innerHTML = '';
         placedItems.forEach((item, i) => {
             const el = document.createElement('div');
-            el.className = 'item item-on-scale';
+            el.className = 'item-on-scale';
             el.innerHTML = item.svg;
-            el.title = `${item.name} (${item.weight}g) — 클릭하면 빼기`;
+            el.title = `${item.name} — 클릭하면 빼기`;
+            el.style.cursor = 'pointer';
             el.onclick = () => removeFromScale(i);
             scalePan.appendChild(el);
         });
@@ -223,14 +210,11 @@
         if (diff > 5) statusEl.textContent = '아직 가벼워요';
         else if (diff > 0) statusEl.textContent = '거의 다 왔어요!';
         else if (diff === 0) statusEl.textContent = '완벽한 균형!';
-        else if (diff > -5) statusEl.textContent = '살짝 무거운 것 같은데...';
         else statusEl.textContent = '너무 무거워요!';
-    }
-
-    function updateBeam() {
-        const diff = placedWeight - KIRO_WEIGHT;
-        const angle = Math.max(-10, Math.min(10, diff * 0.4));
-        beam.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        // 빔 기울기
+        const angle = Math.max(-8, Math.min(8, (placedWeight - KIRO_WEIGHT) * 0.4));
+        beamSvg.style.transform = `rotate(${angle}deg)`;
+        beamSvg.style.transformOrigin = '250px 159px';
     }
 
     document.getElementById('guessBtn').onclick = () => {
