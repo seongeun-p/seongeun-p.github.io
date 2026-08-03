@@ -19,11 +19,11 @@
         .beam { position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%) rotate(0deg); transform-origin: center center; width: 380px; height: 6px; background: #5b21b6; border-radius: 3px; transition: transform 0.4s ease; z-index: 1; }
 
         /* 접시 */
-        .pan { position: absolute; top: -14px; width: 110px; display: flex; flex-direction: column-reverse; z-index: 2; }
+        .pan { position: absolute; top: -14px; width: 110px; z-index: 2; }
         .pan-left { left: 10px; }
         .pan-right { right: 10px; }
-        .pan-plate { width: 110px; height: 14px; background: #5b21b6; border-radius: 50%; flex-shrink: 0; }
-        .pan-content { width: 110px; display: flex; flex-wrap: wrap-reverse; justify-content: center; align-items: flex-end; gap: 2px; padding: 2px; }
+        .pan-plate { width: 110px; height: 14px; background: #5b21b6; border-radius: 50%; }
+        .pan-content { width: 110px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 2px; position: absolute; bottom: 14px; left: 0; }
 
         /* 드롭 존 */
         .drop-zone { position: absolute; top: 6px; right: 10px; width: 110px; height: 80px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
@@ -76,6 +76,7 @@
         <div class="pivot-base"></div>
         <div class="beam" id="beam">
             <div class="pan pan-left">
+                <div class="pan-plate"></div>
                 <div class="kiro-wrap">
                     <svg width="55" height="65" viewBox="0 0 100 120">
                         <path d="M 50 5 C 80 5 95 30 95 55 C 95 75 85 90 75 100 C 70 105 65 112 55 115 C 45 112 35 105 30 100 C 20 90 10 75 10 55 C 10 30 25 5 50 5 Z" fill="#fff"/>
@@ -86,11 +87,11 @@
                     <div class="smoke"></div>
                     <div class="smoke"></div>
                 </div>
-                <div class="pan-plate"></div>
+                </div>
             </div>
             <div class="pan pan-right">
-                <div class="pan-content" id="scalePan"></div>
                 <div class="pan-plate"></div>
+                <div class="pan-content" id="scalePan"></div>
             </div>
         </div>
         <div class="drop-zone" id="dropZone" style="position:absolute; top:60px; right:30px;"></div>
