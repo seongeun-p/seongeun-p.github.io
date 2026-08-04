@@ -107,10 +107,6 @@
     panR.position.set(1.8, -0.08, 0); panR.castShadow = true;
     beamGroup.add(panR);
 
-    // 키로 유령 — 빔 그룹의 자식
-    ghostGroup.position.set(-1.8, 0.5, 0);
-    beamGroup.add(ghostGroup);
-
     // 키로 유령 (로우폴리 — 구 + 원뿔 합체)
     const ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
     const ghostGroup = new THREE.Group();
@@ -129,6 +125,8 @@
     eyeR.position.set(0.12, 0.38, 0.28);
     ghostGroup.add(eyeR);
     ghostGroup.castShadow = true;
+    ghostGroup.position.set(-1.8, 0.5, 0);
+    beamGroup.add(ghostGroup);
 
     // 물건 데이터 + 3D
     const ITEMS = [
