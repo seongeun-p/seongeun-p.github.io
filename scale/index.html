@@ -88,20 +88,28 @@
     base.position.y = 0.075; base.castShadow = true;
     scene.add(base);
 
-    // 빔 (가로 막대)
+    // 저울 구조 — 접시를 빔의 자식으로!
     const beamMat = new THREE.MeshStandardMaterial({ color: 0x7c3aed, roughness: 0.3, metalness: 0.4 });
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(4, 0.08, 0.12), beamMat);
-    beam.position.y = 2.5; beam.castShadow = true;
-    scene.add(beam);
-
-    // 접시 (양쪽)
     const panMat = new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.3, metalness: 0.2 });
+    const beamGroup = new THREE.Group();
+    beamGroup.position.y = 2.5;
+    scene.add(beamGroup);
+
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(4, 0.08, 0.12), beamMat);
+    beam.castShadow = true;
+    beamGroup.add(beam);
+
+    // 접시를 빔 그룹의 자식으로 → 빔 기울면 접시도 같이!
     const panL = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.08, 16), panMat);
-    panL.position.set(-1.8, 2.42, 0); panL.castShadow = true;
-    scene.add(panL);
+    panL.position.set(-1.8, -0.08, 0); panL.castShadow = true;
+    beamGroup.add(panL);
     const panR = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.08, 16), panMat);
-    panR.position.set(1.8, 2.42, 0); panR.castShadow = true;
-    scene.add(panR);
+    panR.position.set(1.8, -0.08, 0); panR.castShadow = true;
+    beamGroup.add(panR);
+
+    // 키로 유령 — 빔 그룹의 자식
+    ghostGroup.position.set(-1.8, 0.5, 0);
+    beamGroup.add(ghostGroup);
 
     // 키로 유령 (로우폴리 — 구 + 원뿔 합체)
     const ghostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
@@ -120,9 +128,7 @@
     const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), eyeMat);
     eyeR.position.set(0.12, 0.38, 0.28);
     ghostGroup.add(eyeR);
-    ghostGroup.position.set(-1.8, 2.8, 0);
     ghostGroup.castShadow = true;
-    scene.add(ghostGroup);
 
     // 물건 데이터 + 3D
     const ITEMS = [
@@ -160,15 +166,14 @@
         placedWeight += item.weight;
         placedItems.push(idx);
 
-        // 3D 물건 올리기
         const geo = new THREE.DodecahedronGeometry(0.15, 0);
         const mat = new THREE.MeshStandardMaterial({ color: item.color, roughness: 0.5, metalness: 0.2 });
         const mesh = new THREE.Mesh(geo, mat);
         const row = Math.floor(placedMeshes.length / 4);
         const col = placedMeshes.length % 4;
-        mesh.position.set(1.8 + (col - 1.5) * 0.25, 2.55 + row * 0.25, (Math.random()-0.5)*0.3);
+        mesh.position.set(1.8 + (col - 1.5) * 0.22, 0.05 + row * 0.25, (Math.random()-0.5)*0.3);
         mesh.castShadow = true;
-        scene.add(mesh);
+        beamGroup.add(mesh);
         placedMeshes.push(mesh);
 
         updateScale();
@@ -186,21 +191,22 @@
             const mesh = hits[0].object;
             const idx = placedMeshes.indexOf(mesh);
             if (idx >= 0) {
-                scene.remove(mesh);
+                beamGroup.remove(mesh);
                 placedWeight -= ITEMS[placedItems[idx]].weight;
                 placedMeshes.splice(idx, 1);
                 placedItems.splice(idx, 1);
-                // 위치 재배치
                 placedMeshes.forEach((m, i) => {
                     const row = Math.floor(i / 4);
                     const col = i % 4;
-                    m.position.x = 1.8 + (col - 1.5) * 0.25;
-                    m.position.y = 2.55 + row * 0.25;
+                    m.position.x = 1.8 + (col - 1.5) * 0.22;
+                    m.position.y = 0.05 + row * 0.25;
                 });
                 updateScale();
             }
         }
     });
+
+    let targetAngle = 0;
 
     function updateScale() {
         document.getElementById('weightText').textContent = placedWeight + 'g';
@@ -211,17 +217,8 @@
         else if (diff === 0) s.textContent = '완벽!';
         else s.textContent = '너무 무거워요';
 
-        // 빔 기울기
-        const angle = Math.max(-0.15, Math.min(0.15, (placedWeight - KIRO_WEIGHT) * 0.008));
-        beam.rotation.z = angle;
-        panL.position.y = 2.42 + Math.sin(angle) * 1.8;
-        panR.position.y = 2.42 - Math.sin(angle) * 1.8;
-        ghostGroup.position.y = 2.8 + Math.sin(angle) * 1.8;
-        // 물건들도 따라 내려감
-        placedMeshes.forEach((m, i) => {
-            const row = Math.floor(i / 4);
-            m.position.y = panR.position.y + 0.13 + row * 0.25;
-        });
+        // 목표 각도 설정 (애니메이션에서 lerp)
+        targetAngle = Math.max(-0.15, Math.min(0.15, (placedWeight - KIRO_WEIGHT) * 0.008));
     }
 
     // 균형 버튼
@@ -235,14 +232,19 @@
         document.getElementById('result').classList.add('show');
     };
 
-    // 키로 유령 둥둥
     let ghostTime = 0;
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
+
+        // 부드러운 기울기 (lerp)
+        beamGroup.rotation.z += (targetAngle - beamGroup.rotation.z) * 0.05;
+
+        // 키로 유령 둥둥
         ghostTime += 0.02;
-        ghostGroup.position.x = -1.8;
+        ghostGroup.position.y = 0.5 + Math.sin(ghostTime) * 0.05;
         ghostGroup.rotation.y = Math.sin(ghostTime * 0.5) * 0.2;
+
         // 물건들 살짝 회전
         placedMeshes.forEach((m, i) => { m.rotation.y += 0.005 + i * 0.001; });
         renderer.render(scene, camera);
