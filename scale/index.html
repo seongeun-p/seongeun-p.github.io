@@ -50,8 +50,19 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1025);
-    scene.fog = new THREE.Fog(0x1a1025, 8, 20);
+    // 그라데이션 배경 (보라→핑크)
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.width = 2; bgCanvas.height = 512;
+    const bgCtx = bgCanvas.getContext('2d');
+    const grad = bgCtx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, '#1a0533');
+    grad.addColorStop(0.5, '#2d1b69');
+    grad.addColorStop(1, '#4a1942');
+    bgCtx.fillStyle = grad;
+    bgCtx.fillRect(0, 0, 2, 512);
+    const bgTexture = new THREE.CanvasTexture(bgCanvas);
+    scene.background = bgTexture;
+    scene.fog = new THREE.Fog(0x2d1b69, 6, 16);
 
     const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
     camera.position.set(0, 3, 6);
@@ -67,20 +78,28 @@
     controls.target.set(0, 1, 0);
     controls.maxPolarAngle = Math.PI / 2.2;
 
-    // 조명
-    scene.add(new THREE.AmbientLight(0x6644aa, 0.4));
-    const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+    // 조명 — 부드럽고 따뜻하게
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const dl = new THREE.DirectionalLight(0xffeedd, 0.8);
     dl.position.set(3, 5, 4); dl.castShadow = true;
     scene.add(dl);
-    scene.add(new THREE.PointLight(0xa855f7, 0.5, 10).translateY(3));
+    const pl1 = new THREE.PointLight(0xff88cc, 0.6, 10);
+    pl1.position.set(-3, 3, 2);
+    scene.add(pl1);
+    const pl2 = new THREE.PointLight(0x8844ff, 0.4, 10);
+    pl2.position.set(3, 2, -2);
+    scene.add(pl2);
 
-    // 바닥
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: 0x2a1a3a, roughness: 0.9 }));
-    floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+    // 바닥 — 반투명 원형 플랫폼
+    const floor = new THREE.Mesh(
+        new THREE.CylinderGeometry(3, 3.2, 0.1, 32),
+        new THREE.MeshStandardMaterial({ color: 0x3d1f6d, roughness: 0.4, metalness: 0.1 })
+    );
+    floor.position.y = -0.05; floor.receiveShadow = true;
     scene.add(floor);
 
     // 저울 기둥
-    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x5b21b6, roughness: 0.4, metalness: 0.3 });
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.3, metalness: 0.5 });
     const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 2.5, 8), pillarMat);
     pillar.position.y = 1.25; pillar.castShadow = true;
     scene.add(pillar);
@@ -89,8 +108,8 @@
     scene.add(base);
 
     // 저울 구조 — 접시를 빔의 자식으로!
-    const beamMat = new THREE.MeshStandardMaterial({ color: 0x7c3aed, roughness: 0.3, metalness: 0.4 });
-    const panMat = new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.3, metalness: 0.2 });
+    const beamMat = new THREE.MeshStandardMaterial({ color: 0xa78bfa, roughness: 0.2, metalness: 0.5 });
+    const panMat = new THREE.MeshStandardMaterial({ color: 0xc4b5fd, roughness: 0.2, metalness: 0.3 });
     const beamGroup = new THREE.Group();
     beamGroup.position.y = 2.5;
     scene.add(beamGroup);
@@ -127,6 +146,20 @@
     ghostGroup.castShadow = true;
     ghostGroup.position.set(-1.8, 0.5, 0);
     beamGroup.add(ghostGroup);
+
+    // 배경 장식 — 떠다니는 로우폴리 도형들
+    const decoMat1 = new THREE.MeshStandardMaterial({ color: 0xff88cc, roughness: 0.4, metalness: 0.2 });
+    const decoMat2 = new THREE.MeshStandardMaterial({ color: 0x88ccff, roughness: 0.4, metalness: 0.2 });
+    const decoMat3 = new THREE.MeshStandardMaterial({ color: 0xffcc88, roughness: 0.4, metalness: 0.2 });
+    const decos = [];
+    for (let i = 0; i < 12; i++) {
+        const geos = [new THREE.IcosahedronGeometry(0.15, 0), new THREE.OctahedronGeometry(0.12, 0), new THREE.TorusGeometry(0.1, 0.04, 6, 8)];
+        const mats = [decoMat1, decoMat2, decoMat3];
+        const mesh = new THREE.Mesh(geos[i % 3], mats[i % 3]);
+        mesh.position.set((Math.random()-0.5)*8, 0.5 + Math.random()*4, (Math.random()-0.5)*6);
+        scene.add(mesh);
+        decos.push(mesh);
+    }
 
     // 물건 데이터 + 3D
     const ITEMS = [
@@ -245,6 +278,12 @@
 
         // 물건들 살짝 회전
         placedMeshes.forEach((m, i) => { m.rotation.y += 0.005 + i * 0.001; });
+        // 배경 장식 둥둥
+        decos.forEach((d, i) => {
+            d.rotation.x += 0.003 + i * 0.001;
+            d.rotation.y += 0.005;
+            d.position.y += Math.sin(ghostTime + i) * 0.002;
+        });
         renderer.render(scene, camera);
     }
     animate();
