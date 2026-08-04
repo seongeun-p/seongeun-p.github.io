@@ -216,7 +216,7 @@
         else s.textContent = '너무 무거워요';
 
         // 목표 각도 설정 (애니메이션에서 lerp)
-        targetAngle = Math.max(-0.15, Math.min(0.15, (placedWeight - KIRO_WEIGHT) * 0.008));
+        targetAngle = Math.max(-0.15, Math.min(0.15, (KIRO_WEIGHT - placedWeight) * 0.008));
     }
 
     // 균형 버튼
