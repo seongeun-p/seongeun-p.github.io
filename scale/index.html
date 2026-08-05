@@ -35,14 +35,18 @@
 <body>
     <a class="back-btn" href="../">&lt;</a>
     <h1>키로의 무게는?</h1>
-    <div class="info">물건을 클릭해서 저울에 올리세요 (다시 클릭하면 빼기)</div>
+    <div class="info">물건을 10번까지 올려보고 키로의 무게를 맞혀보세요!</div>
 
     <div class="ui-overlay">
         <div class="tray" id="tray"></div>
         <div class="bottom-bar">
             <span class="weight-text" id="weightText">0g</span>
             <span class="status-text" id="statusText">물건을 올려보세요</span>
-            <button class="guess-btn" id="guessBtn">균형!</button>
+            <span class="status-text" id="chancesText">기회: 10</span>
+        </div>
+        <div class="bottom-bar" style="margin-top:6px;">
+            <input type="number" id="guessInput" placeholder="키로 무게(g)?" style="width:100px; padding:5px 10px; border-radius:10px; border:none; font-size:13px; text-align:center;">
+            <button class="guess-btn" id="guessBtn">제출!</button>
         </div>
     </div>
 
@@ -67,7 +71,7 @@
     scene.fog = new THREE.Fog(0x2d1b69, 6, 16);
 
     const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
-    camera.position.set(0, 3, 6);
+    camera.position.set(0, 2.5, 5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
@@ -77,7 +81,7 @@
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.target.set(0, 1, 0);
+    controls.target.set(0, 1.5, 0);
     controls.maxPolarAngle = Math.PI / 2.2;
 
     // 조명 — 부드럽고 따뜻하게
@@ -101,20 +105,24 @@
     scene.add(floor);
 
     // 저울 기둥
+    const scaleRoot = new THREE.Group();
+    scaleRoot.scale.set(0.8, 0.8, 0.8); // 20% 축소
+    scene.add(scaleRoot);
+
     const pillarMat = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.3, metalness: 0.5 });
     const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 2.5, 8), pillarMat);
     pillar.position.y = 1.25; pillar.castShadow = true;
-    scene.add(pillar);
+    scaleRoot.add(pillar);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.15, 12), pillarMat);
     base.position.y = 0.075; base.castShadow = true;
-    scene.add(base);
+    scaleRoot.add(base);
 
     // 저울 구조 — 접시를 빔의 자식으로!
     const beamMat = new THREE.MeshStandardMaterial({ color: 0xa78bfa, roughness: 0.2, metalness: 0.5 });
     const panMat = new THREE.MeshStandardMaterial({ color: 0xc4b5fd, roughness: 0.2, metalness: 0.3 });
     const beamGroup = new THREE.Group();
     beamGroup.position.y = 2.5;
-    scene.add(beamGroup);
+    scaleRoot.add(beamGroup);
 
     const beam = new THREE.Mesh(new THREE.BoxGeometry(4, 0.08, 0.12), beamMat);
     beam.castShadow = true;
@@ -182,6 +190,7 @@
     let placedWeight = 0;
     let placedMeshes = [];
     let placedItems = [];
+    let chances = 10;
 
     // 트레이 UI
     const tray = document.getElementById('tray');
@@ -298,6 +307,10 @@
     }
 
     function addItem(idx) {
+        if (chances <= 0) return;
+        chances--;
+        document.getElementById('chancesText').textContent = '기회: ' + chances;
+
         const item = ITEMS[idx];
         placedWeight += item.weight;
         placedItems.push(idx);
@@ -339,7 +352,8 @@
         }
     });
 
-    let targetAngle = 0;
+    let targetAngle = Math.max(-0.15, Math.min(0.15, KIRO_WEIGHT * 0.008)); // 시작 시 키로 쪽 기울어짐
+    beamGroup.rotation.z = targetAngle; // 즉시 적용
 
     function updateScale() {
         document.getElementById('weightText').textContent = placedWeight + 'g';
@@ -354,14 +368,17 @@
         targetAngle = Math.max(-0.15, Math.min(0.15, (KIRO_WEIGHT - placedWeight) * 0.008));
     }
 
-    // 균형 버튼
+    // 답 제출
     document.getElementById('guessBtn').onclick = () => {
-        const diff = Math.abs(placedWeight - KIRO_WEIGHT);
+        const guess = parseInt(document.getElementById('guessInput').value);
+        if (isNaN(guess)) return;
+        const diff = Math.abs(guess - KIRO_WEIGHT);
         const t = document.getElementById('rTitle');
         const p = document.getElementById('rText');
-        if (diff === 0) { t.textContent = '완벽!'; p.textContent = `키로: ${KIRO_WEIGHT}g`; }
-        else if (diff <= 2) { t.textContent = '거의!'; p.textContent = `키로: ${KIRO_WEIGHT}g (${diff}g 차이)`; }
-        else { t.textContent = '아쉬워요'; p.textContent = `키로: ${KIRO_WEIGHT}g / 올린: ${placedWeight}g`; }
+        if (diff === 0) { t.textContent = '정답!'; p.textContent = `키로: 정확히 ${KIRO_WEIGHT}g!`; }
+        else if (diff <= 2) { t.textContent = '거의 맞았어요!'; p.textContent = `키로: ${KIRO_WEIGHT}g (${diff}g 차이)`; }
+        else if (diff <= 5) { t.textContent = '아쉬워요!'; p.textContent = `키로: ${KIRO_WEIGHT}g / 입력: ${guess}g (${diff}g 차이)`; }
+        else { t.textContent = '많이 차이나요'; p.textContent = `키로: ${KIRO_WEIGHT}g / 입력: ${guess}g (${diff}g 차이)`; }
         document.getElementById('result').classList.add('show');
     };
 
