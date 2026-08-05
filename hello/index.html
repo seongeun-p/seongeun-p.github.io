@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { width: 100vw; height: 100vh; overflow: hidden; background: #0a0a0a; display: flex; align-items: center; justify-content: center; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #fff; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
+        .back-btn:hover { opacity: 1; }
+        .hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.3); font-family: -apple-system, sans-serif; }
+    </style>
+</head>
+<body>
+    <a class="back-btn" href="../">&lt;</a>
+    <canvas id="c"></canvas>
+    <div class="hint">클릭하면 사라져요</div>
+    <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W, H;
+
+    function resize() {
+        W = canvas.width = innerWidth * dpr;
+        H = canvas.height = innerHeight * dpr;
+        ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', () => { resize(); init(); });
+
+    // 글자를 픽셀로 읽기
+    let particles = [];
+    let isExploding = false;
+
+    function init() {
+        particles = [];
+        isExploding = false;
+
+        // 텍스트를 캔버스에 그려서 픽셀 추출
+        const fontSize = Math.min(innerWidth * 0.2, 200);
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.font = `900 ${fontSize}px Helvetica, Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Hello', innerWidth / 2, innerHeight / 2);
+
+        const imageData = ctx.getImageData(0, 0, W, H);
+        const data = imageData.data;
+
+        // 픽셀에서 파티클 추출 (간격 조절)
+        const gap = 4;
+        for (let y = 0; y < H; y += gap) {
+            for (let x = 0; x < W; x += gap) {
+                const idx = (y * W + x) * 4;
+                if (data[idx + 3] > 128) {
+                    particles.push({
+                        x: x / dpr,
+                        y: y / dpr,
+                        originX: x / dpr,
+                        originY: y / dpr,
+                        vx: 0,
+                        vy: 0,
+                        size: 2 + Math.random(),
+                        alpha: 1,
+                        color: `hsl(${Math.random() * 30 + 260}, 70%, 70%)`, // 보라~핑크
+                    });
+                }
+            }
+        }
+        ctx.clearRect(0, 0, W, H);
+    }
+
+    // 클릭하면 폭발
+    canvas.addEventListener('click', (e) => {
+        if (isExploding) { init(); return; } // 이미 폭발했으면 리셋
+        isExploding = true;
+        const mx = e.clientX;
+        const my = e.clientY;
+
+        particles.forEach(p => {
+            const dx = p.x - mx;
+            const dy = p.y - my;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const force = Math.min(800 / dist, 30);
+            const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
+            p.vx = Math.cos(angle) * force * (0.5 + Math.random());
+            p.vy = Math.sin(angle) * force * (0.5 + Math.random());
+        });
+    });
+
+    // 애니메이션
+    function animate() {
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.15)';
+        ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+        particles.forEach(p => {
+            if (isExploding) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15; // 중력
+                p.vx *= 0.98; // 마찰
+                p.vy *= 0.98;
+                p.alpha *= 0.995;
+                p.size *= 0.998;
+            } else {
+                // 제자리에서 살짝 떨림
+                p.x = p.originX + Math.sin(Date.now() * 0.002 + p.originX * 0.01) * 0.5;
+                p.y = p.originY + Math.cos(Date.now() * 0.003 + p.originY * 0.01) * 0.5;
+            }
+
+            if (p.alpha < 0.01) return;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+    </script>
+</body>
+</html>
