@@ -3,104 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Shelf</title>
+    <title>Book Corner</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #fff; min-height: 100vh; font-family: -apple-system, sans-serif; color: #222; padding: 40px 20px; }
-        .back-btn { position: fixed; top: 14px; left: 14px; z-index: 100; color: #333; text-decoration: none; font-size: 22px; font-weight: 300; opacity: 0.5; }
+        body { background: #f8f8f6; min-height: 100vh; font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #222; }
+        .back-btn { position: fixed; top: 20px; left: 20px; z-index: 100; color: #222; text-decoration: none; font-size: 20px; font-weight: 300; opacity: 0.4; }
         .back-btn:hover { opacity: 1; }
 
-        h1 { text-align: center; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: rgba(0,0,0,0.3); margin-bottom: 40px; }
+        /* 헤더 */
+        .header { padding: 80px 40px 40px; max-width: 900px; margin: 0 auto; }
+        .header h1 { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #999; margin-bottom: 16px; }
+        .header p { font-size: 14px; color: #666; line-height: 1.7; max-width: 500px; }
 
-        .shelf-section { margin-bottom: 50px; }
-        .shelf-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,0.35); margin-bottom: 14px; padding-left: 10px; }
+        /* 카테고리 네비 */
+        .category-nav { padding: 0 40px 30px; max-width: 900px; margin: 0 auto; display: flex; gap: 20px; }
+        .category-nav a { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #aaa; text-decoration: none; padding-bottom: 4px; border-bottom: 1px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .category-nav a.active { color: #222; border-bottom-color: #222; }
+        .category-nav a:hover { color: #222; }
 
-        .bookshelf { display: flex; align-items: flex-end; gap: 6px; padding: 0 10px 12px; position: relative; flex-wrap: wrap; }
-        .bookshelf::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 10px; background: #e8e8e8; border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        /* 그리드 */
+        .grid { padding: 0 40px 80px; max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 24px; }
 
-        /* 책 한 권 */
-        .book { width: 36px; height: 180px; perspective: 400px; cursor: pointer; position: relative; z-index: 1; }
-        .book:hover { z-index: 10; }
+        /* 아이템 */
+        .item { position: relative; cursor: pointer; }
+        .item-cover { width: 100%; aspect-ratio: 2/3; background: #eee; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .item-cover img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
+        .item:hover .item-cover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 
-        .book-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s ease; transform-origin: left center; }
-        .book:hover .book-inner { transform: rotateY(-70deg); }
+        .item-info { margin-top: 10px; opacity: 0; transform: translateY(4px); transition: opacity 0.3s, transform 0.3s; }
+        .item:hover .item-info { opacity: 1; transform: translateY(0); }
+        .item-title { font-size: 11px; font-weight: 500; color: #333; line-height: 1.4; }
+        .item-type { font-size: 9px; color: #aaa; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* 책등 (spine) */
-        .book-spine { position: absolute; width: 36px; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 2px 0 0 2px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; padding: 8px 2px; overflow: hidden; text-overflow: ellipsis; backface-visibility: hidden; }
-
-        /* 표지 (cover) */
-        .book-cover { position: absolute; width: 120px; height: 100%; transform: rotateY(90deg); transform-origin: left center; border-radius: 0 2px 2px 0; overflow: hidden; backface-visibility: hidden; box-shadow: 4px 4px 12px rgba(0,0,0,0.4); }
-        .book-cover img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* 카테고리 태그 */
-        .book-tag { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s; white-space: nowrap; }
-        .book:hover .book-tag { opacity: 1; }
-
-        /* 반응형 */
-        @media (max-width: 600px) {
-            .book { width: 30px; height: 150px; }
-            .book-cover { width: 100px; }
-        }
+        /* 빈 상태 표지 (이미지 로드 실패) */
+        .item-cover .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e8e8e8; font-size: 10px; color: #aaa; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
     <a class="back-btn" href="../">&lt;</a>
-    <h1>My Shelf</h1>
 
-    <div class="shelf-section">
-        <div class="shelf-label">Book</div>
-        <div class="bookshelf" id="shelfBook"></div>
+    <div class="header">
+        <h1>Book Corner</h1>
+        <p>An ever-evolving collection of books, films, and animations I've experienced — in no particular order.</p>
     </div>
-    <div class="shelf-section">
-        <div class="shelf-label">Movie</div>
-        <div class="bookshelf" id="shelfMovie"></div>
+
+    <div class="category-nav" id="nav">
+        <a data-cat="all" class="active">All</a>
+        <a data-cat="book">Book</a>
+        <a data-cat="movie">Film</a>
+        <a data-cat="anime">Animation</a>
     </div>
-    <div class="shelf-section">
-        <div class="shelf-label">Animation</div>
-        <div class="bookshelf" id="shelfAnime"></div>
-    </div>
+
+    <div class="grid" id="grid"></div>
 
     <script>
     const ITEMS = [
-        { title: '탐나는 현대미술', type: 'book', color: '#e0e0e0', textColor: '#333', cover: 'https://image.yes24.com/goods/90432858/XL' },
-        { title: '긴키 지방의 어느 장소에 대하여', type: 'book', color: '#888', textColor: '#fff', cover: 'https://image.yes24.com/goods/108859702/XL' },
-        { title: '지구 끝의 온실', type: 'book', color: '#555', textColor: '#ddd', cover: 'https://image.yes24.com/goods/99057498/XL' },
-        { title: '아무도 오지 않는 곳에서', type: 'book', color: '#333', textColor: '#ccc', cover: 'https://image.yes24.com/goods/108055069/XL' },
-        { title: '채식주의자', type: 'book', color: '#aaa', textColor: '#222', cover: 'https://image.yes24.com/goods/8150824/XL' },
-        { title: '이듬해 봄', type: 'book', color: '#f0f0f0', textColor: '#444', cover: 'https://image.yes24.com/goods/116573498/XL' },
-        { title: '개인주의자 선언', type: 'book', color: '#222', textColor: '#eee', cover: 'https://image.yes24.com/goods/23280830/XL' },
-        { title: '호프', type: 'movie', color: '#666', textColor: '#fff', cover: 'https://image.tmdb.org/t/p/w500/vKDUmKO6F9bBKpIpMXrmHSfMfSu.jpg' },
-        { title: '약사의 혼자말', type: 'anime', color: '#444', textColor: '#ddd', cover: 'https://image.tmdb.org/t/p/w500/f2mMiWfVfR8YwNEhMnbqfrFhC0r.jpg' },
-        { title: '나의 히어로 아카데미아', type: 'anime', color: '#777', textColor: '#fff', cover: 'https://image.tmdb.org/t/p/w500/ivOLM47yJt90P19RH1NvJrAJz9F.jpg' },
+        { title: '탐나는 현대미술', type: 'book', cover: 'https://image.yes24.com/goods/90432858/XL' },
+        { title: '긴키 지방의 어느 장소에 대하여', type: 'book', cover: 'https://image.yes24.com/goods/108859702/XL' },
+        { title: '지구 끝의 온실', type: 'book', cover: 'https://image.yes24.com/goods/99057498/XL' },
+        { title: '아무도 오지 않는 곳에서', type: 'book', cover: 'https://image.yes24.com/goods/108055069/XL' },
+        { title: '채식주의자', type: 'book', cover: 'https://image.yes24.com/goods/8150824/XL' },
+        { title: '이듬해 봄', type: 'book', cover: 'https://image.yes24.com/goods/116573498/XL' },
+        { title: '개인주의자 선언', type: 'book', cover: 'https://image.yes24.com/goods/23280830/XL' },
+        { title: '호프', type: 'movie', cover: 'https://image.tmdb.org/t/p/w500/vKDUmKO6F9bBKpIpMXrmHSfMfSu.jpg' },
+        { title: '약사의 혼자말', type: 'anime', cover: 'https://image.tmdb.org/t/p/w500/f2mMiWfVfR8YwNEhMnbqfrFhC0r.jpg' },
+        { title: '나의 히어로 아카데미아', type: 'anime', cover: 'https://image.tmdb.org/t/p/w500/ivOLM47yJt90P19RH1NvJrAJz9F.jpg' },
     ];
 
-    const TYPE_LABELS = { book: '책', movie: '영화', anime: '애니' };
+    const TYPE_LABELS = { book: 'Book', movie: 'Film', anime: 'Animation' };
+    const grid = document.getElementById('grid');
+    let currentCat = 'all';
 
-    function renderShelf(containerId, items) {
-        const shelf = document.getElementById(containerId);
-        items.forEach(item => {
-            const book = document.createElement('div');
-            book.className = 'book';
-            const height = 160 + Math.random() * 40;
-            book.style.height = height + 'px';
-            book.innerHTML = `
-                <div class="book-tag">${item.title}</div>
-                <div class="book-inner">
-                    <div class="book-spine" style="background:${item.color}; color:${item.textColor};">
-                        ${item.title.length > 12 ? item.title.slice(0,12)+'…' : item.title}
-                    </div>
-                    <div class="book-cover">
-                        <img src="${item.cover}" alt="${item.title}" loading="lazy">
-                    </div>
+    function renderGrid(cat) {
+        grid.innerHTML = '';
+        const filtered = cat === 'all' ? ITEMS : ITEMS.filter(i => i.type === cat);
+        filtered.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'item';
+            el.innerHTML = `
+                <div class="item-cover">
+                    <img src="${item.cover}" alt="${item.title}" onerror="this.parentElement.innerHTML='<div class=placeholder>${item.title}</div>'">
+                </div>
+                <div class="item-info">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-type">${TYPE_LABELS[item.type]}</div>
                 </div>
             `;
-            shelf.appendChild(book);
+            grid.appendChild(el);
         });
     }
 
-    renderShelf('shelfBook', ITEMS.filter(i => i.type === 'book'));
-    renderShelf('shelfMovie', ITEMS.filter(i => i.type === 'movie'));
-    renderShelf('shelfAnime', ITEMS.filter(i => i.type === 'anime'));
+    // 네비 클릭
+    document.getElementById('nav').addEventListener('click', (e) => {
+        if (e.target.dataset.cat) {
+            currentCat = e.target.dataset.cat;
+            document.querySelectorAll('.category-nav a').forEach(a => a.classList.remove('active'));
+            e.target.classList.add('active');
+            renderGrid(currentCat);
+        }
+    });
+
+    renderGrid('all');
     </script>
 </body>
 </html>
