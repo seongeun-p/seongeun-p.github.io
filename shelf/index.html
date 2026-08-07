@@ -25,18 +25,23 @@
         .grid { padding: 0 40px 80px; max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 24px; }
 
         /* 아이템 */
-        .item { position: relative; cursor: pointer; }
-        .item-cover { width: 100%; aspect-ratio: 2/3; background: #eee; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .item-cover img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
-        .item:hover .item-cover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .item { position: relative; cursor: pointer; perspective: 600px; }
+        .item-inner { width: 100%; aspect-ratio: 2/3; position: relative; transform-style: preserve-3d; transition: transform 0.6s ease; }
+        .item:hover .item-inner { transform: rotateY(180deg); }
+
+        /* 책등 (앞면) */
+        .item-spine { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; text-orientation: mixed; font-size: 11px; font-weight: 500; color: #333; letter-spacing: 0.5px; padding: 12px 6px; overflow: hidden; border-radius: 2px; }
+
+        /* 표지 (뒷면) */
+        .item-cover { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; transform: rotateY(180deg); overflow: hidden; border-radius: 2px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .item-cover img { width: 100%; height: 100%; object-fit: cover; }
 
         .item-info { margin-top: 10px; opacity: 0; transform: translateY(4px); transition: opacity 0.3s, transform 0.3s; }
         .item:hover .item-info { opacity: 1; transform: translateY(0); }
         .item-title { font-size: 11px; font-weight: 500; color: #333; line-height: 1.4; }
         .item-type { font-size: 9px; color: #aaa; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* 빈 상태 표지 (이미지 로드 실패) */
-        .item-cover .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e8e8e8; font-size: 10px; color: #aaa; padding: 10px; text-align: center; }
+        .item-cover .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #ddd; font-size: 10px; color: #888; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -74,15 +79,23 @@
     const grid = document.getElementById('grid');
     let currentCat = 'all';
 
+    const SPINE_COLORS = ['#e8e8e8','#d0d0d0','#c0c0c0','#b0b0b0','#ddd','#eee','#ccc','#bbb','#e0e0e0','#f0f0f0'];
+
     function renderGrid(cat) {
         grid.innerHTML = '';
         const filtered = cat === 'all' ? ITEMS : ITEMS.filter(i => i.type === cat);
-        filtered.forEach(item => {
+        filtered.forEach((item, idx) => {
             const el = document.createElement('div');
             el.className = 'item';
+            const spineColor = SPINE_COLORS[idx % SPINE_COLORS.length];
             el.innerHTML = `
-                <div class="item-cover">
-                    <img src="${item.cover}" alt="${item.title}" onerror="this.parentElement.innerHTML='<div class=placeholder>${item.title}</div>'">
+                <div class="item-inner">
+                    <div class="item-spine" style="background:${spineColor};">
+                        ${item.title}
+                    </div>
+                    <div class="item-cover">
+                        <img src="${item.cover}" alt="${item.title}" onerror="this.parentElement.innerHTML='<div class=placeholder>${item.title}</div>'">
+                    </div>
                 </div>
                 <div class="item-info">
                     <div class="item-title">${item.title}</div>
